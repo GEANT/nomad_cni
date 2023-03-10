@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# This script is managed by the puppet module nomad_cni - do not modify
+#
+# This script will be executed *after* all the other init scripts.
+# You can put your own initialization stuff in here if you don't
+# want to do the full Sys V style init stuff.
+
+run-parts /opt/vxlan --arg=--force --arg=--all
+
+exit 0

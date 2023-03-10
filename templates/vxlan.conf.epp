@@ -1,0 +1,5 @@
+vxlan_id=<%= $vxlan_id %>
+vxlan_ip=<%= $vxlan_ip %>
+iface=<%= $iface %>
+vxlan_netmask=<%= $vxlan_netmask %>
+remote_ip_array=(
