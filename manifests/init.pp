@@ -25,7 +25,6 @@ class nomad_cni (
   Boolean $keep_vxlan_up_cron_ensure = true,
   Integer[1, 59] $keep_vxlan_up_cron_interval = 10
 ) {
-  # apply config manifest
   class { 'nomad_cni::config':
     cni_version                 => $cni_version,
     cni_base_url                => $cni_base_url,

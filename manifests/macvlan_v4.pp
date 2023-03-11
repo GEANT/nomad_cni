@@ -10,6 +10,12 @@
 # [*dns_servers*] Array[Stdlib::IP::Address::Nosubnet]
 # DNS servers for the CNI
 #
+# [*dns_search_domains*] Array[Stdlib::Fqdn]
+# DNS domain search list
+#
+# [*dns_domain*] Array[Stdlib::Fqdn]
+# DNS domain
+#
 # [*network*] Stdlib::IP::Address::V4::CIDR
 # Network and Mask for the CNI
 #
@@ -28,6 +34,8 @@
 define nomad_cni::macvlan_v4 (
   Stdlib::IP::Address::V4::CIDR $network,
   Array[Stdlib::IP::Address::Nosubnet] $dns_servers,
+  Array[Stdlib::Fqdn] $dns_search_domains,
+  Array[Stdlib::Fqdn] $dns_domain,
   String $cni_name             = $name,
   String $agent_regex          = undef,
   Array $agent_list            = [],
@@ -148,10 +156,8 @@ define nomad_cni::macvlan_v4 (
                   ],
                   dns     => {
                     nameservers => $dns_servers,
-                    domain      => 'geant.org',
-                    search      => [
-                      'geant.org',
-                    ],
+                    domain      => $dns_domain,
+                    search      => $dns_search_domains,
                   },
                   dataDir => '/run/cni/ipam-state',
                 },

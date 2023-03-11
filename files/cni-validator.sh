@@ -6,11 +6,11 @@ export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
 usage() {
     echo ""
-    echo "Usage: $(basename $0)"
-    echo "    -h | --help     [Print this help and exit]"
-    echo "    -n | --network  [network CIDR]"
-    echo "    -f | --file     [file name]"
-    echo "    -t | --tmpfile  [file name created by puppet]"
+    echo "Usage: $(basename $0) -n $192.168.1.0/24 -f /opt/cni/config/cni1.conflist -t %"
+    echo "    -h | --help     Print this help and exit"
+    echo "    -n | --network  Network CIDR"
+    echo "    -f | --file     File name"
+    echo "    -t | --tmpfile  File name created by puppet"
     echo ""
     exit 3
 }
