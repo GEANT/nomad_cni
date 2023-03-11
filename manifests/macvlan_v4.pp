@@ -7,6 +7,9 @@
 # [*cni_name*] String
 # the name of the CNI
 #
+# [*dns_servers*] Array[Stdlib::IP::Address::Nosubnet]
+# DNS servers for the CNI
+#
 # [*network*] Stdlib::IP::Address::V4::CIDR
 # Network and Mask for the CNI
 #
@@ -24,14 +27,17 @@
 #
 define nomad_cni::macvlan_v4 (
   Stdlib::IP::Address::V4::CIDR $network,
+  Array[Stdlib::IP::Address::Nosubnet] $dns_servers,
   String $cni_name             = $name,
   String $agent_regex          = undef,
   Array $agent_list            = [],
   String $iface                = 'eth0',
-  String $cni_protocol_version = '1.0.0'
+  String $cni_protocol_version = '1.0.0',
 ) {
   # ensure that nomad_cni is included
-  require nomad_cni
+  unless defined(Class['nomad_cni']) {
+    fail('nomad_cni::macvlan_v4 requires nomad_cni')
+  }
   #
   # set the variables:
   #
@@ -60,8 +66,8 @@ define nomad_cni::macvlan_v4 (
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
   exec { "vxlan${vxlan_id}":
-    command     => "/usr/local/bin/vxlan${vxlan_id}.sh -f -i ${vxlan_id}",
-    require     => File['/usr/local/bin/vxlan.sh'],
+    command     => "/usr/local/bin/vxlan-configurator.sh -f -i ${vxlan_id}",
+    require     => File['/usr/local/bin/vxlan-configurator.sh'],
     refreshonly => true,
   }
 
@@ -97,15 +103,15 @@ define nomad_cni::macvlan_v4 (
           ),
           order   => '0001';
         "vxlan_${vxlan_id}_footer":
-          target => "/etc/cni/vxlan.d/vxlan${vxlan_id}.conf",
-          source => "puppet:///modules/${module_name}/vxlan_footer",
-          order  => 'zzzz';
+          target  => "/etc/cni/vxlan.d/vxlan${vxlan_id}.conf",
+          content => ")\nexport vxlan_id vxlan_ip iface vxlan_netmask remote_ip_array\n",
+          order   => 'zzzz';
       }
       file { "/opt/cni/config/${cni_name}.conflist":
         mode         => '0644',
         validate_cmd => "/usr/local/bin/cni-validator.sh -n ${network} -f /opt/cni/config/${cni_name}.conflist -t %",
         require      => [
-          File['/opt/cni/config', '/usr/local/bin/validate_cni.sh'],
+          File['/opt/cni/config', '/usr/local/bin/cni-validator.sh', '/run/cni'],
           Package['python3-demjson']
         ],
         content      => to_json_pretty(
@@ -141,10 +147,7 @@ define nomad_cni::macvlan_v4 (
                     },
                   ],
                   dns     => {
-                    nameservers => [
-                      '83.97.93.200',
-                      '62.40.104.250',
-                    ],
+                    nameservers => $dns_servers,
                     domain      => 'geant.org',
                     search      => [
                       'geant.org',

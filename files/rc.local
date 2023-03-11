@@ -6,6 +6,6 @@
 # You can put your own initialization stuff in here if you don't
 # want to do the full Sys V style init stuff.
 
-run-parts /opt/vxlan --arg=--force --arg=--all
+/usr/local/bin/vxlan-configurator.sh --force --all
 
 exit 0
