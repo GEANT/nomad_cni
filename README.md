@@ -11,15 +11,15 @@
 
 ## Overview
 
-This module configures a CNI network and it aims to replace a more complex software-defined network solution (like as Calico, Weave, Cilium...).\
+This module configures a CNI network on the Nomad agents, and it aims to replace a more complex software-defined network solution (like as Calico, Weave, Cilium...).\
 Whilst Calico uses `etcd` and `nerdctl` to leverage and centralize the configuration of the cluster, this module splits a network range by the number of Nomad agents, and it creates a number of configuration files for every agent. Each configuration will have a different gateway and will use a different IP range within the same subnet.\
-The module will also create a Bridge interface and a VXLAN on each Agent and the VXLAN will be bridged into the CNI.\
+The module will also create a Bridge interface and a VXLAN on each Agent and the VXLAN will be bridged onto the CNI.
 
 ## What This Module Affects <a name="what-this-module-affects"></a>
 
 * Installs the CNI network plugins (via url)
-* Installs a configuration file for each CNI network (`/etc/cni/vxlan.d/*.conf`)
-* Creates a Bridge and a VXLAN for each CNI network (managed via custom script)
+* Installs a configuration file for every CNI network (`/etc/cni/vxlan.d/*.conf`)
+* Creates a Bridge and a VXLAN for every CNI network (managed via custom script)
 
 ## Usage and examples <a name="usage-and-examples"></a>
 
