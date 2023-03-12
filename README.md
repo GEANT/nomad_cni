@@ -59,5 +59,5 @@ nomad_cni::macvlan_v4 {
 
 ## Limitations
 
-* the function `cni_ranges` currently supports only networks greater than or equal than 24 bits (i.e.: it works with less than 254 hosts). If you love Ruby, please help improving the algorithm in the function
+* the function `cni_ranges` currently supports only networks greater than or equal to 24 bits (i.e.: it works with a maximum of 254 hosts). If you love Ruby, please help improving the algorithm of the function
 * only `macvlan` plugin is supported at the moment
