@@ -60,12 +60,13 @@ class nomad_cni::config (
     }
   }
 
+  # install CNI plugins
+  #
   exec { 'remove_old_cni':
     command => 'rm -f /opt/cni/bin/*',
     unless  => "test -f /opt/cni/bin/bridge && /opt/cni/bin/bridge 2>&1 | awk -F' v' '/plugin/{print \$NF}' | grep -w \"${cni_version}\"",
     path    => '/usr/bin';
   }
-
   archive { "/tmp/cni-plugins-linux-amd64-v${cni_version}.tgz":
     ensure        => present,
     cleanup       => true,
@@ -92,7 +93,6 @@ class nomad_cni::config (
         ensure => link,
         target => 'rc.d/rc.local';
     }
-
     service { 'rc-local.service':
       ensure     => running,
       enable     => true,
@@ -113,3 +113,4 @@ class nomad_cni::config (
     minute  => "*/${$keep_vxlan_up_cron_interval}",
   }
 }
+# vim: set ts=2 sw=2 et :

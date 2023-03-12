@@ -66,7 +66,7 @@ define nomad_cni::macvlan_v4 (
   else {
     $agent_names = puppetdb_query(
       "inventory[facts.hostname] {
-        facts.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${::environment}'
+        facts.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
     ).map |$item| { $item['facts.hostname'] }
   }
@@ -112,7 +112,7 @@ define nomad_cni::macvlan_v4 (
           order   => '0001';
         "vxlan_${vxlan_id}_footer":
           target  => "/etc/cni/vxlan.d/vxlan${vxlan_id}.conf",
-          content => ")\nexport vxlan_id vxlan_ip iface vxlan_netmask remote_ip_array\n",
+          content => ")\nexport vxlan_id vxlan_ip vxlan_netmask iface remote_ip_array\n",
           order   => 'zzzz';
       }
       file { "/opt/cni/config/${cni_name}.conflist":
