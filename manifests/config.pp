@@ -35,10 +35,9 @@ class nomad_cni::config (
 
   file {
     default:
-      ensure => file,
-      owner  => 'root',
-      group  => 'root',
-      mode   => '0755';
+      owner => 'root',
+      group => 'root',
+      mode  => '0755';
     $directory_list:
       ensure => directory;
     '/opt/cni/config':
@@ -67,7 +66,7 @@ class nomad_cni::config (
     path    => '/usr/bin';
   }
 
-  -> archive { "/tmp/cni-plugins-linux-amd64-v${cni_version}.tgz":
+  archive { "/tmp/cni-plugins-linux-amd64-v${cni_version}.tgz":
     ensure        => present,
     cleanup       => true,
     extract       => true,
@@ -76,22 +75,22 @@ class nomad_cni::config (
     creates       => '/opt/cni/bin/bridge',
     checksum_url  => "${cni_base_url}/v${cni_version}/cni-plugins-linux-amd64-v${cni_version}.tgz.sha256",
     checksum_type => 'sha256',
-    require       => File['/opt/cni/bin'];
+    require       => [File['/opt/cni/bin'], Exec['remove_old_cni']];
   }
 
   # create startup script
   #
   if ($manage_startup_script) {
     file {
-      '/etc/rc.local':
-        ensure => link,
-        target => 'rc.d/rc.local';
       '/etc/rc.d/rc.local':
         ensure => file,
         owner  => 'root',
         group  => 'root',
         mode   => '0755',
         source => "puppet:///modules/${module_name}/rc.local";
+      '/etc/rc.local':
+        ensure => link,
+        target => 'rc.d/rc.local';
     }
 
     service { 'rc-local.service':

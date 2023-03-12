@@ -2,11 +2,20 @@
   "name": "maxadamo-nomad_cni",
   "version": "0.1.0",
   "author": "Massimiliano Adamo<maxadamo@gmail.com>",
-  "summary": "",
-  "license": "GPL-3.0-or-later",
-  "source": "",
+  "summary": "Nomad CNI management",
+  "license": "GPL-3.0",
+  "source": "https://github.com/GEANT/nomad_cni",
+  "project_page": "https://github.com/GEANT/nomad_cni",
+  "issues_url": "https://github.com/GEANT/nomad_cni/issues",
   "dependencies": [
-
+    {
+      "name": "puppetlabs/stdlib",
+      "version_requirement": ">= 6.1.0 < 9.0.0"
+    },
+    {
+      "name": "puppet/systemd",
+      "version_requirement": ">= 2.6.0 < 5.0.0"
+    }
   ],
   "operatingsystem_support": [
     {
