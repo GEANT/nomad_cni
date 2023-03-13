@@ -75,7 +75,8 @@ define nomad_cni::macvlan_v4 (
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
   exec { "vxlan${vxlan_id}":
-    command     => "flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh -f -i ${vxlan_id}",
+    command     => "flock /tmp/vxlan-configurator vxlan-configurator.sh -f -i ${vxlan_id}",
+    path        => ['/usr/local/bin', '/bin', '/usr/bin', '/sbin', '/usr/sbin'],
     require     => File['/usr/local/bin/vxlan-configurator.sh'],
     refreshonly => true,
   }
