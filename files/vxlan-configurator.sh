@@ -125,12 +125,6 @@ elif [ -n $ID ]; then
     cfgArray=("/etc/cni/vxlan.d/vxlan_$ID.conf")
 fi
 
-if [ -n "$SILENT" ]; then
-    REDIRECT="/dev/null"
-else
-    REDIRECT="$(tty)"
-fi
-
 if [ -n "$PURGE" ]; then
     purge_unused
     exit 0
@@ -145,8 +139,8 @@ for vxlan in $cfgArray; do
         fi
 
         if [ -n "$FORCE" ]; then
-            if [ -z $SYSTEMD ]; then
-                echo "Configuring VXLAN $vxlan_id" >$REDIRECT
+            if [ -z $SYSTEMD ] || [ -n $SILENT ]; then
+                echo "Configuring VXLAN $vxlan_id" >/dev/null
             else
                 echo "Configuring VXLAN $vxlan_id"
             fi
@@ -156,14 +150,14 @@ for vxlan in $cfgArray; do
             bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
         else
             if check_status $vxlan_id $vxlan_ip; then
-                if [ -z $SYSTEMD ]; then
-                    echo "VXLAN $vxlan_id is already configured" >$REDIRECT
+                if [ -z $SYSTEMD ] || [ -n $SILENT ]; then
+                    echo "VXLAN $vxlan_id is already configured" >/dev/null
                 else
                     echo "VXLAN $vxlan_id is already configured"
                 fi
             else
-                if [ -z $SYSTEMD ]; then
-                    echo "Configuring VXLAN $vxlan_id" >$REDIRECT
+                if [ -z $SYSTEMD ] || [ -n $SILENT ]; then
+                    echo "Configuring VXLAN $vxlan_id" >/dev/null
                 else
                     echo "Configuring VXLAN $vxlan_id"
                 fi

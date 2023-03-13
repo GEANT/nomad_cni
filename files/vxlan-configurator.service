@@ -5,13 +5,15 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-Type=simple
+Type=oneshot
+RemainAfterExit=true
 User=root
 Group=root
 TimeoutStartSec=0
 Restart=on-failure
 RestartSec=30s
 ExecStart=/usr/local/bin/vxlan-configurator.sh --systemd --all
+ExecStop=/usr/bin/true
 SyslogIdentifier=VXLAN-configurator
 
 [Install]
