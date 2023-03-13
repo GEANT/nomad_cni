@@ -90,7 +90,7 @@ define nomad_cni::macvlan_v4 (
   @@concat::fragment { "vxlan_${vxlan_id}_${facts['networking']['hostname']}":
     tag     => "nomad_vxlan_${vxlan_id}_${facts['agent_specified_environment']}",
     target  => "/etc/cni/vxlan.d/vxlan${vxlan_id}.conf",
-    content => "\"${facts['networking']['ip']}\"",
+    content => "\"${facts['networking']['ip']}\"\n",
     order   => seeded_rand(2000, "vxlan_${vxlan_id}_${facts['networking']['ip']}");
   }
 
