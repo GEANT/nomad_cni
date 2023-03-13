@@ -13,7 +13,7 @@
 # [*dns_search_domains*] Array[Stdlib::Fqdn]
 # DNS domain search list
 #
-# [*dns_domain*] Array[Stdlib::Fqdn]
+# [*dns_domain*] Stdlib::Fqdn
 # DNS domain
 #
 # [*network*] Stdlib::IP::Address::V4::CIDR
@@ -35,7 +35,7 @@ define nomad_cni::macvlan_v4 (
   Stdlib::IP::Address::V4::CIDR $network,
   Array[Stdlib::IP::Address::Nosubnet] $dns_servers,
   Array[Stdlib::Fqdn] $dns_search_domains,
-  Array[Stdlib::Fqdn] $dns_domain,
+  Stdlib::Fqdn $dns_domain,
   String $cni_name             = $name,
   String $agent_regex          = undef,
   Array $agent_list            = [],
