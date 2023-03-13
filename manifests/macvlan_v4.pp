@@ -82,9 +82,9 @@ define nomad_cni::macvlan_v4 (
   concat { "/etc/cni/vxlan.d/vxlan${vxlan_id}.conf":
     owner   => 'root',
     group   => 'root',
+    mode    => '0644',
     require => File['/etc/cni/vxlan.d'],
-    notify  => Exec["vxlan${vxlan_id}"],
-    mode    => '0755';
+    notify  => Exec["vxlan${vxlan_id}"];
   }
 
   @@concat::fragment { "vxlan_${vxlan_id}_${facts['networking']['hostname']}":
