@@ -117,10 +117,15 @@ class nomad_cni::config (
     false => absent,
   }
   cron {
+    default:
+      user     => 'root',
+      hour     => '*',
+      month    => '*',
+      monthday => '*',
+      weekday  => '*';
     'keep-vxlan-up':
       ensure  => $cron_ensure_status,
       command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --all',
-      user    => 'root',
       minute  => "*/${$keep_vxlan_up_cron_interval}";
     'purge_unused_vxlans':
       ensure  => present,
