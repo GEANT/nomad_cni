@@ -18,7 +18,7 @@ usage() {
     echo "    -i | --id      Processes the file with the specific VXLAN ID"
     echo "    -p | --purge   Purge VXLANs without a proper configuration file"
     echo "    -s | --silent  Print only errors"
-    echo "         --systemd Run as a systemd service"
+    echo "         --systemd Run as a systemd service and do not redirect output to /dev/null"
     echo ""
     exit
 }
@@ -117,6 +117,9 @@ if [ -n "$ALL" ] && [ -n "$ID" ]; then
 elif [ -z "$ALL" ] && [ -z "$ID" ] && [ -z "$PURGE" ]; then
     echo "ERROR: You must use --all, --id or --purge"
     usage
+elif [ -n "$SILENT" ] && [ -n "$SYSTEMD" ]; then
+    echo "ERROR: You can't use --silent and --systemd at the same time"
+    usage
 fi
 
 if [ -n $ALL ]; then
@@ -143,11 +146,6 @@ for vxlan in $cfgArray; do
                 echo "Configuring VXLAN $vxlan_id"
             else
                 echo "Configuring VXLAN $vxlan_id" >/dev/null                
-            fi
-            if [ -n $SYSTEMD ] || [ -z $SILENT ]; then
-                echo "Configuring VXLAN $vxlan_id"
-            else
-                echo "Configuring VXLAN $vxlan_id" >/dev/null
             fi
             ifaces_down $vxlan_id
             vxlan_up $vxlan_id $iface $vxlan_ip
