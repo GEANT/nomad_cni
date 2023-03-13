@@ -31,7 +31,7 @@ class nomad_cni::config (
 
   # create necessary files
   #
-  $directory_list = ['/opt/cni', '/opt/cni/bin', '/opt/vxlan', '/run/cni', '/etc/cni', '/etc/cni/vlxlan.d']
+  $directory_list = ['/opt/cni', '/opt/cni/bin', '/run/cni', '/etc/cni', '/etc/cni/vxlan.d']
 
   file {
     default:
