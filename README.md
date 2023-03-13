@@ -31,11 +31,11 @@ basic usage
 include nomad_cni
 ```
 
-if you don't want this module to manage the script at boot time
+if want this module to manage the script at boot time (it will overwrite any existing rc.local file)
 
 ```puppet
 class { 'nomad_cni':
-  manage_startup_script => false,
+  manage_startup_script => true,
 }
 ```
 
