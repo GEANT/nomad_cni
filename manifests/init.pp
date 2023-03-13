@@ -22,14 +22,12 @@
 class nomad_cni (
   String $cni_version                = '1.2.0',
   Stdlib::HTTPSUrl $cni_base_url     = 'https://github.com/containernetworking/plugins/releases/download',
-  Boolean $manage_startup_script     = false,
   Boolean $keep_vxlan_up_cron_ensure = true,
   Integer[1, 59] $keep_vxlan_up_cron_interval = 10
 ) {
   class { 'nomad_cni::config':
     cni_version                 => $cni_version,
     cni_base_url                => $cni_base_url,
-    manage_startup_script       => $manage_startup_script,
     keep_vxlan_up_cron_ensure   => $keep_vxlan_up_cron_ensure,
     keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
   }

@@ -10,9 +10,6 @@
 # [*cni_base_url*] Stdlib::HTTPSUrl
 # URL to download CNI plugins from
 #
-# [*manage_startup_script*] Boolean
-# Create startup script through rc.local to setup VXLANs on boot
-#
 # [*keep_vxlan_up_cron_ensure*] Boolean
 # install cron job to keep VXLANs up
 #
@@ -22,11 +19,11 @@
 class nomad_cni::config (
   String $cni_version,
   Stdlib::HTTPSUrl $cni_base_url,
-  Boolean $manage_startup_script,
   Boolean $keep_vxlan_up_cron_ensure,
   Integer[1, 59] $keep_vxlan_up_cron_interval
 ) {
-  # this is a private class
+  # == this is a private class
+  #
   assert_private()
 
   # == create necessary files
@@ -50,6 +47,7 @@ class nomad_cni::config (
   }
 
   # == purge unused VXLANs
+  #
   exec { 'purge_unused_vxlans':
     command     => 'flock /tmp/vxlan-configurator vxlan-configurator.sh --purge',
     require     => File['/usr/local/bin/vxlan-configurator.sh'],
@@ -58,7 +56,7 @@ class nomad_cni::config (
     subscribe   => File['/etc/cni/vxlan.d'];
   }
 
-  # install python3-demjson and fping
+  # == install python3-demjson and fping
   #
   $packages = ['python3-demjson', 'fping']
   $packages.each |String $package| {
@@ -86,28 +84,15 @@ class nomad_cni::config (
     require       => [File['/opt/cni/bin'], Exec['remove_old_cni']];
   }
 
-  # == create startup script
+  # == create startup service for VXLAN configurator
   #
-  if ($manage_startup_script) {
-    file {
-      '/etc/rc.d/rc.local':
-        ensure => file,
-        owner  => 'root',
-        group  => 'root',
-        mode   => '0755',
-        source => "puppet:///modules/${module_name}/rc.local";
-      '/etc/rc.local':
-        ensure => link,
-        target => 'rc.d/rc.local';
-    }
-    service { 'rc-local.service':
-      ensure     => running,
-      enable     => true,
-      hasrestart => true,
-      hasstatus  => true,
-      provider   => 'systemd',
-      require    => File['/etc/rc.d/rc.local'];
-    }
+  systemd::unit_file { 'vxlan-configurator.service':
+    source => "puppet:///modules/${module_name}/vxlan-configurator.service",
+    notify => Service['vxlan-configurator.service'];
+  }
+  service { 'vxlan-configurator.service':
+    ensure => running,
+    enable => true,
   }
 
   # == create cron job to keep the VXLAN up
