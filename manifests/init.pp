@@ -9,10 +9,6 @@
 # [*cni_base_url*] Stdlib::HTTPSUrl
 # URL to download CNI plugins from
 #
-# [*manage_startup_script*] Boolean
-# Create startup script through rc.local to setup VXLANs on boot
-# WARNING: This will overwrite any existing rc.local file
-#
 # [*keep_vxlan_up_cron_ensure*] Boolean
 # install cron job to keep VXLANs up
 #
