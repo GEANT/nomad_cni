@@ -83,7 +83,7 @@ define nomad_cni::macvlan_v4 (
     owner   => 'root',
     group   => 'root',
     require => File['/etc/cni/vxlan.d'],
-    notify  => Exec["vxlan_${vxlan_id}"],
+    notify  => Exec["vxlan${vxlan_id}"],
     mode    => '0755';
   }
 
