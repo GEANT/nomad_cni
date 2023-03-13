@@ -110,7 +110,7 @@ class nomad_cni::config (
     }
   }
 
-  # == create cron job to keep vxlan up
+  # == create cron job to keep the VXLAN up
   #
   $cron_ensure_status = $keep_vxlan_up_cron_ensure ? {
     true  => present,
