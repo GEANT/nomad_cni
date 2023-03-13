@@ -18,6 +18,7 @@ usage() {
     echo "    -i | --id      Processes the file with the specific VXLAN ID"
     echo "    -p | --purge   Purge VXLANs without a proper configuration file"
     echo "    -s | --silent  Print only errors"
+    echo "         --systemd Run as a systemd service"
     echo ""
     exit
 }
@@ -74,7 +75,7 @@ check_status() {
     fi
 }
 
-OPTS=$(getopt -o "h,f,a,i:,s,p" --longoptions "help,force,all,id:,silent,purge" -- "$@")
+OPTS=$(getopt -o "h,f,a,i:,s,p" --longoptions "help,force,all,id:,silent,purge,systemd" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -98,6 +99,9 @@ while true; do
         ;;
     -s | --silent)
         SILENT="yes"
+        ;;
+    --systemd)
+        SYSTEMD="yes"
         ;;
     --)
         shift
@@ -123,7 +127,7 @@ fi
 
 if [ -n "$SILENT" ]; then
     REDIRECT="/dev/null"
-else
+elif
     REDIRECT="$(tty)"
 fi
 
@@ -141,16 +145,28 @@ for vxlan in $cfgArray; do
         fi
 
         if [ -n "$FORCE" ]; then
-            echo "Configuring VXLAN $vxlan_id" >$REDIRECT
+            if [ -z $SYSTEMD ]; then
+                echo "Configuring VXLAN $vxlan_id" >$REDIRECT
+            else
+                echo "Configuring VXLAN $vxlan_id"
+            fi
             ifaces_down $vxlan_id
             vxlan_up $vxlan_id $iface $vxlan_ip
             populate_bridge_db $vxlan_id $remote_ip_array
             bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
         else
             if check_status $vxlan_id $vxlan_ip; then
-                echo "VXLAN $vxlan_id is already configured" >$REDIRECT
+                if [ -z $SYSTEMD ]; then
+                    echo "VXLAN $vxlan_id is already configured" >$REDIRECT
+                else
+                    echo "VXLAN $vxlan_id is already configured"
+                fi
             else
-                echo "Configuring VXLAN $vxlan_id" >$REDIRECT
+                if [ -z $SYSTEMD ]; then
+                    echo "Configuring VXLAN $vxlan_id" >$REDIRECT
+                else
+                    echo "Configuring VXLAN $vxlan_id"
+                fi
                 ifaces_down $vxlan_id
                 vxlan_up $vxlan_id $iface $vxlan_ip
                 populate_bridge_db $vxlan_id $remote_ip_array
