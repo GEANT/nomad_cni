@@ -36,11 +36,11 @@ basic usage
 include nomad_cni
 ```
 
-if want this module to manage the script at boot time (it will overwrite any existing rc.local file)
+if want to change the download URL:
 
 ```puppet
 class { 'nomad_cni':
-  manage_startup_script => true,
+  cni_base_url => https://server.example.org/cni/,
 }
 ```
 
