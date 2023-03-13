@@ -42,11 +42,12 @@ define nomad_cni::macvlan_v4 (
   String $iface                = 'eth0',
   String $cni_protocol_version = '1.0.0',
 ) {
-  # ensure that nomad_cni is included
+  # == ensure that nomad_cni class was included
+  #
   unless defined(Class['nomad_cni']) {
     fail('nomad_cni::macvlan_v4 requires nomad_cni')
   }
-  #
+
   # == set the variables
   #
   # extract nomad agent names from the PuppetDB or use the list
