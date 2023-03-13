@@ -127,7 +127,7 @@ fi
 
 if [ -n "$SILENT" ]; then
     REDIRECT="/dev/null"
-elif
+else
     REDIRECT="$(tty)"
 fi
 
