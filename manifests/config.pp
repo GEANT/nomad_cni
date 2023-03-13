@@ -51,8 +51,9 @@ class nomad_cni::config (
 
   # == purge unused VXLANs
   exec { 'purge_unused_vxlans':
-    command     => '/usr/local/bin/vxlan-configurator.sh --purge',
+    command     => 'flock /tmp/vxlan-configurator vxlan-configurator.sh --purge',
     require     => File['/usr/local/bin/vxlan-configurator.sh'],
+    path        => ['/usr/local/bin', '/bin', '/usr/bin', '/sbin', '/usr/sbin'],
     refreshonly => true,
     subscribe   => File['/etc/cni/vxlan.d'];
   }
