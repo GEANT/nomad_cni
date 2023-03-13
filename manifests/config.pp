@@ -121,13 +121,12 @@ class nomad_cni::config (
       ensure  => $cron_ensure_status,
       command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --all',
       user    => 'root',
-      hour    => '*',
       minute  => "*/${$keep_vxlan_up_cron_interval}";
     'purge_unused_vxlans':
       ensure  => present,
       user    => 'root',
       command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --purge',
-      hour    => [fqdn_rand(6), fqdn_rand(6) + 6, fqdn_rand(6) + 12, fqdn_rand(6) + 18];
+      minute  => fqdn_rand(59);
   }
 }
 # vim: set ts=2 sw=2 et :
