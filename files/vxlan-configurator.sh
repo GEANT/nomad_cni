@@ -75,6 +75,7 @@ check_status() {
     fi
 }
 
+parameters=0
 OPTS=$(getopt -o "h,f,a,i:,s,p" --longoptions "help,force,all,id:,silent,purge,systemd" -- "$@")
 eval set -- "$OPTS"
 
@@ -89,10 +90,12 @@ while true; do
         ;;
     -a | --all)
         ALL="yes"
+        ((parameters++))
         ;;
     -i | --id)
         shift
         ID="$1"
+        ((parameters++))
         ;;
     -p | --purge)
         PURGE="yes"
@@ -129,6 +132,10 @@ elif [ -n $ID ]; then
 fi
 
 if [ -n "$PURGE" ]; then
+    if [ $parameters -gt 0 ]; then
+        echo "ERROR: You can't use --purge with --all or --id"
+        usage
+    fi
     purge_unused
     exit 0
 fi
