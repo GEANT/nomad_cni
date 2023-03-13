@@ -20,8 +20,8 @@
 # interval in minutes to run cron job to keep VXLANs up
 #
 class nomad_cni (
-  String $cni_version                = '1.2.0',
-  Stdlib::HTTPSUrl $cni_base_url     = 'https://github.com/containernetworking/plugins/releases/download',
+  String $cni_version = '1.2.0',
+  Varian[Stdlib::HTTPSUrl, Stdlib::HTTPSUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
   Boolean $keep_vxlan_up_cron_ensure = true,
   Integer[1, 59] $keep_vxlan_up_cron_interval = 10
 ) {

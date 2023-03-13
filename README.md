@@ -36,10 +36,11 @@ basic usage
 include nomad_cni
 ```
 
-if want to change the download URL:
+if want to change the download URL and install a different version:
 
 ```puppet
 class { 'nomad_cni':
+  cni_version  => '1.5.0',
   cni_base_url => https://server.example.org/cni/,
 }
 ```
