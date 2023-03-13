@@ -18,7 +18,7 @@
 #
 class nomad_cni::config (
   String $cni_version,
-  Varian[Stdlib::HTTPSUrl, Stdlib::HTTPSUrl] $cni_base_url,
+  Variant[Stdlib::HTTPSUrl, Stdlib::HTTPSUrl] $cni_base_url,
   Boolean $keep_vxlan_up_cron_ensure,
   Integer[1, 59] $keep_vxlan_up_cron_interval
 ) {
