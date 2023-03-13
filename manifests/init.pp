@@ -29,7 +29,7 @@ class nomad_cni (
     cni_version                 => $cni_version,
     cni_base_url                => $cni_base_url,
     manage_startup_script       => $manage_startup_script,
-    keep_vxlan_up_cron_ensure   => keep_vxlan_up_cron_ensure,
+    keep_vxlan_up_cron_ensure   => $keep_vxlan_up_cron_ensure,
     keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
   }
 }
