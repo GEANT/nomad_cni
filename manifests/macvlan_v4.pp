@@ -47,7 +47,7 @@ define nomad_cni::macvlan_v4 (
     fail('nomad_cni::macvlan_v4 requires nomad_cni')
   }
   #
-  # set the variables:
+  # == set the variables
   #
   # extract nomad agent names from the PuppetDB or use the list
   # set number of agents

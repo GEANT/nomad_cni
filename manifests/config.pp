@@ -29,7 +29,7 @@ class nomad_cni::config (
   # this is a private class
   assert_private()
 
-  # create necessary files
+  # == create necessary files
   #
   file {
     default:
@@ -66,7 +66,7 @@ class nomad_cni::config (
     }
   }
 
-  # install CNI plugins
+  # == install CNI plugins
   #
   exec { 'remove_old_cni':
     command => 'rm -f /opt/cni/bin/*',
@@ -85,7 +85,7 @@ class nomad_cni::config (
     require       => [File['/opt/cni/bin'], Exec['remove_old_cni']];
   }
 
-  # create startup script
+  # == create startup script
   #
   if ($manage_startup_script) {
     file {
@@ -109,7 +109,7 @@ class nomad_cni::config (
     }
   }
 
-  # create cron job to keep vxlan up
+  # == create cron job to keep vxlan up
   #
   $cron_ensure_status = $keep_vxlan_up_cron_ensure ? {
     true  => present,
