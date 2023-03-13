@@ -31,16 +31,14 @@ class nomad_cni::config (
 
   # create necessary files
   #
-  $directory_list = ['/opt/cni', '/opt/cni/bin', '/run/cni', '/etc/cni', '/etc/cni/vxlan.d']
-
   file {
     default:
       owner => 'root',
       group => 'root',
       mode  => '0755';
-    $directory_list:
+    ['/opt/cni', '/opt/cni/bin', '/run/cni', '/etc/cni']:
       ensure => directory;
-    '/opt/cni/config':
+    ['/opt/cni/config', '/etc/cni/vxlan.d']:
       ensure  => directory,
       purge   => true,
       recurse => true,
@@ -49,6 +47,14 @@ class nomad_cni::config (
       source => "puppet:///modules/${module_name}/cni-validator.sh";
     '/usr/local/bin/vxlan-configurator.sh':
       source => "puppet:///modules/${module_name}/vxlan-configurator.sh";
+  }
+
+  # == purge unused VXLANs
+  exec { 'purge_unused_vxlans':
+    command     => '/usr/local/bin/vxlan-configurator.sh --purge',
+    require     => File['/usr/local/bin/vxlan-configurator.sh'],
+    refreshonly => true,
+    subscribe   => File['/etc/cni/vxlan.d'];
   }
 
   # install python3-demjson and fping
@@ -109,12 +115,18 @@ class nomad_cni::config (
     true  => present,
     false => absent,
   }
-  cron { 'keep-vxlan-up':
-    ensure  => $cron_ensure_status,
-    command => '/usr/local/bin/vxlan-configurator.sh --all',
-    user    => 'root',
-    hour    => '*',
-    minute  => "*/${$keep_vxlan_up_cron_interval}",
+  cron {
+    'keep-vxlan-up':
+      ensure  => $cron_ensure_status,
+      command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --all',
+      user    => 'root',
+      hour    => '*',
+      minute  => "*/${$keep_vxlan_up_cron_interval}";
+    'purge_unused_vxlans':
+      ensure  => present,
+      user    => 'root',
+      command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --purge',
+      hour    => [fqdn_rand(6), fqdn_rand(6) + 6, fqdn_rand(6) + 12, fqdn_rand(6) + 18];
   }
 }
 # vim: set ts=2 sw=2 et :

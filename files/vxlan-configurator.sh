@@ -16,6 +16,7 @@ usage() {
     echo "    -f | --force   Force IP configuration"
     echo "    -a | --all     Processes all the configuration files"
     echo "    -i | --id      Processes the file with the specific VXLAN ID"
+    echo "    -p | --purge   Purge VXLANs without a proper configuration file"
     echo "    -s | --silent  Print only errors"
     echo ""
     exit
@@ -53,6 +54,16 @@ bridge_up() {
     ip link set up dev vxbr$vxlan_id
 }
 
+purge_unused() {
+    vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vxlan[0-9]+:/{sub("vxlan", ""); print $2}')
+    for vxlan_iface in $vxlan_ifaces_up; do
+        if ! test -f "/etc/cni/vxlan.d/vxlan${vxlan_iface}.conf"; then
+            ip link delete vxbr$vxlan_iface &>/dev/null || true
+            ip link delete vxlan$vxlan_iface &>/dev/null || true
+        fi
+    done
+}
+
 check_status() {
     vxlan_id=$1
     vxlan_ip=$2
@@ -63,7 +74,7 @@ check_status() {
     fi
 }
 
-OPTS=$(getopt -o "h,f,a,i:,s" --longoptions "help,force,all,id:,silent" -- "$@")
+OPTS=$(getopt -o "h,f,a,i:,s,p" --longoptions "help,force,all,id:,silent,purge" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -82,6 +93,9 @@ while true; do
         shift
         ID="$1"
         ;;
+    -p | --purge)
+        PURGE="yes"
+        ;;
     -s | --silent)
         SILENT="yes"
         ;;
@@ -96,8 +110,8 @@ done
 if [ -n "$ALL" ] && [ -n "$ID" ]; then
     echo "ERROR: You can't use --all and --id at the same time"
     usage
-elif [ -z "$ALL" ] && [ -z "$ID" ]; then
-    echo "ERROR: You must use --all or --id"
+elif [ -z "$ALL" ] && [ -z "$ID" ] && [ -z "$PURGE" ]; then
+    echo "ERROR: You must use --all, --id or --purge"
     usage
 fi
 
@@ -111,6 +125,11 @@ if [ -n "$SILENT" ]; then
     REDIRECT="/dev/null"
 else
     REDIRECT="$(tty)"
+fi
+
+if [ -n "$PURGE" ]; then
+    purge_unused
+    exit 0
 fi
 
 for vxlan in $cfgArray; do

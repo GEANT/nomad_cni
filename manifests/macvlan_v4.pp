@@ -74,7 +74,7 @@ define nomad_cni::macvlan_v4 (
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
   exec { "vxlan${vxlan_id}":
-    command     => "/usr/local/bin/vxlan-configurator.sh -f -i ${vxlan_id}",
+    command     => "flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh -f -i ${vxlan_id}",
     require     => File['/usr/local/bin/vxlan-configurator.sh'],
     refreshonly => true,
   }
@@ -94,7 +94,7 @@ define nomad_cni::macvlan_v4 (
     order   => seeded_rand(2000, "vxlan_${vxlan_id}_${facts['networking']['ip']}");
   }
 
-  # create CNI config file, collect all the fragments for the script and add the footer
+  # == create CNI config file, collect all the fragments for the script and add the footer
   #
   $cni_ranges_v4.each |$cni_item| {
     if $cni_item[0] == $facts['networking']['hostname'] {
