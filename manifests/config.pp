@@ -43,6 +43,7 @@ class nomad_cni::config (
     '/usr/local/bin/cni-validator.sh':
       source => "puppet:///modules/${module_name}/cni-validator.sh";
     '/usr/local/bin/vxlan-configurator.sh':
+      notify => Service['vxlan-configurator.service'],
       source => "puppet:///modules/${module_name}/vxlan-configurator.sh";
   }
 
