@@ -61,6 +61,11 @@
       "version_requirement": ">= 6.21.0 < 8.0.0"
     }
   ],
+  "tags": [
+    "nomad",
+    "cni",
+    "docker"
+  ],
   "pdk-version": "2.6.1",
   "template-url": "pdk-default#2.5.0",
   "template-ref": "tags/2.5.0-0-g369d483"

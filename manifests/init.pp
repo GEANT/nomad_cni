@@ -6,7 +6,7 @@
 # [*cni_version*] String
 # version of CNI to install
 #
-# [*cni_base_url*] Stdlib::HTTPSUrl
+# [*cni_base_url*] Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
 # URL to download CNI plugins from
 #
 # [*keep_vxlan_up_cron_ensure*] Boolean
@@ -17,7 +17,7 @@
 #
 class nomad_cni (
   String $cni_version = '1.2.0',
-  Variant[Stdlib::HTTPSUrl, Stdlib::HTTPSUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
+  Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
   Boolean $keep_vxlan_up_cron_ensure = true,
   Integer[1, 59] $keep_vxlan_up_cron_interval = 10
 ) {

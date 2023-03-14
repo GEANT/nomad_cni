@@ -7,7 +7,7 @@
 # [*cni_version*] String
 # version of CNI to install
 #
-# [*cni_base_url*] Stdlib::HTTPSUrl
+# [*cni_base_url*] Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
 # URL to download CNI plugins from
 #
 # [*keep_vxlan_up_cron_ensure*] Boolean
@@ -18,7 +18,7 @@
 #
 class nomad_cni::config (
   String $cni_version,
-  Variant[Stdlib::HTTPSUrl, Stdlib::HTTPSUrl] $cni_base_url,
+  Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url,
   Boolean $keep_vxlan_up_cron_ensure,
   Integer[1, 59] $keep_vxlan_up_cron_interval
 ) {
