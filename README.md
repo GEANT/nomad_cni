@@ -47,6 +47,8 @@ class { 'nomad_cni':
 
 ### Create a bunch of CNI networks
 
+To make it work, puppet must run twice on all the nodes (due to resource collection)
+
 ```puppet
 nomad_cni::macvlan_v4 {
   default:
