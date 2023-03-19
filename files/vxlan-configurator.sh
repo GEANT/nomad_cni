@@ -14,11 +14,11 @@ usage() {
     echo ""
     echo "    -h | --help    Print this help and exit"
     echo "    -f | --force   Force IP configuration"
-    echo "    -a | --all     Processes all the configuration files"
-    echo "    -i | --id      Processes the file with the specific VXLAN ID"
-    echo "    -p | --purge   Purge VXLANs without a proper configuration file"
+    echo "    -a | --all     Process all the configuration files"
+    echo "    -i | --id      Process the file with the specific VXLAN ID"
+    echo "    -p | --purge   Purge VXLANs without a matching configuration file"
     echo "    -s | --silent  Print only errors"
-    echo "         --systemd Run as a systemd service and do not redirect output to /dev/null"
+    echo "         --systemd Run from systemd service (do not redirect output"
     echo ""
     exit
 }
@@ -140,6 +140,10 @@ if [ -n "$PURGE" ]; then
     exit 0
 fi
 
+if [ -n "$SYSTEMD" ] || [ -z "$SILENT" ]; then
+    NOISY="yes"
+fi
+
 for vxlan in $cfgArray; do
     if [ -f $vxlan ]; then
         source $vxlan
@@ -149,10 +153,8 @@ for vxlan in $cfgArray; do
         fi
 
         if [ -n "$FORCE" ]; then
-            if [ -n $SYSTEMD ] || [ -z $SILENT ]; then
+            if [ -n $SNOISY ]; then
                 echo "Configuring VXLAN $vxlan_id"
-            else
-                echo "Configuring VXLAN $vxlan_id" >/dev/null                
             fi
             ifaces_down $vxlan_id
             vxlan_up $vxlan_id $iface $vxlan_ip
@@ -160,16 +162,12 @@ for vxlan in $cfgArray; do
             bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
         else
             if check_status $vxlan_id $vxlan_ip; then
-                if [ -n $SYSTEMD ] || [ -z $SILENT ]; then
+                if [ -n $SNOISY ]; then
                     echo "VXLAN $vxlan_id is already configured"
-                else
-                    echo "VXLAN $vxlan_id is already configured" >/dev/null
                 fi
             else
-                if [ -n $SYSTEMD ] || [ -z $SILENT ]; then
+                if [ -n $SNOISY ]; then
                     echo "Configuring VXLAN $vxlan_id"
-                else
-                    echo "Configuring VXLAN $vxlan_id" >/dev/null
                 fi
                 ifaces_down $vxlan_id
                 vxlan_up $vxlan_id $iface $vxlan_ip
