@@ -50,7 +50,7 @@ class { 'nomad_cni':
 To make it work, puppet must run twice on all the nodes (due to the way of working of resource collection)
 
 ```puppet
-nomad_cni::macvlan_v4 {
+nomad_cni::macvlan::v4 {
   default:
     dns_search_domains => ['example.org', 'example.net']
     dns_domain => 'geant.org'
@@ -59,12 +59,12 @@ nomad_cni::macvlan_v4 {
   'cni1':
     network => '192.168.1.0/24';
   'cni2':
-    network => '192.168.2.0/24';
+    network => '172.16.2.0/22';
 }
 ```
 
 ## Limitations
 
-* currently only IPv4 is supported
+* currently only IPv4 is supported (`nomad_cni::macvlan::v6` is a place-holder and it does nothing)
 * currently only `macvlan` plugin is supported
 * `nameservers`, `domain`, and `search` do not seem to work, as `resolv.conf` is being copied from the host in the container. Perhaps this parameters are not effective with Nomad

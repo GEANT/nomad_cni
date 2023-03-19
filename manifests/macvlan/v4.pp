@@ -1,4 +1,4 @@
-# == Define: nomad_cni::macvlan_v4
+# == Define: nomad_cni::macvlan::v4
 #
 # configure CNI and VXLAN/Bridge for Nomad
 #
@@ -31,7 +31,7 @@
 # [*cni_protocol_version*] String
 # version of the CNI configuration
 #
-define nomad_cni::macvlan_v4 (
+define nomad_cni::macvlan::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
   Array[Stdlib::IP::Address::Nosubnet] $dns_servers,
   Array[Stdlib::Fqdn] $dns_search_domains,
@@ -45,7 +45,7 @@ define nomad_cni::macvlan_v4 (
   # == ensure that nomad_cni class was included
   #
   unless defined(Class['nomad_cni']) {
-    fail('nomad_cni::macvlan_v4 requires nomad_cni')
+    fail('nomad_cni::macvlan::v4 requires nomad_cni')
   }
 
   # == set the variables
@@ -92,8 +92,8 @@ define nomad_cni::macvlan_v4 (
   @@concat::fragment { "vxlan_${vxlan_id}_${facts['networking']['hostname']}":
     tag     => "nomad_vxlan_${vxlan_id}_${facts['agent_specified_environment']}",
     target  => "/etc/cni/vxlan.d/vxlan${vxlan_id}.conf",
-    content => "\"${facts['networking']['ip']}\"\n",
-    order   => seeded_rand(2000, "vxlan_${vxlan_id}_${facts['networking']['ip']}");
+    content => "\"${facts['networking']['interfaces'][$iface]['ip']}\"\n",
+    order   => seeded_rand(2000, "vxlan_${vxlan_id}_${facts['networking']['interfaces'][$iface]['ip']}");
   }
 
   # == create CNI config file, collect all the fragments for the script and add the footer
