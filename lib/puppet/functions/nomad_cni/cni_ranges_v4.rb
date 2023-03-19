@@ -7,9 +7,9 @@ require 'ipaddr'
 #
 # Returns: Array of arrays, and each array contains:
 #        - the name of the agent
-#        - the gateway of the VXLAN on the host that will be used for the VXLAN on the host
-#        - the first usable number for the range in the CNI config
-#        - the last usable number for the range in the CNI config
+#        - the gateway for the CNI that will be assigned to the VXLAN on the host
+#        - the first usable IP for the range in the CNI config
+#        - the last usable IP for the range in the CNI config
 #        - the netmask
 #
 # Example: nomad_cni::cni_ranges_v4("192.168.0.0/24", ["agent1.foo.org", "agent2.foo.org", "agent3.foo.org"]])
@@ -29,9 +29,9 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
   def calculate_cni_ranges_v4(network_address, agent_names)
     sorted_agent_names = agent_names.sort
     netmask = network_address.split('/')[1].to_i
-    last_ip_integer = IPAddr.new(network_address).to_range.last.to_i
-    first_ip_integer = IPAddr.new(network_address).to_range.first.to_i
-    free_hosts = last_ip_integer - first_ip_integer - 1
+    last_ip_int = IPAddr.new(network_address).to_range.last.to_i
+    first_ip_int = IPAddr.new(network_address).to_range.first.to_i
+    free_hosts = last_ip_int - first_ip_int - 1
 
     agent_number = agent_names.length
     chunk_size = (free_hosts / agent_number).floor
@@ -39,10 +39,10 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
     agents_array.map do |item|
       [
         sorted_agent_names[item], # agent name
-        IPAddr.new((first_ip_integer + (chunk_size * item) + 1).to_i, Socket::AF_INET).to_s,  # gateway, and VXLAN IP on the host
-        IPAddr.new((first_ip_integer + (chunk_size * item) + 2).to_i, Socket::AF_INET).to_s,  # first usable IP in the range
-        IPAddr.new((first_ip_integer + (chunk_size * item) + chunk_size).to_i, Socket::AF_INET).to_s, # last usable IP in the range
-        netmask,  # netmask
+        IPAddr.new((first_ip_int + (chunk_size * item) + 1).to_i, Socket::AF_INET).to_s, # gateway, and VXLAN IP on the host
+        IPAddr.new((first_ip_int + (chunk_size * item) + 2).to_i, Socket::AF_INET).to_s, # first usable IP in the range
+        IPAddr.new((first_ip_int + (chunk_size * item) + chunk_size).to_i, Socket::AF_INET).to_s, # last usable IP in the range
+        netmask, # netmask
       ]
     end
   end
