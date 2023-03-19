@@ -28,8 +28,8 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
   end
 
   def calculate_cni_ranges_v4(network_address, agent_names)
+    sorted_agent_names = agent_names.sort
     netmask = network_address.split('/')[1].to_i
-    ip = network_address.split('/')[0]
     last_ip_integer = IPAddr.new(network_address).to_range.last.to_i
     first_ip_integer = IPAddr.new(network_address).to_range.first.to_i
     free_hosts = last_ip_integer - first_ip_integer - 1
@@ -39,11 +39,11 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
     agents_array = (0..agent_number - 1).to_a
     agents_array.map do |item|
       [
-        agent_names[item],
-        IPAddr.new((first_ip_integer + (chunk_size * item) + 1).to_i, Socket::AF_INET).to_s
-        IPAddr.new((first_ip_integer + (chunk_size * item) + 2).to_i, Socket::AF_INET).to_s
-        IPAddr.new((first_ip_integer + (chunk_size * item) + chunk_size).to_i, Socket::AF_INET).to_s
-        netmask,
+        sorted_agent_names[item], # agent name
+        IPAddr.new((first_ip_integer + (chunk_size * item) + 1).to_i, Socket::AF_INET).to_s,  # gateway
+        IPAddr.new((first_ip_integer + (chunk_size * item) + 2).to_i, Socket::AF_INET).to_s,  # first usable
+        IPAddr.new((first_ip_integer + (chunk_size * item) + chunk_size).to_i, Socket::AF_INET).to_s, # last usable
+        netmask,  # netmask
       ]
     end
   end
