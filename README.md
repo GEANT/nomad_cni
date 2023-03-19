@@ -66,4 +66,5 @@ nomad_cni::macvlan::v4 {
 
 * currently only IPv4 is supported
 * currently only `macvlan` plugin is supported
-* there is no segregation at the moment: containers from one CNI can connect to containers on another CNI. On the other side this is a proof that routing is working like a charm. I still need to elaborate.
+* there is no segregation at the moment: containers from one CNI can connect to containers on another CNI. On the other side this is a proof that routing is working like a charm. I still need to elaborate
+* unit test is always on my mind, but it's not yet ready
