@@ -66,5 +66,6 @@ nomad_cni::macvlan_v4 {
 ## Limitations
 
 * the function `cni_ranges` currently only supports networks greater than or equal to 24 bits (i.e.: it works with a maximum of 254 hosts). If you love Ruby, please help improving the algorithm of the function
+* currently only IPv4 is supported
 * only `macvlan` plugin is supported at the moment
-* domain, search domain and DNS servers do not seem to work, as resolv.conf of the hosts is being copied in the container. Perhaps this parameters are not effective with Nomad
+* `nameservers`, `domain`, and `search` do not seem to work, as resolv.conf is being copied from the host in the container. Perhaps this parameters are not effective with Nomad
