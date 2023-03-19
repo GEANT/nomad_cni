@@ -7,15 +7,6 @@
 # [*cni_name*] String
 # the name of the CNI
 #
-# [*dns_servers*] Array[Stdlib::IP::Address::Nosubnet]
-# DNS servers for the CNI
-#
-# [*dns_search_domains*] Array[Stdlib::Fqdn]
-# DNS domain search list
-#
-# [*dns_domain*] Stdlib::Fqdn
-# DNS domain
-#
 # [*network*] Stdlib::IP::Address::V4::CIDR
 # Network and Mask for the CNI
 #
@@ -33,14 +24,11 @@
 #
 define nomad_cni::macvlan::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
-  Array[Stdlib::IP::Address::Nosubnet] $dns_servers,
-  Array[Stdlib::Fqdn] $dns_search_domains,
-  Stdlib::Fqdn $dns_domain,
-  String $cni_name             = $name,
-  String $agent_regex          = undef,
-  Array $agent_list            = [],
-  String $iface                = 'eth0',
-  String $cni_protocol_version = '1.0.0',
+  String $cni_name                        = $name,
+  String $agent_regex                     = undef,
+  Array $agent_list                       = [],
+  String $iface                           = 'eth0',
+  String $cni_protocol_version            = '1.0.0',
 ) {
   # == ensure that nomad_cni class was included
   #
@@ -156,11 +144,6 @@ define nomad_cni::macvlan::v4 (
                       gw  => $cni_item[1]
                     },
                   ],
-                  dns     => {
-                    nameservers => $dns_servers,
-                    domain      => $dns_domain,
-                    search      => $dns_search_domains,
-                  },
                   dataDir => '/run/cni/ipam-state',
                 },
               },
