@@ -7,11 +7,10 @@ require 'ipaddr'
 #
 # Returns: Array of arrays, and each array contains:
 #        - the name of the agent
-#        - the gateway of the VXLAN on the host
-#        - the first usable number for the range (after the gateway)
-#        - the last usable number for the range
+#        - the gateway of the VXLAN on the host that will be used for the VXLAN on the host
+#        - the first usable number for the range in the CNI config
+#        - the last usable number for the range in the CNI config
 #        - the netmask
-#
 #
 # Example: nomad_cni::cni_ranges_v4("192.168.0.0/24", ["agent1.foo.org", "agent2.foo.org", "agent3.foo.org"]])
 #          returns [
@@ -40,9 +39,9 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
     agents_array.map do |item|
       [
         sorted_agent_names[item], # agent name
-        IPAddr.new((first_ip_integer + (chunk_size * item) + 1).to_i, Socket::AF_INET).to_s,  # gateway
-        IPAddr.new((first_ip_integer + (chunk_size * item) + 2).to_i, Socket::AF_INET).to_s,  # first usable
-        IPAddr.new((first_ip_integer + (chunk_size * item) + chunk_size).to_i, Socket::AF_INET).to_s, # last usable
+        IPAddr.new((first_ip_integer + (chunk_size * item) + 1).to_i, Socket::AF_INET).to_s,  # gateway, and VXLAN IP on the host
+        IPAddr.new((first_ip_integer + (chunk_size * item) + 2).to_i, Socket::AF_INET).to_s,  # first usable IP in the range
+        IPAddr.new((first_ip_integer + (chunk_size * item) + chunk_size).to_i, Socket::AF_INET).to_s, # last usable IP in the range
         netmask,  # netmask
       ]
     end
