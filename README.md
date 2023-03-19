@@ -36,7 +36,7 @@ basic usage
 include nomad_cni
 ```
 
-if want to change the download URL and install a different version:
+if want to change the download URL and you want to specify the version to install:
 
 ```puppet
 class { 'nomad_cni':
@@ -47,7 +47,7 @@ class { 'nomad_cni':
 
 ### Create a bunch of CNI networks
 
-To make it work, puppet must run twice on all the nodes (due to resource collection)
+To make it work, puppet must run twice on all the nodes (due to the way of working of resource collection)
 
 ```puppet
 nomad_cni::macvlan_v4 {

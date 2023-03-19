@@ -1,13 +1,13 @@
-# Function to calculate number of hosts available in a network
+# Function to split a network by a given number of hosts (Nomad agents)
 #
 # network_address: String in CIDR notation (e.g. "192.168.0.0/24")
 #
-# agents: Integer number of agents
+# agent_names: Array of strings containing the names of the Nomad agents
 #
 # Returns: Array of arrays, and each array contains the IP of the VXLAN on the
 #          host, the start number for the range and the end number for the range
 #
-# Example usage: nomad_cni::cni_ranges_v4("192.168.0.0/24", 3)
+# Example usage: nomad_cni::cni_ranges_v4("192.168.0.0/24", ["agent1.example.org", "agent2.example.org", "agent3.example.org"]])
 #                returns [[1, 2, 84], [85, 86, 168], [169, 170, 252]]
 #
 Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
@@ -33,7 +33,7 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
         "#{net_prefix}." + (item * chunk_size + 1).to_s,
         "#{net_prefix}." + (item * chunk_size + 2).to_s,
         "#{net_prefix}." + (item * chunk_size + chunk_size).to_s,
-        netmask
+        netmask,
       ]
     end
   end
