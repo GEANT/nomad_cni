@@ -23,9 +23,9 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
     net_prefix = ip.split('.')[0...-1].join('.')
     raise Puppet::Error, 'this function does not work with subnets greater than 24' if netmask > 24
 
-    hosts_without_broadcast = 2**(32 - netmask) - 2 - 1
+    free_hosts = 2**(32 - netmask) - 2
     agents = agent_names.length
-    chunk_size = (hosts_without_broadcast / agents).floor
+    chunk_size = (free_hosts / agents).floor
     agents_array = (0..agents - 1).to_a
     agents_array.map do |item|
       [
