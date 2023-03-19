@@ -13,7 +13,7 @@
 ## Overview
 
 This module configures a CNI network on the Nomad agents, and it aims to replace a more complex software-defined network solution (like as Calico, Weave, Cilium...).\
-Whilst Calico uses `etcd` and `nerdctl` to leverage and centralize the configuration of the CNI within the cluster, this module splits a network range by the number of Nomad agents, and it creates a number of configuration files for every agent. Each configuration will have a different gateway and will use a different IP range within the same subnet.\
+Whilst Calico uses `etcd` and `nerdctl` to leverage and centralize the configuration of the CNI within the cluster, this module splits a network range by the number of Nomad agents, and assigns each range to a different agent.\
 The module will also create a Bridge interface and a VXLAN on each Agent and the VXLAN will be bridged between the host and the CNI.
 
 ## Requirements and notes
