@@ -67,4 +67,4 @@ nomad_cni::macvlan::v4 {
 
 * currently only IPv4 is supported (`nomad_cni::macvlan::v6` is a place-holder and it does nothing)
 * currently only `macvlan` plugin is supported
-* `nameservers`, `domain`, and `search` do not seem to work, as `resolv.conf` is being copied from the host in the container. Perhaps this parameters are not effective with Nomad
+* `nameservers`, `domain`, and `search` do not seem to work, as `resolv.conf` is being copied from the host in the container. Perhaps these settings are not effective with Nomad
