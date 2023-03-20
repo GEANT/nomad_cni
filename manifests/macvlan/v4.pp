@@ -76,7 +76,7 @@ define nomad_cni::macvlan::v4 (
     group   => 'root',
     mode    => '0644',
     require => File['/etc/cni/vxlan.d'],
-    notify  => Exec["vxlan${vxlan_id}", 'nomad_cni::reload_service'];
+    notify  => Exec["vxlan${vxlan_id}", "${module_name} reload nomad service"];
   }
 
   @@concat::fragment { "vxlan_${vxlan_id}_${facts['networking']['hostname']}":
@@ -114,7 +114,7 @@ define nomad_cni::macvlan::v4 (
           File['/opt/cni/config', '/usr/local/bin/cni-validator.sh', '/run/cni'],
           Package['python3-demjson']
         ],
-        notify       => Exec['nomad_cni::reload_service'],
+        notify       => Exec["${module_name} reload nomad service"],
         content      => to_json_pretty(
           {
             cniVersion => $cni_protocol_version,
