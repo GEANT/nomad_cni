@@ -29,9 +29,9 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
   def calculate_cni_ranges_v4(network_address, agent_names)
     # check if the network address is a valid CIDR
     address = network_address.split('/')[0].to_s
-    if IPAddr.new(network_address).to_range.first.to_s != address
-      raise ArgumentError, "Invalid Network address: #{network_address}. The proper address is: #{address}"
-    end
+    first_ip = IPAddr.new(network_address).to_range.first.to_s
+    raise ArgumentError, "Invalid network address: #{network_address}. The proper address is: #{first_ip}" unless first_ip == address
+    
 
     sorted_agent_names = agent_names.sort
     netmask = network_address.split('/')[1].to_i
