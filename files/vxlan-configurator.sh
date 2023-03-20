@@ -163,7 +163,7 @@ for vxlan in $cfgArray; do
         else
             if check_status $vxlan_id $vxlan_ip; then
                 if [ -n $SNOISY ]; then
-                    echo "VXLAN $vxlan_id is already configured"
+                    tty -s && echo "VXLAN $vxlan_id is already configured"
                 fi
             else
                 if [ -n $SNOISY ]; then
