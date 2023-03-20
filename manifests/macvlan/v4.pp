@@ -125,7 +125,7 @@ define nomad_cni::macvlan::v4 (
               },
               {
                 type             => 'macvlan',
-                master           => "vxlan${vxlan_id}",
+                master           => "vxbr${vxlan_id}",
                 isDefaultGateway => false,
                 forceAddress     => false,
                 ipMasq           => true,
