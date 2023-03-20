@@ -95,7 +95,6 @@ class nomad_cni::config (
       source => "puppet:///modules/${module_name}/vxlan-id.service";
   }
   service {
-      hasrestart => true;
     'vxlan-bootstrap.service':
       ensure => running,
       enable => true;
