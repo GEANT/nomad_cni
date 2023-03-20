@@ -1,7 +1,7 @@
 # Class: nomad_cni::reload_service
 #
 #
-class nomad_cni::reload_serv {
+class nomad_cni::reload_service {
   # == this is a private class
   #
   assert_private()
