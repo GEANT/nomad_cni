@@ -34,6 +34,7 @@ vxlan_up() {
     iface=$2
     vxlan_ip=$3
     ip link add vxlan$vxlan_id type vxlan id $vxlan_id dev $iface dstport 4789 local $vxlan_ip
+    ip addrress add $vxlan_ip/$vxlan_netmask dev vxlan$vxlan_id
     ip link set dev vxlan$vxlan_id up
 }
 
@@ -51,7 +52,6 @@ bridge_up() {
     vxlan_netmask=$3
     brctl addbr vxbr$vxlan_id
     brctl addif vxbr$vxlan_id vxlan$vxlan_id
-    ip addr add $vxlan_ip/$vxlan_netmask dev vxbr$vxlan_id
     ip link set up dev vxbr$vxlan_id
 }
 
@@ -68,7 +68,7 @@ purge_unused() {
 check_status() {
     vxlan_id=$1
     vxlan_ip=$2
-    if ip address show dev vxbr$vxlan_id &>/dev/null && ip address show dev vxlan$vxlan_id &>/dev/null && fping -c1 -t500 $vxlan_ip &>/dev/null; then
+    if ip address show dev vxlan$vxlan_id &>/dev/null && ip address show dev vxlan$vxlan_id &>/dev/null && fping -c1 -t500 $vxlan_ip &>/dev/null; then
         return 0
     else
         return 1
