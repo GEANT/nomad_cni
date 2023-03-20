@@ -31,7 +31,7 @@ ifaces_down() {
 
 vxlan_up() {
     vxlan_id=$1
-    $iface=$2
+    iface=$2
     vxlan_ip=$3
     ip link add vxlan$vxlan_id type vxlan id $vxlan_id dev $iface dstport 4789 local $vxlan_ip
     ip link set dev vxlan$vxlan_id up
