@@ -10,17 +10,15 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 usage() {
-    echo "Usage: $(basename $0) --force --id 8345"
+    echo "Usage: $(basename $0) --force --id 8345 or $(basename $0) --force --id all"
     echo ""
     echo "    -h | --help    Print this help and exit"
-    echo "    -f | --force   Force IP configuration"
-    echo "    -a | --all     Process all the configuration files"
-    echo "    -i | --id      Process the file with the specific VXLAN ID"
-    echo "    -p | --purge   Purge VXLANs without a matching configuration file"
-    echo "    -s | --silent  Print only errors"
-    echo "         --systemd Run from systemd service (do not redirect output"
+    echo "    --name    name/all: Configure the specific CNI, or all if all/ALL is specified"
+    echo "    --status  up/down: Bring VXLAN and Bridge down"
+    echo "    --force   Force IP configuration"
+    echo "    --purge   Purge VXLANs without a matching configuration file"
     echo ""
-    exit
+    exit 3
 }
 
 ifaces_down() {
@@ -34,7 +32,6 @@ vxlan_up() {
     iface=$2
     vxlan_ip=$3
     ip link add vxlan$vxlan_id type vxlan id $vxlan_id dev $iface dstport 4789 local $vxlan_ip
-    ip address add $vxlan_ip/$vxlan_netmask dev vxlan$vxlan_id
     ip link set dev vxlan$vxlan_id up
 }
 
@@ -52,6 +49,7 @@ bridge_up() {
     vxlan_netmask=$3
     brctl addbr vxbr$vxlan_id
     brctl addif vxbr$vxlan_id vxlan$vxlan_id
+    ip address add $vxlan_ip/$vxlan_netmask dev vxbr$vxlan_id
     ip link set up dev vxbr$vxlan_id
 }
 
@@ -68,7 +66,7 @@ purge_unused() {
 check_status() {
     vxlan_id=$1
     vxlan_ip=$2
-    if ip address show dev vxlan$vxlan_id &>/dev/null && ip address show dev vxlan$vxlan_id &>/dev/null && fping -c1 -t500 $vxlan_ip &>/dev/null; then
+    if ip address show dev vxbr$vxlan_id &>/dev/null && ip address show dev vxlan$vxlan_id &>/dev/null && fping -c1 -t500 $vxlan_ip &>/dev/null; then
         return 0
     else
         return 1
@@ -76,35 +74,30 @@ check_status() {
 }
 
 parameters=0
-OPTS=$(getopt -o "h,f,a,i:,s,p" --longoptions "help,force,all,id:,silent,purge,systemd" -- "$@")
+OPTS=$(getopt -o "h" --longoptions "help,name:,status:,force,purge" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
     case "$1" in
     -h | --help)
         usage
-        exit 3
         ;;
-    -f | --force)
+    --force)
         FORCE="yes"
         ;;
-    -a | --all)
-        ALL="yes"
-        ((parameters++))
-        ;;
-    -i | --id)
+    --name)
         shift
-        ID="$1"
+        NAME="$1"
         ((parameters++))
         ;;
-    -p | --purge)
+    --status)
+        shift
+        STATUS="$1"
+        ((parameters++))
+        ;;
+    --purge)
         PURGE="yes"
-        ;;
-    -s | --silent)
-        SILENT="yes"
-        ;;
-    --systemd)
-        SYSTEMD="yes"
+        ((parameters++))
         ;;
     --)
         shift
@@ -114,34 +107,38 @@ while true; do
     shift
 done
 
-if [ -n "$ALL" ] && [ -n "$ID" ]; then
-    echo "ERROR: You can't use --all and --id at the same time"
-    usage
-elif [ -z "$ALL" ] && [ -z "$ID" ] && [ -z "$PURGE" ]; then
-    echo "ERROR: You must use --all, --id or --purge"
-    usage
-elif [ -n "$SILENT" ] && [ -n "$SYSTEMD" ]; then
-    echo "ERROR: You can't use --silent and --systemd at the same time"
-    usage
-fi
-
-if [ -n $ALL ]; then
-    cfgArray=("/etc/cni/vxlan.d/vxlan*.conf")
-elif [ -n $ID ]; then
-    cfgArray=("/etc/cni/vxlan.d/vxlan_$ID.conf")
+# check if the script is triggered by systemd
+if [ "$(ps -o comm= $PPID)" == systemd ]; then
+    SYSTEMD="yes"
 fi
 
 if [ -n "$PURGE" ]; then
-    if [ $parameters -gt 0 ]; then
-        echo "ERROR: You can't use --purge with --all or --id"
+    if [ $parameters -gt 1 ]; then
+        echo -e "ERROR: You must use --purge alone\n"
         usage
     fi
     purge_unused
     exit 0
+elif [ -z "$STATUS" ]; then
+    echo -e "ERROR: You must use --status up --status down\n"
+    usage
+elif [ -z "$NAME" ] && [ -z "$PURGE" ]; then
+    echo -e "ERROR: You must use --id or --purge\n"
+    usage
 fi
 
-if [ -n "$SYSTEMD" ] || [ -z "$SILENT" ]; then
-    NOISY="yes"
+lower_status=$(echo $STATUS | tr '[:upper:]' '[:lower:]')
+lower_name=$(echo $NAME | tr '[:upper:]' '[:lower:]')
+
+if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ]; then
+    echo -e "ERROR: You must use --status up or --status down\n"
+    usage
+fi
+
+if [ "$lower_name" == 'all' ]; then
+    cfgArray=("/etc/cni/vxlan.d/*.conf")
+else
+    cfgArray=("/etc/cni/vxlan.d/$NAME.conf")
 fi
 
 for vxlan in $cfgArray; do
@@ -153,31 +150,29 @@ for vxlan in $cfgArray; do
         fi
 
         if [ -n "$FORCE" ]; then
-            if [ -n $SNOISY ]; then
-                echo "Configuring VXLAN $vxlan_id"
-            fi
             ifaces_down $vxlan_id
+        else
+            # from crontab we do not use force option, so we check if vxlan is already configured
+            if check_status $vxlan_id $vxlan_ip; then
+                if [ -n "$SYSTEMD" ]; then
+                    # print if systemd (tty does not work)
+                    echo "VXLAN $vxlan_id is already configured"
+                else
+                    # do not print if not a tty (cron job)
+                    tty -s && echo "VXLAN $vxlan_id is already configured"
+                fi
+                exit
+            else
+                ifaces_down $vxlan_id
+            fi
+        fi
+        if [ "$lower_status" == "up" ]; then
             vxlan_up $vxlan_id $iface $vxlan_ip
             populate_bridge_db $vxlan_id $remote_ip_array
             bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
-        else
-            if check_status $vxlan_id $vxlan_ip; then
-                if [ -n $SNOISY ]; then
-                    if [ -n "$SYSTEMD" ]; then
-                        echo "VXLAN $vxlan_id is already configured"
-                    else
-                        tty -s && echo "VXLAN $vxlan_id is already configured"  # do not print if not a tty
-                    fi
-                fi
-            else
-                if [ -n $SNOISY ]; then
-                    echo "Configuring VXLAN $vxlan_id"
-                fi
-                ifaces_down $vxlan_id
-                vxlan_up $vxlan_id $iface $vxlan_ip
-                populate_bridge_db $vxlan_id $remote_ip_array
-                bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
-            fi
         fi
+    else
+        echo "ERROR: vxlan configuration file $vxlan does not exist"
+        exit 1
     fi
 done

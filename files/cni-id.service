@@ -1,19 +1,19 @@
 [Unit]
-Description=VXLAN configurator - startup script
+Description=VXLAN for CNI %I
 Documentation=https://github.com/GEANT/nomad_cni
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-Type=oneshot
+Type=simple
 RemainAfterExit=true
 User=root
 Group=root
 TimeoutStartSec=0
 Restart=on-failure
 RestartSec=30s
-ExecStart=/usr/local/bin/vxlan-configurator.sh --systemd --all
-ExecStop=/usr/bin/true
+ExecStart=/usr/local/bin/vxlan-configurator.sh --force --status up --name %i
+ExecStop=/usr/local/bin/vxlan-configurator.sh --force --status down --name %i
 SyslogIdentifier=VXLAN-configurator
 
 [Install]

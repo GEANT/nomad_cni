@@ -87,11 +87,14 @@ class nomad_cni::config (
 
   # == create startup service for VXLAN configurator
   #
-  systemd::unit_file { 'vxlan-configurator.service':
-    source => "puppet:///modules/${module_name}/vxlan-configurator.service",
-    notify => Service['vxlan-configurator.service'];
+  systemd::unit_file {
+    'vxlan-bootstrap.service':
+      source => "puppet:///modules/${module_name}/vxlan-bootstrap.service",
+      notify => Service['vxlan-bootstrap.service'];
+    'cni-id@.service':
+      source => "puppet:///modules/${module_name}/vxlan-id.service";
   }
-  service { 'vxlan-configurator.service':
+  service { 'vxlan-bootstrap.service':
     ensure => running,
     enable => true,
   }
