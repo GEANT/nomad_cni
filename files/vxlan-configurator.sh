@@ -34,7 +34,7 @@ vxlan_up() {
     iface=$2
     vxlan_ip=$3
     ip link add vxlan$vxlan_id type vxlan id $vxlan_id dev $iface dstport 4789 local $vxlan_ip
-    ip addrress add $vxlan_ip/$vxlan_netmask dev vxlan$vxlan_id
+    ip address add $vxlan_ip/$vxlan_netmask dev vxlan$vxlan_id
     ip link set dev vxlan$vxlan_id up
 }
 
