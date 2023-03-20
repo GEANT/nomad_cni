@@ -31,7 +31,7 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
     address = network_address.split('/')[0].to_s
     first_ip = IPAddr.new(network_address).to_range.first.to_s
 
-    if first_ip != address:
+    if first_ip != address
       raise ArgumentError, "Invalid network address: #{network_address}. The proper address is: #{first_ip}/#{netmask}"
     end
 
