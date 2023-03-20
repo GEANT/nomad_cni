@@ -107,11 +107,6 @@ while true; do
     shift
 done
 
-# check if the script is triggered by systemd
-if [ "$(ps -o comm= $PPID)" == systemd ]; then
-    SYSTEMD="yes"
-fi
-
 if [ -n "$PURGE" ]; then
     if [ $parameters -gt 1 ]; then
         echo -e "ERROR: You must use --purge alone\n"
@@ -154,7 +149,7 @@ for vxlan in $cfgArray; do
         else
             # from crontab we do not use force option, so we check if vxlan is already configured
             if check_status $vxlan_id $vxlan_ip; then
-                if [ -n "$SYSTEMD" ]; then
+                if [ "$STARTED_BY_SYSTEMD" == "yes" ]; then
                     # print if systemd (tty does not work)
                     echo "VXLAN $vxlan_id is already configured"
                 else

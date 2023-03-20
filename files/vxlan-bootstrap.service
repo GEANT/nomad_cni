@@ -7,6 +7,7 @@ After=network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=true
+Environment="STARTED_BY_SYSTEMD=yes"
 User=root
 Group=root
 TimeoutStartSec=0
