@@ -67,7 +67,7 @@ define nomad_cni::macvlan::v4 (
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
-  exec { "vxlan${vxlan_id}":
+  exec { "restart cni-id@${cni_name}":
     command     => "systemctl restart cni-id@${cni_name}.service",
     path        => ['/usr/local/bin', '/bin', '/usr/bin', '/sbin', '/usr/sbin'],
     require     => Service['cni-id@.service'],
@@ -79,7 +79,7 @@ define nomad_cni::macvlan::v4 (
     group   => 'root',
     mode    => '0644',
     require => File['/etc/cni/vxlan.d'],
-    notify  => Exec["vxlan${vxlan_id}", "${module_name} reload nomad service"];
+    notify  => Exec["restart cni-id@${cni_name}", "${module_name} reload nomad service"];
   }
 
   @@concat::fragment { "vxlan_${vxlan_id}_${facts['networking']['hostname']}":
