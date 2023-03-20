@@ -30,10 +30,13 @@ define nomad_cni::macvlan::v4 (
   String $iface                           = 'eth0',
   String $cni_protocol_version            = '1.0.0',
 ) {
-  # == ensure that nomad_cni class was included
+  # == ensure that nomad_cni class was included and that the name is not reserved
   #
   unless defined(Class['nomad_cni']) {
     fail('nomad_cni::macvlan::v4 requires nomad_cni')
+  }
+  if $cni_name == 'all' {
+    fail('the name \'all\' is reserved and it cannot be used as a CNI name')
   }
 
   include nomad_cni::reload_service

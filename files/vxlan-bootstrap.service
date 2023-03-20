@@ -12,8 +12,8 @@ Group=root
 TimeoutStartSec=0
 Restart=on-failure
 RestartSec=30s
-ExecStart=/usr/local/bin/vxlan-configurator.sh --systemd --force --id all
-ExecStop=/usr/local/bin/vxlan-configurator.sh --systemd --force --down --id all
+ExecStart=/usr/local/bin/vxlan-configurator.sh --force --status up --name all
+ExecStop=/usr/local/bin/vxlan-configurator.sh --force --status down --name all
 SyslogIdentifier=VXLAN-configurator
 
 [Install]
