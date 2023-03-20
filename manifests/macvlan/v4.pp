@@ -74,7 +74,7 @@ define nomad_cni::macvlan::v4 (
     refreshonly => true,
   }
 
-  concat { "/etc/cni/vxlan.d/${cni_name}-v4.conf":
+  concat { "/etc/cni/vxlan.d/${cni_name}.conf":
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
@@ -84,7 +84,7 @@ define nomad_cni::macvlan::v4 (
 
   @@concat::fragment { "vxlan_${vxlan_id}_${facts['networking']['hostname']}":
     tag     => "nomad_vxlan_${vxlan_id}_${facts['agent_specified_environment']}",
-    target  => "/etc/cni/vxlan.d/${cni_name}-v4.conf",
+    target  => "/etc/cni/vxlan.d/${cni_name}.conf",
     content => "\"${facts['networking']['interfaces'][$iface]['ip']}\"\n",
     order   => seeded_rand(2000, "vxlan_${vxlan_id}_${facts['networking']['interfaces'][$iface]['ip']}");
   }
@@ -95,7 +95,7 @@ define nomad_cni::macvlan::v4 (
     if $cni_item[0] == $facts['networking']['hostname'] {
       concat::fragment {
         "vxlan_${vxlan_id}_header":
-          target  => "/etc/cni/vxlan.d/${cni_name}-v4.conf",
+          target  => "/etc/cni/vxlan.d/${cni_name}.conf",
           content => epp(
             "${module_name}/vxlan_header.conf.epp", {
               vxlan_id      => $vxlan_id,
@@ -106,7 +106,7 @@ define nomad_cni::macvlan::v4 (
           ),
           order   => '0001';
         "vxlan_${vxlan_id}_footer":
-          target  => "/etc/cni/vxlan.d/${cni_name}-v4.conf",
+          target  => "/etc/cni/vxlan.d/${cni_name}.conf",
           content => ")\nexport vxlan_id vxlan_ip vxlan_netmask iface remote_ip_array\n",
           order   => 'zzzz';
       }
