@@ -92,7 +92,7 @@ class nomad_cni::config (
       source => "puppet:///modules/${module_name}/vxlan-bootstrap.service",
       notify => Service['vxlan-bootstrap.service'];
     'cni-id@.service':
-      source => "puppet:///modules/${module_name}/vxlan-id.service";
+      source => "puppet:///modules/${module_name}/cni-id.service";
   }
   service {
     'vxlan-bootstrap.service':
