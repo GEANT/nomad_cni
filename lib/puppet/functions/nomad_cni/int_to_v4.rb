@@ -28,6 +28,5 @@ Puppet::Functions.create_function(:'nomad_cni::int_to_v4') do
   def int_to_v4(multicast_int_addr)
     real_int_address = multicast_int_addr + 4026531840
     IPAddr.new(real_int_address, Socket::AF_INET).to_s
-    end
   end
 end
