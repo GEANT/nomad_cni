@@ -23,8 +23,8 @@ usage() {
 
 ifaces_down() {
     vxlan_id=$1
-    ip link delete vxbr$vxlan_id &>/dev/null || true
-    ip link delete vxlan$vxlan_id &>/dev/null || true
+    ip address show dev vxbr$vxlan_id &>/dev/null && ip link delete vxbr$vxlan_id || true
+    ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id || true
 }
 
 vxlan_config() {
