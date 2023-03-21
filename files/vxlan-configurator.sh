@@ -59,7 +59,7 @@ bridge_up() {
 purge_stale_ifaces() {
     vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vxlan[0-9]+:/{sub("vxlan", ""); print $2}')
     for vxlan_iface in $vxlan_ifaces_up; do
-        if ! test -f "/etc/cni/vxlan.d/vxlan${vxlan_iface}.conf"; then
+        if ! test -f "/etc/cni/vxlan.d/${vxlan_iface}.conf"; then
             ip link delete vxbr$vxlan_iface &>/dev/null || true
             ip link delete vxlan$vxlan_iface &>/dev/null || true
         fi
@@ -69,7 +69,7 @@ purge_stale_ifaces() {
 purge_stale_services() {
     configured_services=$(systemctl list-units cni-id@* --all -l --no-pager --no-legend | awk '{print $NF}')
     for srv in $configured_services; do
-        if ! test -f "/etc/cni/vxlan.d/vxlan${srv}.conf"; then
+        if ! test -f "/etc/cni/vxlan.d/${srv}.conf"; then
             systemctl disable cni-id@${srv}.service
             systemctl stop cni-id@${srv}.service
             rm -f /etc/systemd/system/cni-id@${srv}.service
