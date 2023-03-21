@@ -26,10 +26,6 @@ class nomad_cni::config (
   #
   assert_private()
 
-  # == include dependencies
-  #
-  include nomad_cni::reload_service
-
   # == create necessary files
   #
   file {
