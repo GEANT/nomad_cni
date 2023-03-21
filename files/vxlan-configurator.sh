@@ -86,7 +86,7 @@ check_status() {
 }
 
 parameters=0
-OPTS=$(getopt -o "h" --longoptions "help,name:,status:,force,purge:systemd" -- "$@")
+OPTS=$(getopt -o "h" --longoptions "help,name:,status:,force,purge:,systemd" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
