@@ -65,10 +65,10 @@ define nomad_cni::macvlan::v4 (
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
-  service { "cni-id@${cni_name}.service":
+  service { "unicast-cni-id@${cni_name}.service":
     ensure  => running,
     enable  => true,
-    require => Systemd::Unit_file['cni-id@.service'],
+    require => Systemd::Unit_file['unicast-cni-id@.service'],
     notify  => Exec["${module_name} reload nomad service"];
   }
 
@@ -77,7 +77,7 @@ define nomad_cni::macvlan::v4 (
     group   => 'root',
     mode    => '0644',
     require => File['/etc/cni/vxlan.d'],
-    notify  => Service["cni-id@${cni_name}.service"];
+    notify  => Service["unicast-cni-id@${cni_name}.service"];
   }
 
   @@concat::fragment { "vxlan_${vxlan_id}_${facts['networking']['hostname']}":
@@ -95,7 +95,7 @@ define nomad_cni::macvlan::v4 (
         "vxlan_${vxlan_id}_header":
           target  => "/etc/cni/vxlan.d/${cni_name}.conf",
           content => epp(
-            "${module_name}/vxlan_header.conf.epp", {
+            "${module_name}/unicast-vxlan_header.conf.epp", {
               vxlan_id      => $vxlan_id,
               vxlan_ip      => $cni_item[1],
               iface         => $iface,
@@ -115,7 +115,7 @@ define nomad_cni::macvlan::v4 (
           File['/opt/cni/config', '/usr/local/bin/cni-validator.sh', '/run/cni'],
           Package['python3-demjson']
         ],
-        notify       => Service["cni-id@${cni_name}.service"],
+        notify       => Service["unicast-cni-id@${cni_name}.service"],
         content      => to_json_pretty(
           {
             cniVersion => $cni_proto_version,

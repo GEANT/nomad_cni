@@ -15,6 +15,7 @@ usage() {
     echo "    -h | --help    Print this help and exit"
     echo "    --name    name/all: Configure the specific CNI, or all if all/ALL is specified"
     echo "    --status  up/down: Bring VXLAN and Bridge down"
+    echo "    --type    multicast/unicast: Use multicast of unicast"
     echo "    --force   Force IP configuration"
     echo "    --purge   Purge VXLANs and systemd service without a matching configuration file"
     echo ""
@@ -31,7 +32,12 @@ vxlan_config() {
     vxlan_id=$1
     iface=$2
     vxlan_ip=$3
-    ip link add vxlan$vxlan_id type vxlan id $vxlan_id dev $iface dstport 4789 local $vxlan_ip
+    type=$4
+    if [ "$type" == "multicast" ]; then
+        ip link add vxlan$vxlan_id type vxlan id $vxlan_id dev $iface dstport 4789 group $multicast_group
+    else
+        ip link add vxlan$vxlan_id type vxlan id $vxlan_id dev $iface dstport 4789 local $vxlan_ip
+    fi
 }
 
 populate_bridge_db() {
@@ -40,7 +46,7 @@ populate_bridge_db() {
     is_systemd=$3
     cni_name=$4
     for remote_ip in ${remote_ip_array[*]}; do
-        [ "$is_systemd" == "STARTED_BY_SYSTEMD" ] && echo  "vxlan $vxlan_id - cni $cni_name: adding $remote_ip to bridge DB"
+        [ "$is_systemd" == "STARTED_BY_SYSTEMD" ] && echo "vxlan $vxlan_id - cni $cni_name: adding $remote_ip to bridge DB"
         bridge fdb append 00:00:00:00:00:00 dev vxlan$vxlan_id dst $remote_ip
     done
 }
@@ -59,7 +65,7 @@ bridge_up() {
 purge_stale_ifaces() {
     vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vxlan[0-9]+:/{sub("vxlan", ""); print $2}')
     for vxlan_iface in $vxlan_ifaces_up; do
-        if ! test -f "/etc/cni/vxlan.d/${vxlan_iface}.conf"; then
+        if ! test -f "/etc/cni/vxlan.multicast.d/${srv}.conf" && ! test -f "/etc/cni/vxlan.unicast.d/${srv}.conf"; then
             ip link delete vxbr$vxlan_iface &>/dev/null || true
             ip link delete vxlan$vxlan_iface &>/dev/null || true
         fi
@@ -69,7 +75,7 @@ purge_stale_ifaces() {
 purge_stale_services() {
     configured_services=$(systemctl list-units cni-id@* --all -l --no-pager --no-legend | awk '{print $NF}')
     for srv in $configured_services; do
-        if ! test -f "/etc/cni/vxlan.d/${srv}.conf"; then
+        if ! test -f "/etc/cni/vxlan.multicast.d/${srv}.conf" && ! test -f "/etc/cni/vxlan.unicast.d/${srv}.conf"; then
             systemctl disable cni-id@${srv}.service
             systemctl stop cni-id@${srv}.service
             rm -f /etc/systemd/system/cni-id@${srv}.service
@@ -88,7 +94,7 @@ check_status() {
 }
 
 parameters=0
-OPTS=$(getopt -o "h" --longoptions "help,name:,status:,force,purge" -- "$@")
+OPTS=$(getopt -o "h" --longoptions "help,name:,status:,type:,force,purge" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -107,6 +113,11 @@ while true; do
     --status)
         shift
         STATUS="$1"
+        ((parameters++))
+        ;;
+    --type)
+        shift
+        TYPE="$1"
         ((parameters++))
         ;;
     --purge)
@@ -136,7 +147,13 @@ elif [ -n "$PURGE" ]; then
     purge_stale_services
     exit 0
 elif [ -z "$STATUS" ]; then
-    echo -e "\nERROR: You must use --status up --status down\n"
+    echo -e "\nERROR: You must use --status up or --status down\n"
+    usage
+elif [ $parameters -lt 3 ]; then
+    echo -e "\nERROR: You must use --name, --status and --type\n"
+    usage
+elif [ "$TYPE" != "unicast"] && [ "$TYPE" != "multicast" ]; then
+    echo -e "\nERROR: You must use --type unicast or --type multicast\n"
     usage
 fi
 
@@ -149,9 +166,9 @@ if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ]; then
 fi
 
 if [ "$lower_name" == 'all' ]; then
-    cfgArray=("/etc/cni/vxlan.d/*.conf")
+    cfgArray=("/etc/cni/vxlan.{multicast,unicast}.d/*.conf")
 else
-    cfgArray=("/etc/cni/vxlan.d/$NAME.conf")
+    cfgArray=("/etc/cni/vxlan.{multicast,unicast}.d/$NAME.conf")
 fi
 
 # == MAIN ==
@@ -172,9 +189,11 @@ for vxlan in ${cfgArray[*]}; do
             # now we bring it up only if status was set to up
             if [ "$lower_status" == "up" ]; then
                 [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: not configured, bringing up vxlan"
-                vxlan_config $vxlan_id $iface $vxlan_ip
-                [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: adding remote IPs to bridge db"
-                populate_bridge_db $vxlan_id $remote_ip_array 'STARTED_BY_SYSTEMD' $NAME
+                vxlan_config $vxlan_id $iface $vxlan_ip $TYPE
+                if [ "$TYPE" == "unicast" ]; then
+                    [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: adding remote IPs to bridge db"
+                    populate_bridge_db $vxlan_id $remote_ip_array 'STARTED_BY_SYSTEMD' $NAME
+                fi
                 [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: bringing up bridge"
                 bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
             fi
@@ -187,8 +206,8 @@ for vxlan in ${cfgArray[*]}; do
                 ifaces_down $vxlan_id
                 # now we bring it up only if status was set to up
                 if [ "$lower_status" == "up" ]; then
-                    vxlan_config $vxlan_id $iface $vxlan_ip
-                    populate_bridge_db $vxlan_id $remote_ip_array 'NOT_STARTED_BY_SYSTEMD' $NAME
+                    vxlan_config $vxlan_id $iface $vxlan_ip $TYPE
+                    [ "$TYPE" == "unicast" ] && populate_bridge_db $vxlan_id $remote_ip_array 'STARTED_BY_SYSTEMD' $NAME
                     bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
                 fi
             fi

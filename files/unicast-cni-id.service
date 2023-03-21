@@ -1,0 +1,21 @@
+[Unit]
+Description=VXLAN for CNI %I
+Documentation=https://github.com/GEANT/nomad_cni
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+RemainAfterExit=true
+Environment="STARTED_BY_SYSTEMD=yes"
+User=root
+Group=root
+TimeoutStartSec=0
+Restart=on-failure
+RestartSec=30s
+ExecStart=/usr/local/bin/vxlan-configurator.sh --type unicast --force --status up --name %i
+ExecStop=/usr/local/bin/vxlan-configurator.sh --type unicast --force --status down --name %i
+SyslogIdentifier=VXLAN-configurator
+
+[Install]
+WantedBy=multi-user.target

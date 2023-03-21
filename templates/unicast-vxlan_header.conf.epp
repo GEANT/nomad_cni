@@ -1,3 +1,4 @@
+# vxlan unicast configuration
 vxlan_id=<%= $vxlan_id %>
 vxlan_ip=<%= $vxlan_ip %>
 iface=<%= $iface %>
