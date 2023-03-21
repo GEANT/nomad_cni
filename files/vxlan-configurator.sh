@@ -148,6 +148,10 @@ else
     cfgArray=("/etc/cni/vxlan.d/$NAME.conf")
 fi
 
+# == MAIN ==
+#
+# we parse all the configuration files and we bring up/down the vxlan and bridge
+#
 for vxlan in $cfgArray; do
     if [ -f $vxlan ]; then
         source $vxlan
