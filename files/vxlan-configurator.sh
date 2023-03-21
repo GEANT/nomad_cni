@@ -37,7 +37,10 @@ vxlan_config() {
 populate_bridge_db() {
     vxlan_id=$1
     remote_ip_array=$2
-    for remote_ip in $remote_ip_array; do
+    is_systemd=$3
+    cni_name=$4
+    for remote_ip in ${remote_ip_array[*]}; do
+        [ "$is_systemd" == "STARTED_BY_SYSTEMD" ] && echo  "vxlan $vxlan_id - cni $cni_name: adding $remote_ip to bridge DB"
         bridge fdb append 00:00:00:00:00:00 dev vxlan$vxlan_id dst $remote_ip
     done
 }
@@ -164,15 +167,15 @@ for vxlan in $cfgArray; do
         fi
 
         if [ -n "$FORCE" ]; then
-            [ -n $STARTED_BY_SYSTEMD ] && echo "VXLAN $vxlan_id, CNI $NAME: bringing down vxlan and bridge"
+            [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id, cni $NAME: bringing down vxlan and bridge"
             ifaces_down $vxlan_id
             # now we bring it up only if status was set to up
             if [ "$lower_status" == "up" ]; then
-                [ -n $STARTED_BY_SYSTEMD ] && echo "VXLAN $vxlan_id, CNI $NAME: not configured, bringing up vxlan"
+                [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: not configured, bringing up vxlan"
                 vxlan_config $vxlan_id $iface $vxlan_ip
-                [ -n $STARTED_BY_SYSTEMD ] && echo "VXLAN $vxlan_id, CNI $NAME:adding remote IPs to bridge db"
-                populate_bridge_db $vxlan_id $remote_ip_array
-                [ -n $STARTED_BY_SYSTEMD ] && echo "VXLAN $vxlan_id, CNI $NAME: bringing up bridge"
+                [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id, cni $NAME: adding remote IPs to bridge db"
+                populate_bridge_db $vxlan_id $remote_ip_array 'STARTED_BY_SYSTEMD' $NAME
+                [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id, cni $NAME: bringing up bridge"
                 bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
             fi
         else
@@ -185,7 +188,7 @@ for vxlan in $cfgArray; do
                 # now we bring it up only if status was set to up
                 if [ "$lower_status" == "up" ]; then
                     vxlan_config $vxlan_id $iface $vxlan_ip
-                    populate_bridge_db $vxlan_id $remote_ip_array
+                    populate_bridge_db $vxlan_id $remote_ip_array 'NOT_STARTED_BY_SYSTEMD' $NAME
                     bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
                 fi
             fi
