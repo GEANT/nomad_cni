@@ -1,4 +1,4 @@
-# == Define: nomad_cni::macvlan::v4
+# == Define: nomad_cni::macvlan::unicast::v4
 #
 # configure CNI and VXLAN/Bridge for Nomad
 #
@@ -22,7 +22,7 @@
 # [*cni_proto_version*] String
 # version of the CNI protocol
 #
-define nomad_cni::macvlan::v4 (
+define nomad_cni::macvlan::unicast::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
   String $cni_name          = $name,
   String $agent_regex       = undef,
