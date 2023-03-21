@@ -167,15 +167,15 @@ for vxlan in $cfgArray; do
         fi
 
         if [ -n "$FORCE" ]; then
-            [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id, cni $NAME: bringing down vxlan and bridge"
+            [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: bringing down vxlan and bridge"
             ifaces_down $vxlan_id
             # now we bring it up only if status was set to up
             if [ "$lower_status" == "up" ]; then
                 [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: not configured, bringing up vxlan"
                 vxlan_config $vxlan_id $iface $vxlan_ip
-                [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id, cni $NAME: adding remote IPs to bridge db"
+                [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: adding remote IPs to bridge db"
                 populate_bridge_db $vxlan_id $remote_ip_array 'STARTED_BY_SYSTEMD' $NAME
-                [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id, cni $NAME: bringing up bridge"
+                [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: bringing up bridge"
                 bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
             fi
         else
