@@ -84,10 +84,11 @@ define nomad_cni::macvlan::multicast::v4 (
         require => File['/etc/cni/vxlan.multicast.d'],
         content => epp(
           "${module_name}/multicast-vxlan.conf.epp", {
-            vxlan_id      => $vxlan_id,
-            vxlan_ip      => $cni_item[1],
-            iface         => $iface,
-            vxlan_netmask => $cni_item[4]
+            vxlan_id        => $vxlan_id,
+            vxlan_ip        => $cni_item[1],
+            iface           => $iface,
+            multicast_group => $multicast_group,
+            vxlan_netmask   => $cni_item[4]
           }
         ),
       }
