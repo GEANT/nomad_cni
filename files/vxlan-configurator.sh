@@ -10,13 +10,13 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 usage() {
-    echo "Usage: $(basename $0) --force --id 8345 or $(basename $0) --force --id all"
+    echo "Usage: $(basename $0) --force --status up --name my_cni"
     echo ""
     echo "    -h | --help    Print this help and exit"
     echo "    --name    name/all: Configure the specific CNI, or all if all/ALL is specified"
     echo "    --status  up/down: Bring VXLAN and Bridge down"
     echo "    --force   Force IP configuration"
-    echo "    --purge   Purge VXLANs without a matching configuration file"
+    echo "    --purge   Purge VXLANs and systemd service without a matching configuration file"
     echo ""
     exit 3
 }
@@ -119,18 +119,21 @@ while true; do
 done
 
 if [ -z "$NAME" ] && [ -z "$PURGE" ]; then
-    echo -e "ERROR: You must use --id or --purge\n"
+    echo -e "\nERROR: Either --name or --purge must be used\n"
+    usage
+elif [ -n "$NAME" ] && [ -n "$PURGE" ]; then
+    echo -e "\nERROR: Only one of --name or --purge can be used\n"
     usage
 elif [ -n "$PURGE" ]; then
     if [ $parameters -gt 1 ]; then
-        echo -e "ERROR: You must use --purge alone\n"
+        echo -e "\nERROR: You must use --purge alone\n"
         usage
     fi
     purge_stale_ifaces
     purge_stale_services
     exit 0
 elif [ -z "$STATUS" ]; then
-    echo -e "ERROR: You must use --status up --status down\n"
+    echo -e "\nERROR: You must use --status up --status down\n"
     usage
 fi
 
