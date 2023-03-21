@@ -13,11 +13,10 @@ usage() {
     echo "Usage: $(basename $0) --force --status up --name my_cni"
     echo ""
     echo "    -h | --help    Print this help and exit"
-    echo "    --name     name/all: Configure the specific CNI, or all if all/ALL is specified"
-    echo "    --status   up/down: Bring VXLAN and Bridge down"
-    echo "    --force    Force IP configuration"
-    echo "    --purge    Purge VXLANs and systemd service without a matching configuration file"
-    echo "    --systemd  Set script output compatible with systemd"
+    echo "    --name    name/all: Configure the specific CNI, or all if all/ALL is specified"
+    echo "    --status  up/down: Bring VXLAN and Bridge down"
+    echo "    --force   Force IP configuration"
+    echo "    --purge   Purge VXLANs and systemd service without a matching configuration file"
     echo ""
     exit 3
 }
@@ -86,7 +85,7 @@ check_status() {
 }
 
 parameters=0
-OPTS=$(getopt -o "h" --longoptions "help,name:,status:,force,purge:,systemd" -- "$@")
+OPTS=$(getopt -o "h" --longoptions "help,name:,status:,force,purge" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -109,10 +108,6 @@ while true; do
         ;;
     --purge)
         PURGE="yes"
-        ((parameters++))
-        ;;
-    --systemd)
-        SYSTEMD="yes"
         ((parameters++))
         ;;
     --)
@@ -169,20 +164,20 @@ for vxlan in $cfgArray; do
         fi
 
         if [ -n "$FORCE" ]; then
+            [ -n $STARTED_BY_SYSTEMD ] && echo "bringing down vxlan and bridge $vxlan_id for CNI $NAME"
             ifaces_down $vxlan_id
             # now we bring it up only if status was set to up
             if [ "$lower_status" == "up" ]; then
+                [ -n $STARTED_BY_SYSTEMD ] && echo "VXLAN $vxlan_id is not configured, bringing it up"
                 vxlan_config $vxlan_id $iface $vxlan_ip
+                [ -n $STARTED_BY_SYSTEMD ] && echo "adding remote IPs to bridge db"
                 populate_bridge_db $vxlan_id $remote_ip_array
+                [ -n $STARTED_BY_SYSTEMD ] && echo "bringing up vxlan bridge $vxlan_id for CNI $NAME"
                 bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
             fi
         else
-            # from crontab we do not use force option, so we check if vxlan is already configured
+            # from systemd we always use force and we don't need any check here
             if check_status $vxlan_id $vxlan_ip; then
-                if [ -n "$SYSTEMD" ]; then
-                    # print if systemd (tty does not work)
-                    echo "VXLAN $vxlan_id is already configured"
-                else
                     # do not print if not a tty (cron job)
                     tty -s && echo "VXLAN $vxlan_id is already configured"
                 fi
