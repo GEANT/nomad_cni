@@ -65,7 +65,7 @@ bridge_up() {
 purge_stale_ifaces() {
     vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vxlan[0-9]+:/{sub("vxlan", ""); print $2}')
     for vxlan_iface in $vxlan_ifaces_up; do
-        if ! test -f "/etc/cni/vxlan.multicast.d/${srv}.conf" && ! test -f "/etc/cni/vxlan.unicast.d/${srv}.conf"; then
+        if ! grep -qrw vxlan_id=$vxlan_iface /etc/cni/vxlan.{multicast,unicast}.d; then
             ip link delete vxbr$vxlan_iface &>/dev/null || true
             ip link delete vxlan$vxlan_iface &>/dev/null || true
         fi
