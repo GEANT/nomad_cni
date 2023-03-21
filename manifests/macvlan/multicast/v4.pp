@@ -83,7 +83,7 @@ define nomad_cni::macvlan::multicast::v4 (
         group   => 'root',
         mode    => '0644',
         content => epp(
-          "${module_name}/vxlan_header.conf.epp", {
+          "${module_name}/multicast-vxlan_header.conf.epp", {
             vxlan_id      => $vxlan_id,
             vxlan_ip      => $cni_item[1],
             iface         => $iface,
