@@ -26,6 +26,10 @@ class nomad_cni::config (
   #
   assert_private()
 
+  # == include dependencies
+  #
+  include nomad_cni::reload_service
+
   # == create necessary files
   #
   file {
@@ -43,24 +47,30 @@ class nomad_cni::config (
     '/usr/local/bin/cni-validator.sh':
       source => "puppet:///modules/${module_name}/cni-validator.sh";
     '/usr/local/bin/vxlan-configurator.sh':
-      notify => Service['vxlan-bootstrap.service'],
       source => "puppet:///modules/${module_name}/vxlan-configurator.sh";
   }
 
-  # == purge unused VXLANs
+  # == define Nomad service reload
+  #
+  exec { "${module_name} reload nomad service":
+    path        => ['/bin', '/usr/bin'],
+    command     => 'systemctl reload nomad',
+    refreshonly => true,
+  }
+
+  # == purge unused VXLANs (triggered by directory changes)
   #
   exec { 'purge_unused_vxlans':
     command     => 'flock /tmp/vxlan-configurator vxlan-configurator.sh --purge',
     require     => File['/usr/local/bin/vxlan-configurator.sh'],
-    path        => ['/usr/local/bin', '/bin', '/usr/bin', '/sbin', '/usr/sbin'],
+    path        => ['/usr/local/bin', '/usr/bin'],
     refreshonly => true,
     subscribe   => File['/etc/cni/vxlan.d'];
   }
 
   # == install python3-demjson and fping
   #
-  $packages = ['python3-demjson', 'fping']
-  $packages.each |String $package| {
+  ['python3-demjson', 'fping'].each |String $package| {
     unless defined(Package[$package]) {
       package { $package: ensure => present, }
     }
@@ -85,18 +95,10 @@ class nomad_cni::config (
     require       => [File['/opt/cni/bin'], Exec['remove_old_cni']];
   }
 
-  # == create startup service for VXLAN configurator
+  # == create systemd unit file
   #
-  systemd::unit_file {
-    'vxlan-bootstrap.service':
-      source => "puppet:///modules/${module_name}/vxlan-bootstrap.service",
-      notify => Service['vxlan-bootstrap.service'];
-    'cni-id@.service':
-      source => "puppet:///modules/${module_name}/cni-id.service";
-  }
-  service { 'vxlan-bootstrap.service':
-    ensure => running,
-    enable => true;
+  systemd::unit_file { 'cni-id@.service':
+    source => "puppet:///modules/${module_name}/cni-id.service";
   }
 
   # == create cron job to keep the VXLAN up
@@ -112,10 +114,13 @@ class nomad_cni::config (
       month    => '*',
       monthday => '*',
       weekday  => '*';
+    # ensure that the VXLANs are up and running (ideally this should be done by systemd)  (FIXME)
     'keep-vxlan-up':
       ensure  => $cron_ensure_status,
       command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --status up --name all',
       minute  => "*/${$keep_vxlan_up_cron_interval}";
+    # it unconfigures the VXLANs that are not in use and disable corresponding systemd services
+    # it's also triggered when the directory /etc/cni/vxlan.d is changed
     'purge_unused_vxlans':
       ensure  => present,
       user    => 'root',

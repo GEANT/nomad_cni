@@ -19,16 +19,16 @@
 # [*iface*] String
 # network interface on the Nomad agents
 #
-# [*cni_protocol_version*] String
-# version of the CNI configuration
+# [*cni_proto_version*] String
+# version of the CNI protocol
 #
 define nomad_cni::macvlan::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
-  String $cni_name                        = $name,
-  String $agent_regex                     = undef,
-  Array $agent_list                       = [],
-  String $iface                           = 'eth0',
-  String $cni_protocol_version            = '1.0.0',
+  String $cni_name          = $name,
+  String $agent_regex       = undef,
+  Array $agent_list         = [],
+  String $iface             = 'eth0',
+  String $cni_proto_version = '1.0.0',
 ) {
   # == ensure that nomad_cni class was included and that the name is not reserved
   #
@@ -38,8 +38,6 @@ define nomad_cni::macvlan::v4 (
   if $cni_name == 'all' {
     fail('the name \'all\' is reserved and it cannot be used as a CNI name')
   }
-
-  include nomad_cni::reload_service
 
   # == set the variables
   #
@@ -120,7 +118,7 @@ define nomad_cni::macvlan::v4 (
         notify       => Service["cni-id@${cni_name}.service"],
         content      => to_json_pretty(
           {
-            cniVersion => $cni_protocol_version,
+            cniVersion => $cni_proto_version,
             name       => $cni_name,
             plugins    => [
               {
