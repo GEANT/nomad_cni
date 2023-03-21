@@ -66,7 +66,7 @@ define nomad_cni::macvlan::multicast::v4 (
   $vxlan_id = seeded_rand(16777215, $network) + 1
   $multicast_group = nomad_cni::int_to_v4(seeded_rand(268435455, $network) + 1)
 
-  service { "multicast-cni-id@${cni_name}.service":
+  service { "cni-id@${cni_name}.service":
     ensure  => running,
     enable  => true,
     require => Systemd::Unit_file['multicast-cni-id@.service'],
@@ -91,7 +91,7 @@ define nomad_cni::macvlan::multicast::v4 (
             vxlan_netmask   => $cni_item[4]
           }
         ),
-        notify  => Service["multicast-cni-id@${cni_name}.service"];
+        notify  => Service["cni-id@${cni_name}.service"];
       }
       file { "/opt/cni/config/${cni_name}.conflist":
         mode         => '0644',
@@ -100,7 +100,7 @@ define nomad_cni::macvlan::multicast::v4 (
           File['/opt/cni/config', '/usr/local/bin/cni-validator.sh', '/run/cni'],
           Package['python3-demjson']
         ],
-        notify       => Service["multicast-cni-id@${cni_name}.service"],
+        notify       => Service["cni-id@${cni_name}.service"],
         content      => to_json_pretty(
           {
             cniVersion => $cni_proto_version,

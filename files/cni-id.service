@@ -13,8 +13,8 @@ Group=root
 TimeoutStartSec=0
 Restart=on-failure
 RestartSec=30s
-ExecStart=/usr/local/bin/vxlan-configurator.sh --type multicast --force --status up --name %i
-ExecStop=/usr/local/bin/vxlan-configurator.sh --type multicast --force --status down --name %i
+ExecStart=/usr/local/bin/vxlan-configurator.sh --force --status up --name %i
+ExecStop=/usr/local/bin/vxlan-configurator.sh --force --status down --name %i
 SyslogIdentifier=VXLAN-configurator
 
 [Install]
