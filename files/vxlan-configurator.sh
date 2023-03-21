@@ -152,7 +152,7 @@ elif [ -z "$STATUS" ]; then
 elif [ $parameters -lt 3 ]; then
     echo -e "\nERROR: You must use --name, --status and --type\n"
     usage
-elif [ "$TYPE" != "unicast"] && [ "$TYPE" != "multicast" ]; then
+elif [ "$TYPE" != "unicast" ] && [ "$TYPE" != "multicast" ]; then
     echo -e "\nERROR: You must use --type unicast or --type multicast\n"
     usage
 fi
