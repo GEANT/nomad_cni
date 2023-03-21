@@ -68,7 +68,7 @@ define nomad_cni::macvlan::unicast::v4 (
   service { "cni-id@${cni_name}.service":
     ensure  => running,
     enable  => true,
-    require => Systemd::Unit_file['unicast-cni-id@.service'],
+    require => Systemd::Unit_file['cni-id@.service'],
     notify  => Exec["${module_name} reload nomad service"];
   }
 

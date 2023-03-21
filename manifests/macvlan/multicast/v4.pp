@@ -69,7 +69,7 @@ define nomad_cni::macvlan::multicast::v4 (
   service { "cni-id@${cni_name}.service":
     ensure  => running,
     enable  => true,
-    require => Systemd::Unit_file['multicast-cni-id@.service'],
+    require => Systemd::Unit_file['cni-id@.service'],
     notify  => Exec["${module_name} reload nomad service"];
   }
 
