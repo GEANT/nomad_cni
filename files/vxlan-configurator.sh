@@ -65,7 +65,7 @@ bridge_up() {
 purge_stale_ifaces() {
     vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vxlan[0-9]+:/{sub("vxlan", ""); print $2}')
     for vxlan_iface in $vxlan_ifaces_up; do
-        if ! grep -qrw vxlan_id=$vxlan_iface /etc/cni/vxlan.{multicast,unicast}.d; then
+        if ! grep -qrw vxlan_id=$vxlan_iface /etc/cni/vxlan/{multicast,unicast}.d; then
             ip link delete vxbr$vxlan_iface &>/dev/null || true
             ip link delete vxlan$vxlan_iface &>/dev/null || true
         fi
@@ -75,7 +75,7 @@ purge_stale_ifaces() {
 purge_stale_services() {
     configured_services=$(systemctl list-units cni-id@* --all -l --no-pager --no-legend | awk '{print $NF}')
     for srv in $configured_services; do
-        if ! test -f "/etc/cni/vxlan.multicast.d/${srv}.conf" && ! test -f "/etc/cni/vxlan.unicast.d/${srv}.conf"; then
+        if ! test -f "/etc/cni/vxlan/multicast.d/${srv}.conf" && ! test -f "/etc/cni/vxlan/unicast.d/${srv}.conf"; then
             systemctl disable cni-id@${srv}.service
             systemctl stop cni-id@${srv}.service
             rm -f /etc/systemd/system/cni-id@${srv}.service
@@ -94,7 +94,7 @@ check_status() {
 }
 
 parameters=0
-OPTS=$(getopt -o "h" --longoptions "help,name:,status:,type:,force,purge" -- "$@")
+OPTS=$(getopt -o "h" --longoptions "help,name:,status:,force,purge" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -113,11 +113,6 @@ while true; do
     --status)
         shift
         STATUS="$1"
-        ((parameters++))
-        ;;
-    --type)
-        shift
-        TYPE="$1"
         ((parameters++))
         ;;
     --purge)
@@ -149,12 +144,6 @@ elif [ -n "$PURGE" ]; then
 elif [ -z "$STATUS" ]; then
     echo -e "\nERROR: You must use --status up or --status down\n"
     usage
-elif [ $parameters -lt 3 ]; then
-    echo -e "\nERROR: You must use --name, --status and --type\n"
-    usage
-elif [ "$TYPE" != "unicast" ] && [ "$TYPE" != "multicast" ]; then
-    echo -e "\nERROR: You must use --type unicast or --type multicast\n"
-    usage
 fi
 
 lower_status=$(echo $STATUS | tr '[:upper:]' '[:lower:]')
@@ -167,9 +156,9 @@ fi
 
 shopt -s nullglob
 if [ "$lower_name" == 'all' ]; then
-    cfgArray=("/etc/cni/vxlan.{unicast,multicast}.d/*.conf")
+    cfgArray=(/etc/cni/vxlan/*.d/*.conf)
 else
-    cfgArray=("/etc/cni/vxlan.$TYPE.d/$NAME.conf")
+    cfgArray=(/etc/cni/vxlan/*.d/$NAME.conf)
 fi
 
 # == MAIN ==
@@ -182,6 +171,11 @@ for vxlan in ${cfgArray[*]}; do
         if [ -z "$vxlan_id" ] || [ -z "$vxlan_ip" ] || [ -z "$vxlan_netmask" ] || [ -z "$iface" ]; then
             echo "ERROR: vxlan configuration file $vxlan is not valid"
             exit 1
+        fi
+        if [[ "$vxlan" == *"unicast"* ]]; then
+          TYPE="unicast"
+        elif [[ "$vxlan" == *"multicast"* ]]; then
+          TYPE="multicast"
         fi
 
         if [ -n "$FORCE" ]; then

@@ -35,7 +35,7 @@ class nomad_cni::config (
       mode  => '0755';
     ['/opt/cni', '/opt/cni/bin', '/run/cni', '/etc/cni']:
       ensure => directory;
-    ['/opt/cni/config', '/etc/cni/vxlan.unicast.d', '/etc/cni/vxlan.multicast.d']:
+    ['/opt/cni/config', '/etc/cni/vxlan', '/etc/cni/vxlan/unicast.d', '/etc/cni/vxlan/multicast.d']:
       ensure  => directory,
       purge   => true,
       recurse => true,
@@ -61,7 +61,7 @@ class nomad_cni::config (
     require     => File['/usr/local/bin/vxlan-configurator.sh'],
     path        => ['/usr/local/bin', '/usr/bin'],
     refreshonly => true,
-    subscribe   => File['/etc/cni/vxlan.unicast.d', '/etc/cni/vxlan.multicast.d'];
+    subscribe   => File['/etc/cni/vxlan/unicast.d', '/etc/cni/vxlan/multicast.d'];
   }
 
   # == install python3-demjson and fping
@@ -119,7 +119,7 @@ class nomad_cni::config (
       command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --status up --name all',
       minute  => "*/${$keep_vxlan_up_cron_interval}";
     # it unconfigures the VXLANs that are not in use and disable corresponding systemd services
-    # it's also triggered when the directory /etc/cni/vxlan.{multicast,unicast}.d is changed
+    # it's also triggered when the directory /etc/cni/vxlan/{multicast,unicast}.d is changed
     'purge_unused_vxlans':
       ensure  => present,
       user    => 'root',
