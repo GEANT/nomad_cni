@@ -64,7 +64,7 @@ define nomad_cni::macvlan::multicast::v4 (
   }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
   $vxlan_id = seeded_rand(16777215, $network) + 1
-  $multicast_group = int_to_v4(268435455, $network)
+  $multicast_group = nomad_cni::int_to_v4(268435455, $network)
 
   service { "multicast-cni-id@${cni_name}.service":
     ensure  => running,
