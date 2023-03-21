@@ -158,6 +158,12 @@ for vxlan in $cfgArray; do
 
         if [ -n "$FORCE" ]; then
             ifaces_down $vxlan_id
+            # now we bring it up only if status was set to up
+            if [ "$lower_status" == "up" ]; then
+                vxlan_up $vxlan_id $iface $vxlan_ip
+                populate_bridge_db $vxlan_id $remote_ip_array
+                bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
+            fi
         else
             # from crontab we do not use force option, so we check if vxlan is already configured
             if check_status $vxlan_id $vxlan_ip; then
@@ -170,12 +176,13 @@ for vxlan in $cfgArray; do
                 fi
             else
                 ifaces_down $vxlan_id
+                # now we bring it up only if status was set to up
+                if [ "$lower_status" == "up" ]; then
+                    vxlan_up $vxlan_id $iface $vxlan_ip
+                    populate_bridge_db $vxlan_id $remote_ip_array
+                    bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
+                fi
             fi
-        fi
-        if [ "$lower_status" == "up" ]; then
-            vxlan_up $vxlan_id $iface $vxlan_ip
-            populate_bridge_db $vxlan_id $remote_ip_array
-            bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
         fi
     else
         echo "ERROR: vxlan configuration file $vxlan does not exist"
