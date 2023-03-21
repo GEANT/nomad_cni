@@ -46,7 +46,7 @@ bridge_up() {
     vxlan_id=$1
     vxlan_ip=$2
     vxlan_netmask=$3
-    ip link set dev vxlan$vxlan_id up  # bring up the vxlan interface after populating the bridge db
+    ip link set dev vxlan$vxlan_id up # bring up the vxlan interface after populating the bridge db
     brctl addbr vxbr$vxlan_id
     brctl addif vxbr$vxlan_id vxlan$vxlan_id
     ip address add $vxlan_ip/$vxlan_netmask dev vxbr$vxlan_id
@@ -176,11 +176,10 @@ for vxlan in $cfgArray; do
                 bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
             fi
         else
-            # from systemd we always use force and we don't need any check here
+            # from systemd we only use force. We don't need any check here
             if check_status $vxlan_id $vxlan_ip; then
-                    # do not print if not a tty (cron job)
-                    tty -s && echo "VXLAN $vxlan_id is already configured"
-                fi
+                # do not print if not a tty (cron job)
+                tty -s && echo "VXLAN $vxlan_id is already configured"
             else
                 ifaces_down $vxlan_id
                 # now we bring it up only if status was set to up
