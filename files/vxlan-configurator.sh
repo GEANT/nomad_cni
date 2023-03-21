@@ -53,12 +53,23 @@ bridge_up() {
     ip link set up dev vxbr$vxlan_id
 }
 
-purge_unused() {
+purge_stale_ifaces() {
     vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vxlan[0-9]+:/{sub("vxlan", ""); print $2}')
     for vxlan_iface in $vxlan_ifaces_up; do
         if ! test -f "/etc/cni/vxlan.d/vxlan${vxlan_iface}.conf"; then
             ip link delete vxbr$vxlan_iface &>/dev/null || true
             ip link delete vxlan$vxlan_iface &>/dev/null || true
+        fi
+    done
+}
+
+purge_stale_services() {
+    configured_services=$(systemctl list-units cni-id@* --all -l --no-pager --no-legend | awk '{print $NF}')
+    for srv in $configured_services; do
+        if ! test -f "/etc/cni/vxlan.d/vxlan${srv}.conf"; then
+            systemctl disable cni-id@${srv}.service
+            systemctl stop cni-id@${srv}.service
+            rm -f /etc/systemd/system/cni-id@${srv}.service
         fi
     done
 }
@@ -107,18 +118,19 @@ while true; do
     shift
 done
 
-if [ -n "$PURGE" ]; then
+if [ -z "$NAME" ] && [ -z "$PURGE" ]; then
+    echo -e "ERROR: You must use --id or --purge\n"
+    usage
+elif [ -n "$PURGE" ]; then
     if [ $parameters -gt 1 ]; then
         echo -e "ERROR: You must use --purge alone\n"
         usage
     fi
-    purge_unused
+    purge_stale_ifaces
+    purge_stale_services
     exit 0
 elif [ -z "$STATUS" ]; then
     echo -e "ERROR: You must use --status up --status down\n"
-    usage
-elif [ -z "$NAME" ] && [ -z "$PURGE" ]; then
-    echo -e "ERROR: You must use --id or --purge\n"
     usage
 fi
 
@@ -156,7 +168,6 @@ for vxlan in $cfgArray; do
                     # do not print if not a tty (cron job)
                     tty -s && echo "VXLAN $vxlan_id is already configured"
                 fi
-                exit
             else
                 ifaces_down $vxlan_id
             fi
