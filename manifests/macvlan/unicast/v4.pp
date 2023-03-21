@@ -76,7 +76,7 @@ define nomad_cni::macvlan::unicast::v4 (
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    require => File['/etc/cni/vxlan.d'],
+    require => File['/etc/cni/vxlan.unicast.d'],
     notify  => Service["unicast-cni-id@${cni_name}.service"];
   }
 

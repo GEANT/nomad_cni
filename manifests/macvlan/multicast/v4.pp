@@ -81,6 +81,7 @@ define nomad_cni::macvlan::multicast::v4 (
         owner   => 'root',
         group   => 'root',
         mode    => '0644',
+        require => File['/etc/cni/vxlan.multicast.d'],
         content => epp(
           "${module_name}/multicast-vxlan.conf.epp", {
             vxlan_id      => $vxlan_id,
