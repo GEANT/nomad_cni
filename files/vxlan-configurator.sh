@@ -13,10 +13,11 @@ usage() {
     echo "Usage: $(basename $0) --force --status up --name my_cni"
     echo ""
     echo "    -h | --help    Print this help and exit"
-    echo "    --name    name/all: Configure the specific CNI, or all if all/ALL is specified"
-    echo "    --status  up/down: Bring VXLAN and Bridge down"
-    echo "    --force   Force IP configuration"
-    echo "    --purge   Purge VXLANs and systemd service without a matching configuration file"
+    echo "    --name     name/all: Configure the specific CNI, or all if all/ALL is specified"
+    echo "    --status   up/down: Bring VXLAN and Bridge down"
+    echo "    --force    Force IP configuration"
+    echo "    --purge    Purge VXLANs and systemd service without a matching configuration file"
+    echo "    --systemd  Set script output compatible with systemd"
     echo ""
     exit 3
 }
@@ -85,7 +86,7 @@ check_status() {
 }
 
 parameters=0
-OPTS=$(getopt -o "h" --longoptions "help,name:,status:,force,purge" -- "$@")
+OPTS=$(getopt -o "h" --longoptions "help,name:,status:,force,purge:systemd" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -108,6 +109,10 @@ while true; do
         ;;
     --purge)
         PURGE="yes"
+        ((parameters++))
+        ;;
+    --systemd)
+        SYSTEMD="yes"
         ((parameters++))
         ;;
     --)
@@ -174,7 +179,7 @@ for vxlan in $cfgArray; do
         else
             # from crontab we do not use force option, so we check if vxlan is already configured
             if check_status $vxlan_id $vxlan_ip; then
-                if [ "$STARTED_BY_SYSTEMD" == "yes" ]; then
+                if [ -n "$SYSTEMD" ]; then
                     # print if systemd (tty does not work)
                     echo "VXLAN $vxlan_id is already configured"
                 else
