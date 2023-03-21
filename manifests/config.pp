@@ -94,7 +94,7 @@ class nomad_cni::config (
   # == create systemd unit file
   #
   systemd::unit_file { 'cni-id@.service':
-    source => "puppet:///modules/${module_name}/unicast-cni-id.service";
+    source => "puppet:///modules/${module_name}/cni-id.service";
   }
 
   # == create cron job to keep the VXLAN up
