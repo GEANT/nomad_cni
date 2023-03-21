@@ -94,12 +94,9 @@ class nomad_cni::config (
     'cni-id@.service':
       source => "puppet:///modules/${module_name}/cni-id.service";
   }
-  service {
-    'vxlan-bootstrap.service':
-      ensure => running,
-      enable => true;
-    'cni-id@.service':
-      hasrestart => true;
+  service { 'vxlan-bootstrap.service':
+    ensure => running,
+    enable => true;
   }
 
   # == create cron job to keep the VXLAN up
@@ -117,7 +114,7 @@ class nomad_cni::config (
       weekday  => '*';
     'keep-vxlan-up':
       ensure  => $cron_ensure_status,
-      command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --all',
+      command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --status up --name all',
       minute  => "*/${$keep_vxlan_up_cron_interval}";
     'purge_unused_vxlans':
       ensure  => present,
