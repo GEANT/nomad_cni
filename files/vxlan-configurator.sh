@@ -165,10 +165,11 @@ if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ]; then
     usage
 fi
 
+shopt -s nullglob
 if [ "$lower_name" == 'all' ]; then
-    cfgArray=("/etc/cni/vxlan.{multicast,unicast}.d/*.conf")
+    cfgArray=("/etc/cni/vxlan.{unicast,multicast}.d/*.conf")
 else
-    cfgArray=("/etc/cni/vxlan.{multicast,unicast}.d/$NAME.conf")
+    cfgArray=("/etc/cni/vxlan.$TYPE.d/$NAME.conf")
 fi
 
 # == MAIN ==

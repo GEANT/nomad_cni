@@ -77,8 +77,7 @@ define nomad_cni::macvlan::multicast::v4 (
   #
   $cni_ranges_v4.each |$cni_item| {
     if $cni_item[0] == $facts['networking']['hostname'] {
-      file { "/etc/cni/vxlan.d/${cni_name}.conf":
-        ensure  => directory,
+      file { "/etc/cni/vxlan.multicast.d/${cni_name}.conf":
         owner   => 'root',
         group   => 'root',
         mode    => '0644',
