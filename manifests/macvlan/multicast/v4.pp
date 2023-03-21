@@ -91,6 +91,7 @@ define nomad_cni::macvlan::multicast::v4 (
             vxlan_netmask   => $cni_item[4]
           }
         ),
+        notify  => Service["multicast-cni-id@${cni_name}.service"];
       }
       file { "/opt/cni/config/${cni_name}.conflist":
         mode         => '0644',
