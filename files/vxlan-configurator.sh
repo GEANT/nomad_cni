@@ -27,12 +27,11 @@ ifaces_down() {
     ip link delete vxlan$vxlan_id &>/dev/null || true
 }
 
-vxlan_up() {
+vxlan_config() {
     vxlan_id=$1
     iface=$2
     vxlan_ip=$3
     ip link add vxlan$vxlan_id type vxlan id $vxlan_id dev $iface dstport 4789 local $vxlan_ip
-    ip link set dev vxlan$vxlan_id up
 }
 
 populate_bridge_db() {
@@ -47,6 +46,7 @@ bridge_up() {
     vxlan_id=$1
     vxlan_ip=$2
     vxlan_netmask=$3
+    ip link set dev vxlan$vxlan_id up  # bring up the vxlan interface after populating the bridge db
     brctl addbr vxbr$vxlan_id
     brctl addif vxbr$vxlan_id vxlan$vxlan_id
     ip address add $vxlan_ip/$vxlan_netmask dev vxbr$vxlan_id
@@ -167,7 +167,7 @@ for vxlan in $cfgArray; do
             ifaces_down $vxlan_id
             # now we bring it up only if status was set to up
             if [ "$lower_status" == "up" ]; then
-                vxlan_up $vxlan_id $iface $vxlan_ip
+                vxlan_config $vxlan_id $iface $vxlan_ip
                 populate_bridge_db $vxlan_id $remote_ip_array
                 bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
             fi
@@ -185,7 +185,7 @@ for vxlan in $cfgArray; do
                 ifaces_down $vxlan_id
                 # now we bring it up only if status was set to up
                 if [ "$lower_status" == "up" ]; then
-                    vxlan_up $vxlan_id $iface $vxlan_ip
+                    vxlan_config $vxlan_id $iface $vxlan_ip
                     populate_bridge_db $vxlan_id $remote_ip_array
                     bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
                 fi
