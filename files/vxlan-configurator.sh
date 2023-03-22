@@ -113,30 +113,28 @@ if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ]; then
     usage
 fi
 
-if [ -z $STARTED_BY_SYSTEMD ]; then
-    if tty -s; then
-        NOISY='yes'
-    fi
-else
+if [ -n $STARTED_BY_SYSTEMD ]; then
     NOISY='yes'
+else
+    tty -s && NOISY='yes'
 fi
 
 shopt -s nullglob
 if [ "$lower_name" == 'all' ]; then
-    cfgArray=(/etc/cni/vxlan/*.d/*.sh)
+    scriptArray=(/etc/cni/vxlan/*icast.d/*.sh)
 else
-    cfgArray=(/etc/cni/vxlan/*.d/$NAME.sh)
+    scriptArray=(/etc/cni/vxlan/*icast.d/$NAME.sh)
 fi
 
 # == MAIN ==
 #
-# we parse all the configuration files and we bring up/down the vxlan and bridge
+# we parse the scripts and bring up/down the vxlan and bridge
 #
-for vxlan in ${cfgArray[*]}; do
-    if [ -f $vxlan ]; then
-        if [[ "$vxlan" == *"unicast"* ]]; then
+for script in ${scriptArray[*]}; do
+    if [ -f $script ]; then
+        if [[ "$script" == *"unicast"* ]]; then
             TYPE="unicast"
-        elif [[ "$vxlan" == *"multicast"* ]]; then
+        elif [[ "$script" == *"multicast"* ]]; then
             TYPE="multicast"
         fi
         if [ -n "$FORCE" ]; then
@@ -167,7 +165,7 @@ for vxlan in ${cfgArray[*]}; do
             fi
         fi
     else
-        echo "ERROR: vxlan script $vxlan does not exist"
+        echo "ERROR: vxlan script $script does not exist"
         exit 1
     fi
 done
