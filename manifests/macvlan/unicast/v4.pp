@@ -107,7 +107,7 @@ define nomad_cni::macvlan::unicast::v4 (
           ),
           order   => '0001';
         "vxlan_${vxlan_id}_footer":
-          target  => "/etc/cni/vxlan/unicast.d/${cni_name}.conf",
+          target  => "/etc/cni/vxlan/unicast.d/${cni_name}.sh",
           content => epp(
             "${module_name}/unicast-vxlan-script-footer.sh.epp", {
               vxlan_id      => $vxlan_id,
