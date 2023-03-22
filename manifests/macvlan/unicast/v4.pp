@@ -56,21 +56,26 @@ define nomad_cni::macvlan::unicast::v4 (
     $agent_names = $agent_list
   }
   else {
-    $agents = puppetdb_query(
+    $agents_inventory = puppetdb_query(
       "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
         facts.networking.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
     )
-    $agent_hash = $agents.map |$item| { {
-      $item['facts.networking.hostname'] => {
+    $agents_pretty_inventory = $agents_inventory.map |$item| {
+      {
+        'name' => $item['facts.networking.hostname'],
         'ip' => $item["facts.networking.interfaces.${iface}.ip"],
         'mac' => $item["facts.networking.interfaces.${iface}.mac"]
       }
     }
-    $agent_names = keys($agent_hash)
+    $agent_names = $agents_inventory.map |$item| { $item['facts.networking.hostname'] }
   }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
   $vxlan_id = seeded_rand(16777215, $network) + 1
+
+  $test = {
+    'test1' => [ '$agent_names', '$cni_ranges_v4', '$vxlan_id' ],
+  }
 
   service { "cni-id@${cni_name}.service":
     ensure  => running,
@@ -87,16 +92,16 @@ define nomad_cni::macvlan::unicast::v4 (
     notify  => Service["cni-id@${cni_name}.service"];
   }
 
-  $agent_names.each |$agent| {
-    concat::fragment { "vxlan_${vxlan_id}_${agent_hash['agent']['ip']}":
+  $agents_pretty_inventory.each |$agent| {
+    concat::fragment { "vxlan_${vxlan_id}_${agent['name']}":
       target  => "/etc/cni/vxlan/unicast.d/${cni_name}.sh",
       content => epp(
         "${module_name}/bridge-fdb.epp", {
-          agent_mac => $agent_hash['agent']['mac'],
-          agent_ip  => $agent_hash['agent']['ip'],
+          agent_mac => $agent['mac'],
+          agent_ip  => $agent['ip'],
         }
       ),
-      order   => seeded_rand(20000, "vxlan_${vxlan_id}_${agent_hash['agent']['ip']}");
+      order   => seeded_rand(20000, "vxlan_${vxlan_id}_${agent['ip']}");
     }
   }
 
