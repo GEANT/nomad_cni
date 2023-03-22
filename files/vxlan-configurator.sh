@@ -132,6 +132,8 @@ fi
 #
 for script in ${scriptArray[*]}; do
     if [ -f $script ]; then
+        vxlan_name=$(basename $script | cut -d'.' -f1)
+        source <(grep vxlan_id= $script)
         if [[ "$script" == *"unicast"* ]]; then
             TYPE="unicast"
         elif [[ "$script" == *"multicast"* ]]; then
@@ -139,10 +141,10 @@ for script in ${scriptArray[*]}; do
         fi
         if [ -n "$FORCE" ]; then
             if [ "$lower_status" == "up" ]; then
-                [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $NAME: not configured, bringing up vxlan"
+                [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name: not configured, bringing up vxlan"
                 $script
             else
-                [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $NAME: bringing down vxlan and bridge"
+                [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name: bringing down vxlan and bridge"
                 ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id
                 ip address show dev vxbr$vxlan_id &>/dev/null && ip link delete vxbr$vxlan_id
             fi
@@ -154,10 +156,10 @@ for script in ${scriptArray[*]}; do
             else
                 # now we bring it up only if status was set to up
                 if [ "$lower_status" == "up" ]; then
-                    [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $NAME: not configured, bringing up vxlan"
+                    [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name: not configured, bringing up vxlan"
                     $script
                 else
-                    [ -n $NOISY ] echo "vxlan $vxlan_id - cni $NAME: bringing down vxlan and bridge"
+                    [ -n $NOISY ] echo "vxlan $vxlan_id - cni $vxlan_name: bringing down vxlan and bridge"
                     ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id
                     ip address show dev vxbr$vxlan_id &>/dev/null && ip link delete vxbr$vxlan_id
                 fi

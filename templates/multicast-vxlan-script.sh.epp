@@ -1,4 +1,4 @@
-# vxlan multicast configuration
+vxlan_id=<%= $vxlan_id %>
 
 # vxlan multicast configuration
 ip link add vxlan<%= $vxlan_id %> type vxlan id <%= $vxlan_id %> dev <%= $iface %> dstport 4789 group <%= $multicast_group %>
