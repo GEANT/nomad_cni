@@ -140,7 +140,7 @@ for script in ${scriptArray[*]}; do
         if [ -n "$FORCE" ]; then
             if [ "$lower_status" == "up" ]; then
                 [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $NAME: not configured, bringing up vxlan"
-                /etc/cni/vxlan/${TYPE}.d/${NAME}.sh
+                $script
             else
                 [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $NAME: bringing down vxlan and bridge"
                 ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id
@@ -152,11 +152,10 @@ for script in ${scriptArray[*]}; do
                 # do not print if not a tty (cron job)
                 [ -n $NOISY ] && echo "VXLAN $vxlan_id is already configured"
             else
-                ifaces_down $vxlan_id
                 # now we bring it up only if status was set to up
                 if [ "$lower_status" == "up" ]; then
                     [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $NAME: not configured, bringing up vxlan"
-                    /etc/cni/vxlan/${TYPE}.d/${NAME}.sh
+                    $script
                 else
                     [ -n $NOISY ] echo "vxlan $vxlan_id - cni $NAME: bringing down vxlan and bridge"
                     ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id
