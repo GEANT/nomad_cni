@@ -1,0 +1,9 @@
+
+# bring up the vxlan interface
+ip link set up dev vxlan<%= $vxlan_id %>
+
+# bring up the bridge
+brctl addbr vxbr<%= $vxlan_id %>
+brctl addif vxbr<%= $vxlan_id %> vxlan<%= $vxlan_id %>
+ip addr add <%= $vxlan_ip %>/<%= $vxlan_netmask %> dev vxbr<%= $vxlan_id %>
+ip link set up dev vxbr<%= $vxlan_id %>

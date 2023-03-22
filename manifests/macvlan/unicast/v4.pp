@@ -56,11 +56,13 @@ define nomad_cni::macvlan::unicast::v4 (
     $agent_names = $agent_list
   }
   else {
-    $agent_names = puppetdb_query(
-      "inventory[facts.hostname] {
-        facts.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
+    $agents = puppetdb_query(
+      "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip] {
+        facts.networking.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
-    ).map |$item| { $item['facts.hostname'] }
+    )
+    $agent_names = $agents.map |$item| { $item['facts.networking.hostname'] }
+    $agent_ips = $agents.map |$item| { $item["facts.networking.interfaces.${iface}.ip"] }
   }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
   $vxlan_id = seeded_rand(16777215, $network) + 1
@@ -72,19 +74,20 @@ define nomad_cni::macvlan::unicast::v4 (
     notify  => Exec["${module_name} reload nomad service"];
   }
 
-  concat { "/etc/cni/vxlan/unicast.d/${cni_name}.conf":
+  concat { "/etc/cni/vxlan/unicast.d/${cni_name}.sh":
     owner   => 'root',
     group   => 'root',
-    mode    => '0644',
+    mode    => '0755',
     require => File['/etc/cni/vxlan/unicast.d'],
     notify  => Service["cni-id@${cni_name}.service"];
   }
 
-  @@concat::fragment { "vxlan_${vxlan_id}_${facts['networking']['hostname']}":
-    tag     => "nomad_vxlan_${vxlan_id}_${facts['agent_specified_environment']}",
-    target  => "/etc/cni/vxlan/unicast.d/${cni_name}.conf",
-    content => "\"${facts['networking']['interfaces'][$iface]['ip']}\"\n",
-    order   => seeded_rand(2000, "vxlan_${vxlan_id}_${facts['networking']['interfaces'][$iface]['ip']}");
+  $agent_ips.each |$agent_ip| {
+    concat::fragment { "vxlan_${vxlan_id}_${agent_ip}":
+      target  => "/etc/cni/vxlan/unicast.d/${cni_name}.sh",
+      content => "bridge fdb append 00:00:00:00:00:00 dev vxlan${vxlan_id} dst ${agent_ip}\n",
+      order   => seeded_rand(2000, "vxlan_${vxlan_id}_${agent_ip}");
+    }
   }
 
   # == create CNI config file, collect all the fragments for the script and add the footer
@@ -93,9 +96,9 @@ define nomad_cni::macvlan::unicast::v4 (
     if $cni_item[0] == $facts['networking']['hostname'] {
       concat::fragment {
         "vxlan_${vxlan_id}_header":
-          target  => "/etc/cni/vxlan/unicast.d/${cni_name}.conf",
+          target  => "/etc/cni/vxlan/unicast.d/${cni_name}.sh",
           content => epp(
-            "${module_name}/unicast-vxlan_header.conf.epp", {
+            "${module_name}/unicast-vxlan-script-header.sh.epp", {
               vxlan_id      => $vxlan_id,
               vxlan_ip      => $cni_item[1],
               iface         => $iface,
@@ -105,7 +108,13 @@ define nomad_cni::macvlan::unicast::v4 (
           order   => '0001';
         "vxlan_${vxlan_id}_footer":
           target  => "/etc/cni/vxlan/unicast.d/${cni_name}.conf",
-          content => ")\nexport vxlan_id vxlan_ip vxlan_netmask iface remote_ip_array\n",
+          content => epp(
+            "${module_name}/unicast-vxlan-script-footer.sh.epp", {
+              vxlan_id      => $vxlan_id,
+              vxlan_ip      => $cni_item[1],
+              vxlan_netmask => $cni_item[4]
+            }
+          ),
           order   => 'zzzz';
       }
       file { "/opt/cni/config/${cni_name}.conflist":
@@ -167,11 +176,6 @@ define nomad_cni::macvlan::unicast::v4 (
           }
         ),
       }
-    } else {
-      Concat::Fragment <<|
-        title == "vxlan_${vxlan_id}_${$cni_item[0]}" and
-        tag == "nomad_vxlan_${vxlan_id}_${facts['agent_specified_environment']}"
-      |>>
     }
   }
 }

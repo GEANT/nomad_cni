@@ -16,15 +16,55 @@ usage() {
     echo "    --name    name/all: Configure the specific CNI, or all if all/ALL is specified"
     echo "    --status  up/down: Bring VXLAN and Bridge down"
     echo "    --force   Force IP configuration"
-    echo "    --purge   Purge VXLANs and systemd service without a matching script"
+    echo "    --purge   Purge VXLANs and systemd service without a matching configuration file"
     echo ""
     exit 3
+}
+
+ifaces_down() {
+    vxlan_id=$1
+    ip address show dev vxbr$vxlan_id &>/dev/null && ip link delete vxbr$vxlan_id || true
+    ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id || true
+}
+
+vxlan_config() {
+    vxlan_id=$1
+    iface=$2
+    vxlan_ip=$3
+    type=$4
+    if [ "$type" == "multicast" ]; then
+        ip link add vxlan$vxlan_id type vxlan id $vxlan_id dev $iface dstport 4789 group $multicast_group
+    else
+        ip link add vxlan$vxlan_id type vxlan id $vxlan_id dev $iface dstport 4789 local $vxlan_ip
+    fi
+}
+
+populate_bridge_db() {
+    vxlan_id=$1
+    remote_ip_array=$2
+    is_systemd=$3
+    cni_name=$4
+    for remote_ip in ${remote_ip_array[*]}; do
+        [ "$is_systemd" == "STARTED_BY_SYSTEMD" ] && echo "vxlan $vxlan_id - cni $cni_name: adding $remote_ip to bridge DB"
+        bridge fdb append 00:00:00:00:00:00 dev vxlan$vxlan_id dst $remote_ip
+    done
+}
+
+bridge_up() {
+    vxlan_id=$1
+    vxlan_ip=$2
+    vxlan_netmask=$3
+    ip link set dev vxlan$vxlan_id up # bring up the vxlan interface after populating the bridge db
+    brctl addbr vxbr$vxlan_id
+    brctl addif vxbr$vxlan_id vxlan$vxlan_id
+    ip address add $vxlan_ip/$vxlan_netmask dev vxbr$vxlan_id
+    ip link set up dev vxbr$vxlan_id
 }
 
 purge_stale_ifaces() {
     vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vxlan[0-9]+:/{sub("vxlan", ""); print $2}')
     for vxlan_iface in $vxlan_ifaces_up; do
-        if ! grep -qrw $vxlan_iface /etc/cni/vxlan/{multicast,unicast}.d; then
+        if ! grep -qrw vxlan_id=$vxlan_iface /etc/cni/vxlan/{multicast,unicast}.d; then
             ip link delete vxbr$vxlan_iface &>/dev/null || true
             ip link delete vxlan$vxlan_iface &>/dev/null || true
         fi
@@ -34,7 +74,7 @@ purge_stale_ifaces() {
 purge_stale_services() {
     configured_services=$(systemctl list-units cni-id@* --all -l --no-pager --no-legend | awk '{print $NF}')
     for srv in $configured_services; do
-        if ! test -f "/etc/cni/vxlan/multicast.d/${srv}.sh" && ! test -f "/etc/cni/vxlan/unicast.d/${srv}.sh"; then
+        if ! test -f "/etc/cni/vxlan/multicast.d/${srv}.conf" && ! test -f "/etc/cni/vxlan/unicast.d/${srv}.conf"; then
             systemctl disable cni-id@${srv}.service
             systemctl stop cni-id@${srv}.service
             rm -f /etc/systemd/system/cni-id@${srv}.service
@@ -113,19 +153,11 @@ if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ]; then
     usage
 fi
 
-if [ -z $STARTED_BY_SYSTEMD ]; then
-    if tty -s; then
-        NOISY='yes'
-    fi
-else
-    NOISY='yes'
-fi
-
 shopt -s nullglob
 if [ "$lower_name" == 'all' ]; then
-    cfgArray=(/etc/cni/vxlan/*.d/*.sh)
+    cfgArray=(/etc/cni/vxlan/*.d/*.conf)
 else
-    cfgArray=(/etc/cni/vxlan/*.d/$NAME.sh)
+    cfgArray=(/etc/cni/vxlan/*.d/$NAME.conf)
 fi
 
 # == MAIN ==
@@ -134,40 +166,48 @@ fi
 #
 for vxlan in ${cfgArray[*]}; do
     if [ -f $vxlan ]; then
-        if [[ "$vxlan" == *"unicast"* ]]; then
-            TYPE="unicast"
-        elif [[ "$vxlan" == *"multicast"* ]]; then
-            TYPE="multicast"
+        source $vxlan
+        if [ -z "$vxlan_id" ] || [ -z "$vxlan_ip" ] || [ -z "$vxlan_netmask" ] || [ -z "$iface" ]; then
+            echo "ERROR: vxlan configuration file $vxlan is not valid"
+            exit 1
         fi
+        if [[ "$vxlan" == *"unicast"* ]]; then
+          TYPE="unicast"
+        elif [[ "$vxlan" == *"multicast"* ]]; then
+          TYPE="multicast"
+        fi
+
         if [ -n "$FORCE" ]; then
+            [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: bringing down vxlan and bridge"
+            ifaces_down $vxlan_id
+            # now we bring it up only if status was set to up
             if [ "$lower_status" == "up" ]; then
-                [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $NAME: not configured, bringing up vxlan"
-                /etc/cni/vxlan/${TYPE}.d/${NAME}.sh
-            else
-                [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $NAME: bringing down vxlan and bridge"
-                ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id
-                ip address show dev vxbr$vxlan_id &>/dev/null && ip link delete vxbr$vxlan_id
+                [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: not configured, bringing up vxlan"
+                vxlan_config $vxlan_id $iface $vxlan_ip $TYPE
+                if [ "$TYPE" == "unicast" ]; then
+                    [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: adding remote IPs to bridge db"
+                    populate_bridge_db $vxlan_id $remote_ip_array 'STARTED_BY_SYSTEMD' $NAME
+                fi
+                [ -n $STARTED_BY_SYSTEMD ] && echo "vxlan $vxlan_id - cni $NAME: bringing up bridge"
+                bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
             fi
         else
-            # from systemd we ONLY use force. We don't need any check here
+            # from systemd we only use force. We don't need any check here
             if check_status $vxlan_id $vxlan_ip; then
                 # do not print if not a tty (cron job)
-                [ -n $NOISY ] && echo "VXLAN $vxlan_id is already configured"
+                tty -s && echo "VXLAN $vxlan_id is already configured"
             else
                 ifaces_down $vxlan_id
                 # now we bring it up only if status was set to up
                 if [ "$lower_status" == "up" ]; then
-                    [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $NAME: not configured, bringing up vxlan"
-                    /etc/cni/vxlan/${TYPE}.d/${NAME}.sh
-                else
-                    [ -n $NOISY ] echo "vxlan $vxlan_id - cni $NAME: bringing down vxlan and bridge"
-                    ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id
-                    ip address show dev vxbr$vxlan_id &>/dev/null && ip link delete vxbr$vxlan_id
+                    vxlan_config $vxlan_id $iface $vxlan_ip $TYPE
+                    [ "$TYPE" == "unicast" ] && populate_bridge_db $vxlan_id $remote_ip_array 'STARTED_BY_SYSTEMD' $NAME
+                    bridge_up $vxlan_id $vxlan_ip $vxlan_netmask
                 fi
             fi
         fi
     else
-        echo "ERROR: vxlan script $vxlan does not exist"
+        echo "ERROR: vxlan configuration file $vxlan does not exist"
         exit 1
     fi
 done
