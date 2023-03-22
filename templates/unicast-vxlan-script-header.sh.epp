@@ -7,6 +7,6 @@ ip address show dev vxlan<%= $vxlan_id %> &>/dev/null && ip link delete vxlan<%=
 ip address show dev vxbr<%= $vxlan_id %> &>/dev/null && ip link delete vxbr<%= $vxlan_id %>
 
 # create vxlan interface
-ip link add vxlan<%= $vxlan_id %> type vxlan id <%= $vxlan_id %> dev <%= $iface %> dstport 4789 local <%= $vxlan_ip %>
+ip link add vxlan<%= $vxlan_id %> type vxlan id <%= $vxlan_id %> dev <%= $iface %> dstport 4789 local <%= $vxlan_ip %> nolearning
 
 # populate bridge DB

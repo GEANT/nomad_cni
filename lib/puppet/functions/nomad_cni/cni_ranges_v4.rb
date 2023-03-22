@@ -32,7 +32,7 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
     first_ip = IPAddr.new(network_address).to_range.first.to_s
 
     if first_ip != address
-      raise ArgumentError, "Invalid network address: #{network_address}. The proper address is: #{first_ip}/#{netmask}"
+      raise ArgumentError, "Invalid network address: #{network_address}. The correct address for this network is: #{first_ip}/#{netmask}"
     end
 
     sorted_agent_names = agent_names.sort

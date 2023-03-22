@@ -57,12 +57,17 @@ define nomad_cni::macvlan::unicast::v4 (
   }
   else {
     $agents = puppetdb_query(
-      "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip] {
+      "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip facts.networking.interfaces.${iface}.mac] {
         facts.networking.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
     )
-    $agent_names = $agents.map |$item| { $item['facts.networking.hostname'] }
-    $agent_ips = $agents.map |$item| { $item["facts.networking.interfaces.${iface}.ip"] }
+    $agent_hash = $agents.map |$item| { {
+      $item['facts.networking.hostname'] => {
+        'ip' => $item["facts.networking.interfaces.${iface}.ip"],
+        'mac' => $item["facts.networking.interfaces.${iface}.mac"]
+      }
+    }
+    $agent_names = keys($agent_hash)
   }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
   $vxlan_id = seeded_rand(16777215, $network) + 1
@@ -82,11 +87,16 @@ define nomad_cni::macvlan::unicast::v4 (
     notify  => Service["cni-id@${cni_name}.service"];
   }
 
-  $agent_ips.each |$agent_ip| {
-    concat::fragment { "vxlan_${vxlan_id}_${agent_ip}":
+  $agent_names.each |$agent| {
+    concat::fragment { "vxlan_${vxlan_id}_${agent_hash['agent']['ip']}":
       target  => "/etc/cni/vxlan/unicast.d/${cni_name}.sh",
-      content => "bridge fdb append 00:00:00:00:00:00 dev vxlan${vxlan_id} dst ${agent_ip}\n",
-      order   => seeded_rand(2000, "vxlan_${vxlan_id}_${agent_ip}");
+      content => epp(
+        "${module_name}/bridge-fdb.epp", {
+          agent_mac => $agent_hash['agent']['mac'],
+          agent_ip  => $agent_hash['agent']['ip'],
+        }
+      ),
+      order   => seeded_rand(20000, "vxlan_${vxlan_id}_${agent_hash['agent']['ip']}");
     }
   }
 
