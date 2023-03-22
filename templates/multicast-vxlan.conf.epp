@@ -1,7 +1,0 @@
-# vxlan multicast configuration
-vxlan_id=<%= $vxlan_id %>
-vxlan_ip=<%= $vxlan_ip %>
-iface=<%= $iface %>
-vxlan_netmask=<%= $vxlan_netmask %>
-multicast_group=<%= $multicast_group %>
-export vxlan_id vxlan_ip vxlan_netmask iface remote_ip_array

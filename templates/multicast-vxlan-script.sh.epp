@@ -2,7 +2,7 @@
 
 # vxlan multicast configuration
 ip link add vxlan<%= $vxlan_id %> type vxlan id <%= $vxlan_id %> dev <%= $iface %> dstport 4789 group <%= $multicast_group %>
-ip link set vxlan124 up
+ip link set vxlan<%= $vxlan_id %> up
 
 # vxlan bridge configuration
 brctl addbr vxbr<%= $vxlan_id %>
