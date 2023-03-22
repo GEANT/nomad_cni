@@ -2,7 +2,7 @@
 vxlan_id=<%= $vxlan_id %>
 vxlan_ip=<%= $vxlan_ip %>
 
-# delete vxlan and bridge interface
+# delete vxlan and bridge interface if they exist
 ip address show dev vxlan<%= $vxlan_id %> &>/dev/null && ip link delete vxlan<%= $vxlan_id %>
 ip address show dev vxbr<%= $vxlan_id %> &>/dev/null && ip link delete vxbr<%= $vxlan_id %>
 
