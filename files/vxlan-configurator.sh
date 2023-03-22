@@ -68,7 +68,7 @@ while true; do
         usage
         ;;
     --force)
-        FORCE="yes"
+        FORCE="bofh"
         ;;
     --name)
         shift
@@ -81,8 +81,7 @@ while true; do
         ((parameters++))
         ;;
     --purge)
-        PURGE="yes"
-        ((parameters++))
+        PURGE="bofh"
         ;;
     --)
         shift
@@ -92,22 +91,16 @@ while true; do
     shift
 done
 
-if [ -z "$NAME" ] && [ -z "$PURGE" ]; then
-    echo -e "\nERROR: Either --name or --purge must be used\n"
-    usage
-elif [ -n "$NAME" ] && [ -n "$PURGE" ]; then
-    echo -e "\nERROR: Only one of --name or --purge can be used\n"
-    usage
-elif [ -n "$PURGE" ]; then
-    if [ $parameters -gt 1 ]; then
-        echo -e "\nERROR: You must use --purge alone\n"
+if [ -n "$PURGE" ]; then
+    if [ $parameters -gt 0 ]; then
+        echo -e "\nERROR: --purge cannot be used with other options\n"
         usage
     fi
     purge_stale_ifaces
     purge_stale_services
     exit 0
-elif [ -z "$STATUS" ]; then
-    echo -e "\nERROR: You must use --status up or --status down\n"
+elif [ $parameters -lt 2 ]; then
+    echo -e "\nERROR: You must use --name <cni_name> and --status <up>/<down>\n"
     usage
 fi
 
@@ -119,12 +112,6 @@ if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ]; then
     usage
 fi
 
-if [ -n $STARTED_BY_SYSTEMD ]; then
-    NOISY='yes'
-else
-    tty -s && NOISY='yes'
-fi
-
 shopt -s nullglob
 if [ "$lower_name" == 'all' ]; then
     scriptArray=(/etc/cni/vxlan/*icast.d/*.sh)
@@ -132,45 +119,43 @@ else
     scriptArray=(/etc/cni/vxlan/*icast.d/$NAME.sh)
 fi
 
+if [ -n $STARTED_BY_SYSTEMD ]; then
+    NOISY='bofh'
+else
+    tty -s && NOISY='bofh' # tty command cannot be used in a systemd service
+fi
+
 # == MAIN ==
 #
-# we parse the scripts and bring up/down the vxlan and bridge
+# we parse the scripts and bring up/down the vxlan and the bridge
 #
 for script in ${scriptArray[*]}; do
-    if [ -f $script ]; then
-        vxlan_name=$(basename $script | cut -d'.' -f1)
-        source <(grep vxlan_i.= $script) # set vxlan_id and vxlan_ip
-        if [[ "$script" == *"unicast"* ]]; then
-            TYPE="unicast"
-        elif [[ "$script" == *"multicast"* ]]; then
-            TYPE="multicast"
-        fi
-        if [ -n "$FORCE" ]; then
-            if [ "$lower_status" == "up" ]; then
-                [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name: not configured, bringing up vxlan"
-                $script
-            else
-                [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name: bringing down vxlan and bridge"
-                ifaces_down $vxlan_id
-            fi
+    vxlan_name=$(basename $script | cut -d'.' -f1)
+    source <(grep vxlan_i.= $script) # set vxlan_id and vxlan_ip
+    if [[ "$script" == *"unicast"* ]]; then
+        TYPE="unicast"
+    elif [[ "$script" == *"multicast"* ]]; then
+        TYPE="multicast"
+    fi
+    if [ -n "$FORCE" ]; then
+        if [ "$lower_status" == "up" ]; then
+            [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name not configured, bringing up vxlan"
+            $script
         else
-            # from systemd we ONLY use force. We don't need any check here
-            if check_status $vxlan_id $vxlan_ip; then
-                # do not print if not a tty (cron job)
-                [ -n $NOISY ] && echo "VXLAN $vxlan_id is already configured"
-            else
-                # now we bring it up only if status was set to up
-                if [ "$lower_status" == "up" ]; then
-                    [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name: not configured, bringing up vxlan"
-                    $script
-                else
-                    [ -n $NOISY ] echo "vxlan $vxlan_id - cni $vxlan_name: bringing down vxlan and bridge"
-                    ifaces_down $vxlan_id
-                fi
-            fi
+            [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name bringing down vxlan and bridge"
+            ifaces_down $vxlan_id
         fi
     else
-        echo "ERROR: vxlan script $script does not exist"
-        exit 1
+        if check_status $vxlan_id $vxlan_ip; then
+            [ -n $NOISY ] && echo "VXLAN $vxlan_id is already configured"
+        else
+            if [ "$lower_status" == "up" ]; then
+                [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name not configured, bringing up vxlan"
+                $script
+            else
+                [ -n $NOISY ] echo "vxlan $vxlan_id - cni $vxlan_name bringing down vxlan and bridge"
+                ifaces_down $vxlan_id
+            fi
+        fi
     fi
 done
