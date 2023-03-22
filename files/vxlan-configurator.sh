@@ -21,6 +21,12 @@ usage() {
     exit 3
 }
 
+ifaces_down() {
+    vxlan_id=$1
+    ip address show dev vxbr$vxlan_id &>/dev/null && ip link delete vxbr$vxlan_id || true
+    ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id || true
+}
+
 purge_stale_ifaces() {
     vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vxlan[0-9]+:/{sub("vxlan", ""); print $2}')
     for vxlan_iface in $vxlan_ifaces_up; do
@@ -133,7 +139,7 @@ fi
 for script in ${scriptArray[*]}; do
     if [ -f $script ]; then
         vxlan_name=$(basename $script | cut -d'.' -f1)
-        source <(grep vxlan_i.= test_cni_1.sh) # set vxlan_id and vxlan_ip
+        source <(grep vxlan_i.= $script) # set vxlan_id and vxlan_ip
         if [[ "$script" == *"unicast"* ]]; then
             TYPE="unicast"
         elif [[ "$script" == *"multicast"* ]]; then
@@ -145,8 +151,7 @@ for script in ${scriptArray[*]}; do
                 $script
             else
                 [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name: bringing down vxlan and bridge"
-                ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id
-                ip address show dev vxbr$vxlan_id &>/dev/null && ip link delete vxbr$vxlan_id
+                ifaces_down $vxlan_id
             fi
         else
             # from systemd we ONLY use force. We don't need any check here
@@ -160,8 +165,7 @@ for script in ${scriptArray[*]}; do
                     $script
                 else
                     [ -n $NOISY ] echo "vxlan $vxlan_id - cni $vxlan_name: bringing down vxlan and bridge"
-                    ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id
-                    ip address show dev vxbr$vxlan_id &>/dev/null && ip link delete vxbr$vxlan_id
+                    ifaces_down $vxlan_id
                 fi
             fi
         fi
