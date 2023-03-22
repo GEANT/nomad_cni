@@ -99,6 +99,7 @@ define nomad_cni::macvlan::unicast::v4 (
         "${module_name}/bridge-fdb.epp", {
           agent_mac => $agent['mac'],
           agent_ip  => $agent['ip'],
+          vxlan_id  => $vxlan_id,
         }
       ),
       order   => seeded_rand(20000, "vxlan_${vxlan_id}_${agent['ip']}");
