@@ -133,7 +133,7 @@ fi
 for script in ${scriptArray[*]}; do
     if [ -f $script ]; then
         vxlan_name=$(basename $script | cut -d'.' -f1)
-        source <(grep vxlan_id= $script)
+        source <(grep vxlan_i.= test_cni_1.sh) # set vxlan_id and vxlan_ip
         if [[ "$script" == *"unicast"* ]]; then
             TYPE="unicast"
         elif [[ "$script" == *"multicast"* ]]; then

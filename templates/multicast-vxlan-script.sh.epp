@@ -1,4 +1,6 @@
+# variables used in the main script
 vxlan_id=<%= $vxlan_id %>
+vxlan_ip=<%= $vxlan_ip %>
 
 # vxlan multicast configuration
 ip link add vxlan<%= $vxlan_id %> type vxlan id <%= $vxlan_id %> dev <%= $iface %> dstport 4789 group <%= $multicast_group %>
