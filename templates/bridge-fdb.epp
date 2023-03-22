@@ -1,2 +1,2 @@
-bridge fdb append 00:00:00:00:00:00 dev vxlan${vxlan_id} dst <%= $agent_id %>
-bridge fdb append <%= $agent_mac %> dev vxlan${vxlan_id} dst <%= $agent_id %>
+bridge fdb append 00:00:00:00:00:00 dev vxlan<%= $vxlan_id %> dst <%= $agent_id %>
+bridge fdb append <%= $agent_mac %> dev vxlan<%= $vxlan_id %> dst <%= $agent_id %>
