@@ -57,7 +57,7 @@ define nomad_cni::macvlan::unicast::v4 (
   }
   else {
     $agents = puppetdb_query(
-      "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip facts.networking.interfaces.${iface}.mac] {
+      "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
         facts.networking.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
     )
