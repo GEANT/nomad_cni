@@ -2,13 +2,18 @@
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Requirements and notes](#requirements-and-notes)
-3. [What this module affects](#what-this-module-affects)
-4. [Usage and examples](#usage-and-examples)
+1. [Important notice](#important-notice)
+2. [Overview](#overview)
+3. [Requirements and notes](#requirements-and-notes)
+4. [What this module affects](#what-this-module-affects)
+5. [Usage and examples](#usage-and-examples)
     1. [Install the CNI components](#install-the-cni-components)
     2. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
-5. [Limitations](#limitations)
+6. [Limitations](#limitations)
+
+## Important notice
+
+**This modules is still experimental.** Use it and test it at your own risk.
 
 ## Overview
 
