@@ -73,10 +73,6 @@ define nomad_cni::macvlan::unicast::v4 (
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
-  $test = {
-    'test1' => [ '$agent_names', '$cni_ranges_v4', '$vxlan_id' ],
-  }
-
   service { "cni-id@${cni_name}.service":
     ensure  => running,
     enable  => true,
@@ -115,10 +111,11 @@ define nomad_cni::macvlan::unicast::v4 (
           target  => "/etc/vxlan/unicast.d/${cni_name}.sh",
           content => epp(
             "${module_name}/unicast-vxlan-script-header.sh.epp", {
+              agent_ip      => $facts['networking']['interfaces'][$iface]['ip'],
               vxlan_id      => $vxlan_id,
               vxlan_ip      => $cni_item[1],
               iface         => $iface,
-              vxlan_netmask => $cni_item[4]
+              vxlan_netmask => $cni_item[4],
             }
           ),
           order   => '0001';
