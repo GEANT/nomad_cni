@@ -105,25 +105,23 @@ class nomad_cni::config (
   }
   cron {
     default:
-      user     => 'root',
-      hour     => '*',
-      month    => '*',
-      monthday => '*',
-      weekday  => '*';
+      user        => 'root',
+      hour        => '*',
+      month       => '*',
+      monthday    => '*',
+      weekday     => '*',
+      environment => 'STARTED_BY_CRON=yes';
     # ensure that the VXLANs are up and running (ideally this should be done by systemd)  (FIXME)
     'keep-vxlan-up':
-      ensure      => $cron_ensure_status,
-      environment => 'STARTED_BY_CRON=yes',
-      command     => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --status up --name all',
-      minute      => "*/${$keep_vxlan_up_cron_interval}";
+      ensure  => $cron_ensure_status,
+      command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --status up --name all',
+      minute  => "*/${$keep_vxlan_up_cron_interval}";
     # it unconfigures the VXLANs that are not in use and disable corresponding systemd services
     # it's also triggered when the directory /etc/vxlan/{multicast,unicast}.d is changed
     'purge_unused_vxlans':
-      ensure      => present,
-      environment => 'STARTED_BY_CRON=yes',
-      user        => 'root',
-      command     => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --purge',
-      minute      => fqdn_rand(59);
+      ensure  => present,
+      command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --purge',
+      minute  => fqdn_rand(59);
   }
 }
 # vim: set ts=2 sw=2 et :
