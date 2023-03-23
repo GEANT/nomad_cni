@@ -24,11 +24,11 @@
 #
 define nomad_cni::macvlan::unicast::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
-  String $cni_name          = $name,
-  String $agent_regex       = undef,
-  Array $agent_list         = [],
-  String $iface             = 'eth0',
-  String $cni_proto_version = '1.0.0',
+  String $cni_name               = $name,
+  String $agent_regex            = undef,
+  Array $agent_list              = [],
+  String $iface                  = 'eth0',
+  String $cni_proto_version      = '1.0.0',
 ) {
   # == ensure that nomad_cni class was included and that the name is not reserved
   #
@@ -68,7 +68,8 @@ define nomad_cni::macvlan::unicast::v4 (
         'mac' => $item["facts.networking.interfaces.${iface}.mac"]
       }
     }
-    $agent_names = $agents_inventory.map |$item| { $item['facts.networking.hostname'] }
+    $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
+    $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
   }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
   $vxlan_id = seeded_rand(16777215, $network) + 1
