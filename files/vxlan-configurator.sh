@@ -119,10 +119,8 @@ else
     scriptArray=(/etc/vxlan/*icast.d/$NAME.sh)
 fi
 
-if [ -n $STARTED_BY_SYSTEMD ]; then
+if [ -n $STARTED_BY_SYSTEMD ] || [ -z $STARTED_BY_CRON ]; then
     NOISY='bofh'
-else
-    tty -s && NOISY='bofh' # tty command cannot be used in a systemd service
 fi
 
 # == MAIN ==
