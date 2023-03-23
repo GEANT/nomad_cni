@@ -120,7 +120,9 @@ else
 fi
 
 if [ -n $STARTED_BY_SYSTEMD ] || [ -z $STARTED_BY_CRON ]; then
-    NOISY='bofh'
+    ECHO_CMD='echo'
+else
+    ECHO_CMD='logger -t VXLAN-configurator'
 fi
 
 # == MAIN ==
@@ -137,21 +139,21 @@ for script in ${scriptArray[*]}; do
     fi
     if [ -n "$FORCE" ]; then
         if [ "$lower_status" == "up" ]; then
-            [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name not configured, bringing up vxlan"
+            $ECHO_CMD "vxlan $vxlan_id - cni $vxlan_name not configured, bringing up vxlan"
             $script
         else
-            [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name bringing down vxlan and bridge"
+            $ECHO_CMD "vxlan $vxlan_id - cni $vxlan_name bringing down vxlan and bridge"
             ifaces_down $vxlan_id
         fi
     else
         if check_status $vxlan_id $vxlan_ip; then
-            [ -n $NOISY ] && echo "VXLAN $vxlan_id is already configured"
+            $ECHO_CMD "VXLAN $vxlan_id is already configured"
         else
             if [ "$lower_status" == "up" ]; then
-                [ -n $NOISY ] && echo "vxlan $vxlan_id - cni $vxlan_name not configured, bringing up vxlan"
+                $ECHO_CMD "vxlan $vxlan_id - cni $vxlan_name not configured, bringing up vxlan"
                 $script
             else
-                [ -n $NOISY ] echo "vxlan $vxlan_id - cni $vxlan_name bringing down vxlan and bridge"
+                $ECHO_CMD echo "vxlan $vxlan_id - cni $vxlan_name bringing down vxlan and bridge"
                 ifaces_down $vxlan_id
             fi
         fi
