@@ -119,7 +119,7 @@ else
     scriptArray=(/etc/vxlan/*icast.d/$NAME.sh)
 fi
 
-if [ -n $STARTED_BY_SYSTEMD ] || [ -z $STARTED_BY_CRON ]; then
+if [ -n "$STARTED_BY_SYSTEMD" ] || [ -z "$STARTED_BY_CRON" ]; then
     ECHO_CMD='echo'
 else
     ECHO_CMD='logger -t VXLAN-configurator'
