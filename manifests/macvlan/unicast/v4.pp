@@ -170,6 +170,11 @@ define nomad_cni::macvlan::unicast::v4 (
                       gw  => $cni_item[1]
                     },
                   ],
+                  dns     => {
+                    nameservers => ['83.97.93.200'],
+                    domain      => 'geant.org',
+                    search      => ['geant.org'],
+                  },
                   dataDir => '/run/cni/ipam-state',
                 },
               },
