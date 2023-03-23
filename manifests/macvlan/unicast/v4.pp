@@ -84,17 +84,17 @@ define nomad_cni::macvlan::unicast::v4 (
     notify  => Exec["${module_name} reload nomad service"];
   }
 
-  concat { "/etc/cni/vxlan/unicast.d/${cni_name}.sh":
+  concat { "/etc/vxlan/unicast.d/${cni_name}.sh":
     owner   => 'root',
     group   => 'root',
     mode    => '0755',
-    require => File['/etc/cni/vxlan/unicast.d'],
+    require => File['/etc/vxlan/unicast.d'],
     notify  => Service["cni-id@${cni_name}.service"];
   }
 
   $agents_pretty_inventory.each |$agent| {
     concat::fragment { "vxlan_${vxlan_id}_${agent['name']}":
-      target  => "/etc/cni/vxlan/unicast.d/${cni_name}.sh",
+      target  => "/etc/vxlan/unicast.d/${cni_name}.sh",
       content => epp(
         "${module_name}/bridge-fdb.epp", {
           agent_mac => $agent['mac'],
@@ -112,7 +112,7 @@ define nomad_cni::macvlan::unicast::v4 (
     if $cni_item[0] == $facts['networking']['hostname'] {
       concat::fragment {
         "vxlan_${vxlan_id}_header":
-          target  => "/etc/cni/vxlan/unicast.d/${cni_name}.sh",
+          target  => "/etc/vxlan/unicast.d/${cni_name}.sh",
           content => epp(
             "${module_name}/unicast-vxlan-script-header.sh.epp", {
               vxlan_id      => $vxlan_id,
@@ -123,7 +123,7 @@ define nomad_cni::macvlan::unicast::v4 (
           ),
           order   => '0001';
         "vxlan_${vxlan_id}_footer":
-          target  => "/etc/cni/vxlan/unicast.d/${cni_name}.sh",
+          target  => "/etc/vxlan/unicast.d/${cni_name}.sh",
           content => epp(
             "${module_name}/unicast-vxlan-script-footer.sh.epp", {
               vxlan_id      => $vxlan_id,
