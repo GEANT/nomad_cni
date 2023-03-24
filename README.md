@@ -49,8 +49,8 @@ class { 'nomad_cni':
 
 ### Create a bunch of CNI networks
 
-`agent_regex` will only match nodes within the same Puppet environment (i.e. on test you won't be able match a node from the production environment). Alternatively you can use `agent_list`.\
-The following will setup a unicast vxlan:
+`agent_regex` will only match nodes within the same Puppet environment (i.e. on test you won't be able to match a node from the production environment). Alternatively you can use `agent_list`.\
+Using following you can setup to CNI networks, using the unicast vxlan technology:
 
 ```puppet
 nomad_cni::macvlan::unicast::v4 {
