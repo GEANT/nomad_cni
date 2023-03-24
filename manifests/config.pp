@@ -46,6 +46,12 @@ class nomad_cni::config (
       source => "puppet:///modules/${module_name}/vxlan-configurator.sh";
   }
 
+  ['/etc/facter/', '/etc/facter/facts.d/'].each |$facts_dir| {
+    unless defined(File[$facts_dir]) {
+      file { $facts_dir: ensure => 'directory', }
+    }
+  }
+
   # == define Nomad service reload
   #
   exec { "${module_name} reload nomad service":

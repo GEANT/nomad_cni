@@ -12,11 +12,11 @@ fi
 usage() {
     echo "Usage: $(basename $0) --force --status up --name my_cni"
     echo ""
-    echo "    -h | --help    Print this help and exit"
-    echo "    --name    name/all: Configure the specific CNI, or all if all/ALL is specified"
-    echo "    --status  up/down: Bring VXLAN and Bridge down"
-    echo "    --force   Force IP configuration"
-    echo "    --purge   Purge VXLANs and systemd service without a matching script"
+    echo "    -h | --help         Print this help and exit"
+    echo "    --name name/all:  Configure the specific CNI, or all if all/ALL is specified"
+    echo "    --status up/down:  Bring VXLAN and Bridge down"
+    echo "    --force             Force IP configuration"
+    echo "    --purge             Purge VXLANs and systemd service without a matching script"
     echo ""
     exit 3
 }

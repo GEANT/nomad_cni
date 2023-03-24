@@ -89,7 +89,8 @@ define nomad_cni::macvlan::multicast::v4 (
             vxlan_ip        => $cni_item[1],
             iface           => $iface,
             multicast_group => $multicast_group,
-            vxlan_netmask   => $cni_item[4]
+            vxlan_netmask   => $cni_item[4],
+            vxlan_name      => $cni_name,
           }
         ),
         notify  => Service["cni-id@${cni_name}.service"];

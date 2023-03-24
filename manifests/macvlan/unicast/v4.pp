@@ -69,7 +69,6 @@ define nomad_cni::macvlan::unicast::v4 (
       }"
     )
   }
-
   $agents_pretty_inventory = $agents_inventory.map |$item| {
     {
       'name' => $item['facts.networking.hostname'],
@@ -77,6 +76,7 @@ define nomad_cni::macvlan::unicast::v4 (
       'mac' => $item["facts.networking.interfaces.${iface}.mac"]
     }
   }
+
   $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
   $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
@@ -125,6 +125,7 @@ define nomad_cni::macvlan::unicast::v4 (
               vxlan_ip      => $cni_item[1],
               iface         => $iface,
               vxlan_netmask => $cni_item[4],
+              vxlan_name    => $cni_name,
             }
           ),
           order   => '0001';

@@ -1,6 +1,7 @@
 # variables used in the main script
-vxlan_id=<%= $vxlan_id %>
-vxlan_ip=<%= $vxlan_ip %>
+vxlan_name="<%= $vxlan_name %>"
+vxlan_id="<%= $vxlan_id %>"
+vxlan_ip="<%= $vxlan_ip %>"
 
 # delete vxlan and bridge interface if they exist
 ip address show dev vxlan<%= $vxlan_id %> &>/dev/null && ip link delete vxlan<%= $vxlan_id %>
