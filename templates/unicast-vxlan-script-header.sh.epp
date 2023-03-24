@@ -1,5 +1,5 @@
 # variables used in the main script
-vxlan_id="<%= $vxlan_id %>"
+vxlan_id=<%= $vxlan_id %>
 vxlan_ip="<%= $vxlan_ip %>"
 
 # delete vxlan and bridge interface if they exist
