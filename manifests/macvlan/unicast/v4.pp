@@ -125,7 +125,6 @@ define nomad_cni::macvlan::unicast::v4 (
               vxlan_ip      => $cni_item[1],
               iface         => $iface,
               vxlan_netmask => $cni_item[4],
-              vxlan_name    => $cni_name,
             }
           ),
           order   => '0001';
