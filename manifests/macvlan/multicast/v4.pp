@@ -57,11 +57,12 @@ define nomad_cni::macvlan::multicast::v4 (
   }
   else {
     $agent_names = puppetdb_query(
-      "inventory[facts.hostname] {
-        facts.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
+      "inventory[facts.networking.hostname] {
+        facts.networking.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
-    ).map |$item| { $item['facts.hostname'] }
+    ).map |$item| { $item['facts.networking.hostname'] }
   }
+
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
   $vxlan_id = seeded_rand(16777215, $network) + 1
   $multicast_group = nomad_cni::int_to_v4(seeded_rand(268435455, $network) + 1)

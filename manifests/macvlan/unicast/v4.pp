@@ -24,11 +24,11 @@
 #
 define nomad_cni::macvlan::unicast::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
-  String $cni_name               = $name,
-  String $agent_regex            = undef,
-  Array $agent_list              = [],
-  String $iface                  = 'eth0',
-  String $cni_proto_version      = '1.0.0',
+  String $cni_name          = $name,
+  String $agent_regex       = undef,
+  Array $agent_list         = [],
+  String $iface             = 'eth0',
+  String $cni_proto_version = '1.0.0',
 ) {
   # == ensure that nomad_cni class was included and that the name is not reserved
   #
@@ -54,6 +54,13 @@ define nomad_cni::macvlan::unicast::v4 (
   }
   elsif $agent_list != [] {
     $agent_names = $agent_list
+    $agents_inventory = $agent_names.map |$item| {
+      $item_inventory = puppetdb_query(
+        "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
+          facts.networking.hostname = '${item}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
+        }"
+      )
+    }
   }
   else {
     $agents_inventory = puppetdb_query(
@@ -61,16 +68,17 @@ define nomad_cni::macvlan::unicast::v4 (
         facts.networking.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
     )
-    $agents_pretty_inventory = $agents_inventory.map |$item| {
-      {
-        'name' => $item['facts.networking.hostname'],
-        'ip' => $item["facts.networking.interfaces.${iface}.ip"],
-        'mac' => $item["facts.networking.interfaces.${iface}.mac"]
-      }
-    }
-    $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
-    $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
   }
+
+  $agents_pretty_inventory = $agents_inventory.map |$item| {
+    {
+      'name' => $item['facts.networking.hostname'],
+      'ip' => $item["facts.networking.interfaces.${iface}.ip"],
+      'mac' => $item["facts.networking.interfaces.${iface}.mac"]
+    }
+  }
+  $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
+  $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
