@@ -1,4 +1,5 @@
 # variables used in the main script
+vxlan_name="<%= $vxlan_name %>"
 vxlan_id="<%= $vxlan_id %>"
 vxlan_ip="<%= $vxlan_ip %>"
 
