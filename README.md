@@ -9,7 +9,7 @@
     1. [Install the CNI components](#install-the-cni-components)
     2. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
 5. [CNIs segregation and interconnection](#cnis-segregation-and-interconnection)
-7. [Limitations](#limitations)
+6. [Limitations](#limitations)
 
 ## Overview
 
@@ -27,6 +27,7 @@ The CNI configuration has a stanza for the DNS settings, but these settings don'
 * Installs the CNI network plugins (via url)
 * Installs a configuration file for every CNI network (`/etc/cni/vxlan.d/vxlan*.conf`)
 * Creates a Bridge and a VXLAN for every CNI network (managed via custom script)
+* Optionally, segregates and interconnects CNIs (by default they're open)
 
 ## Usage and examples <a name="usage-and-examples"></a>
 
@@ -85,11 +86,11 @@ nomad_cni::cni_connect {['test-cni-1', 'test-cni-2']: }
 If you need encryption, or you need to interconnect only certain services, you can either:
 
 1. help implementing `wireguard` in this module (to enable encryption)
-2. use [Consul Connect](https://www.hashicorp.com/products/consul) (to enable encryption and interconnectio single service)
+2. use [Consul Connect](https://www.hashicorp.com/products/consul) (to enable encryption and interconnect single services)
 
 ## Limitations
 
 * currently only IPv4 is supported
-* currently only `macvlan` plugin is supported (any reason to use a different plugin?)
-* vlxlan are brought up with systemd, but a link failure is not detected by systemd service (there is a cron job to ensure that the network is up)
+* currently only `macvlan` plugin is supported (is there a reason to use a different plugin?)
+* vlxlan are brought up with systemd, but a link failure is not detected by the systemd service (there is a cron job to ensure that the network is up)
 * unit test is always on my mind, but it's not yet ready
