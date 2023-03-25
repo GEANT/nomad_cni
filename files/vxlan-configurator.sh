@@ -42,7 +42,7 @@ purge_stale_ifaces() {
 purge_stale_services() {
     configured_services=$(systemctl list-units cni-id@* --all -l --no-pager --no-legend | awk '{print $NF}')
     for srv in $configured_services; do
-        if ! test -f "${$BASE_DIR}/multicast.d/${srv}.sh" && ! test -f "${$BASE_DIR}/unicast.d/${srv}.sh"; then
+        if ! test -f "${BASE_DIR}/multicast.d/${srv}.sh" && ! test -f "${BASE_DIR}/unicast.d/${srv}.sh"; then
             systemctl disable cni-id@${srv}.service
             systemctl stop cni-id@${srv}.service
             rm -f /etc/systemd/system/cni-id@${srv}.service
