@@ -42,8 +42,8 @@ class nomad_cni::config (
       force   => true;
     '/usr/local/bin/cni-validator.sh':
       source => "puppet:///modules/${module_name}/cni-validator.sh";
-    '/usr/local/bin/vxlan-configurator.sh':
-      source => "puppet:///modules/${module_name}/vxlan-configurator.sh";
+    '/usr/local/bin/vxlan-wizard.sh':
+      source => "puppet:///modules/${module_name}/vxlan-wizard.sh";
   }
 
   ['/etc/facter/', '/etc/facter/facts.d/'].each |$facts_dir| {
@@ -63,8 +63,8 @@ class nomad_cni::config (
   # == purge unused VXLANs (triggered by directory changes)
   #
   exec { 'purge_unused_vxlans':
-    command     => 'flock /tmp/vxlan-configurator vxlan-configurator.sh --purge',
-    require     => File['/usr/local/bin/vxlan-configurator.sh'],
+    command     => 'flock /tmp/vxlan-wizard vxlan-wizard.sh --purge',
+    require     => File['/usr/local/bin/vxlan-wizard.sh'],
     path        => ['/usr/local/bin', '/usr/bin'],
     refreshonly => true,
     subscribe   => File['/opt/cni/vxlan/unicast.d', '/opt/cni/vxlan/multicast.d'];
@@ -120,13 +120,13 @@ class nomad_cni::config (
     # ensure that the VXLANs are up and running (ideally this should be done by systemd)  (FIXME)
     'keep-vxlan-up':
       ensure  => $cron_ensure_status,
-      command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --status up --name all',
+      command => 'flock /tmp/vxlan-wizard /usr/local/bin/vxlan-wizard.sh --status up --name all',
       minute  => "*/${$keep_vxlan_up_cron_interval}";
     # it unconfigures the VXLANs that are not in use and disable corresponding systemd services
     # it's also triggered when the directory /opt/cni/vxlan/{multicast,unicast}.d is changed
     'purge_unused_vxlans':
       ensure  => present,
-      command => 'flock /tmp/vxlan-configurator /usr/local/bin/vxlan-configurator.sh --purge',
+      command => 'flock /tmp/vxlan-wizard /usr/local/bin/vxlan-wizard.sh --purge',
       minute  => fqdn_rand(59);
   }
 }
