@@ -30,6 +30,9 @@
 # [*firewall_rule_order*] Integer
 # Iptables rule order
 #
+# [*cut_off_vxlan*] Boolean
+# Segregate vxlans with iptables
+#
 class nomad_cni (
   String $cni_version = '1.2.0',
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
@@ -41,6 +44,7 @@ class nomad_cni (
   Boolean $manage_firewall_vxlan                   = false,
   Integer $firewall_rule_order                     = 150,
   Enum['iptables', 'ip6tables'] $firewall_provider = 'iptables',
+  Boolean $cut_off_vxlan                           = false,
 ) {
   class { 'nomad_cni::config':
     cni_version                 => $cni_version,
@@ -60,6 +64,13 @@ class nomad_cni (
   if ($manage_firewall_vxlan) {
     class { 'nomad_cni::firewall::vxlan':
       interface  => $interface,
+      rule_order => $firewall_rule_order,
+      provider   => $firewall_provider,
+    }
+  }
+
+  if ($cut_off_vxlan) {
+    class { 'nomad_cni::cut_off':
       rule_order => $firewall_rule_order,
       provider   => $firewall_provider,
     }

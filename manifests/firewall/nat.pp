@@ -13,9 +13,9 @@
 # Iptables rule order
 #
 class nomad_cni::firewall::nat (
-  Enum['iptables', 'ip6tables'] $provider = $name,
-  String $interface = 'eth0',
-  Integer $rule_order = 150,
+  Integer $rule_order,
+  Enum['iptables', 'ip6tables'] $provider,
+  String $interface,
 ) {
   # == this is a private class
   #
