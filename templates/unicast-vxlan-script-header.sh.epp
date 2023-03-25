@@ -1,13 +1,13 @@
 # variables used in the main script
 vxlan_id=<%= $vxlan_id %>
 vxlan_ip="<%= $vxlan_ip %>"
+vxlan_network="<%= $vxlan_ip %>/<%= $vxlan_netmask %>"
 
 # delete vxlan and bridge interface if they exist
 ip address show dev vxlan<%= $vxlan_id %> &>/dev/null && ip link delete vxlan<%= $vxlan_id %>
 ip address show dev vxbr<%= $vxlan_id %> &>/dev/null && ip link delete vxbr<%= $vxlan_id %>
 
 # create vxlan interface
-#ip link add vxlan<%= $vxlan_id %> type vxlan id <%= $vxlan_id %> dev <%= $iface %> dstport 4789 local <%= $agent_ip %> nolearning
-ip link add vxlan<%= $vxlan_id %> type vxlan id <%= $vxlan_id %> dev <%= $iface %> dstport 4789 local <%= $agent_ip %>
+ip link add vxlan<%= $vxlan_id %> type vxlan id <%= $vxlan_id %> dev <%= $iface %> dstport 4789 local <%= $agent_ip %><% if ($nolearning) { %> nolearning<% } %>
 
 # populate bridge DB

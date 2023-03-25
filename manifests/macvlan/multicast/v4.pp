@@ -78,11 +78,11 @@ define nomad_cni::macvlan::multicast::v4 (
   #
   $cni_ranges_v4.each |$cni_item| {
     if $cni_item[0] == $facts['networking']['hostname'] {
-      file { "/etc/vxlan/multicast.d/${cni_name}.sh":
+      file { "/opt/cni/vxlan/multicast.d/${cni_name}.sh":
         owner   => 'root',
         group   => 'root',
         mode    => '0755',
-        require => File['/etc/vxlan/multicast.d'],
+        require => File['/opt/cni/vxlan/multicast.d'],
         content => epp(
           "${module_name}/multicast-vxlan-script.sh.epp", {
             vxlan_id        => $vxlan_id,

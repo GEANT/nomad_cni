@@ -1,2 +1,4 @@
 bridge fdb append 00:00:00:00:00:00 dev vxlan<%= $vxlan_id %> dst <%= $agent_ip %>
-# bridge fdb append <%= $agent_mac %> dev vxlan<%= $vxlan_id %> dst <%= $agent_ip %>
+<% if ($nolearning) { -%>
+bridge fdb append <%= $agent_mac %> dev vxlan<%= $vxlan_id %> dst <%= $agent_ip %>
+<% } -%>

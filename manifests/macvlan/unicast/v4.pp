@@ -22,6 +22,10 @@
 # [*cni_proto_version*] String
 # version of the CNI protocol
 #
+# [*nolearning*] Boolean
+# disable learning of MAC addresses on the bridge interface
+# it DID NOT WORK AS EXPECTED. It may require testing and maybe an improved configuration
+#
 define nomad_cni::macvlan::unicast::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
   String $cni_name          = $name,
@@ -29,6 +33,7 @@ define nomad_cni::macvlan::unicast::v4 (
   Array $agent_list         = [],
   String $iface             = 'eth0',
   String $cni_proto_version = '1.0.0',
+  Boolean $nolearning       = false,  # please read the docs carefully before enabling this option
 ) {
   # == ensure that nomad_cni class was included and that the name is not reserved
   #
@@ -89,22 +94,23 @@ define nomad_cni::macvlan::unicast::v4 (
     notify  => Exec["${module_name} reload nomad service"];
   }
 
-  concat { "/etc/vxlan/unicast.d/${cni_name}.sh":
+  concat { "/opt/cni/vxlan/unicast.d/${cni_name}.sh":
     owner   => 'root',
     group   => 'root',
     mode    => '0755',
-    require => File['/etc/vxlan/unicast.d'],
+    require => File['/opt/cni/vxlan/unicast.d'],
     notify  => Service["cni-id@${cni_name}.service"];
   }
 
   $agents_pretty_inventory.each |$agent| {
     concat::fragment { "vxlan_${vxlan_id}_${agent['name']}":
-      target  => "/etc/vxlan/unicast.d/${cni_name}.sh",
+      target  => "/opt/cni/vxlan/unicast.d/${cni_name}.sh",
       content => epp(
         "${module_name}/bridge-fdb.epp", {
-          agent_mac => $agent['mac'],
-          agent_ip  => $agent['ip'],
-          vxlan_id  => $vxlan_id,
+          agent_mac  => $agent['mac'],
+          agent_ip   => $agent['ip'],
+          vxlan_id   => $vxlan_id,
+          nolearning => $nolearning,
         }
       ),
       order   => seeded_rand(20000, "vxlan_${vxlan_id}_${agent['ip']}");
@@ -117,7 +123,7 @@ define nomad_cni::macvlan::unicast::v4 (
     if $cni_item[0] == $facts['networking']['hostname'] {
       concat::fragment {
         "vxlan_${vxlan_id}_header":
-          target  => "/etc/vxlan/unicast.d/${cni_name}.sh",
+          target  => "/opt/cni/vxlan/unicast.d/${cni_name}.sh",
           content => epp(
             "${module_name}/unicast-vxlan-script-header.sh.epp", {
               agent_ip      => $facts['networking']['interfaces'][$iface]['ip'],
@@ -125,11 +131,12 @@ define nomad_cni::macvlan::unicast::v4 (
               vxlan_ip      => $cni_item[1],
               iface         => $iface,
               vxlan_netmask => $cni_item[4],
+              nolearning    => $nolearning,
             }
           ),
           order   => '0001';
         "vxlan_${vxlan_id}_footer":
-          target  => "/etc/vxlan/unicast.d/${cni_name}.sh",
+          target  => "/opt/cni/vxlan/unicast.d/${cni_name}.sh",
           content => epp(
             "${module_name}/unicast-vxlan-script-footer.sh.epp", {
               vxlan_id      => $vxlan_id,
