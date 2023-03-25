@@ -30,7 +30,7 @@
 # [*firewall_rule_order*] Integer
 # Iptables rule order
 #
-# [*cut_off_vxlan*] Boolean
+# [*cni_cut_off*] Boolean
 # Segregate vxlans with iptables
 #
 class nomad_cni (
@@ -44,7 +44,7 @@ class nomad_cni (
   Boolean $manage_firewall_vxlan                   = false,
   Integer $firewall_rule_order                     = 150,
   Enum['iptables', 'ip6tables'] $firewall_provider = 'iptables', # be aware that ip6tables is NOT supported at the moment
-  Boolean $cut_off_vxlan                           = false,
+  Boolean $cni_cut_off                                 = false,
 ) {
   class { 'nomad_cni::config':
     cni_version                 => $cni_version,
@@ -69,8 +69,8 @@ class nomad_cni (
     }
   }
 
-  if ($cut_off_vxlan) {
-    class { 'nomad_cni::cut_off':
+  if ($cni_cut_off) {
+    class { 'nomad_cni::firewall::cni_cut_off':
       rule_order => $firewall_rule_order,
       provider   => $firewall_provider,
     }

@@ -1,4 +1,4 @@
-# Class: nomad_cni::firewall::cut_off
+# Class: nomad_cni::firewall::cni_cutoff
 #
 #
 # == Paramters:
@@ -9,7 +9,7 @@
 # [*rule_order*] Integer
 # Iptables rule order
 #
-class nomad_cni::firewall::cut_off (
+class nomad_cni::firewall::cni_cut_off (
   Integer $rule_order,
   Enum['iptables', 'ip6tables'] $provider,
 ) {
@@ -21,11 +21,11 @@ class nomad_cni::firewall::cut_off (
   $networks = $cni_names.map |$item| { $cni_names[$item]['network'] }
   $drop_rule_order = $rule_order + 100
 
-  $cni_names.each |$cni_name| {
-    $my_network = $cni_names[$cni_name]
+  $cni_names.each |$cni| {
+    $my_network = $cni_names[$cni]['network']
     $other_networks = $networks - $my_network
 
-    firewall_multi { "${drop_rule_order} drop traffic from other CNIs to ${cni_name}":
+    firewall_multi { "${drop_rule_order} drop traffic from other CNIs to ${cni}":
       action      => 'DROP',
       chain       => 'INPUT',
       source      => $other_networks,

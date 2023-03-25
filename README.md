@@ -8,8 +8,8 @@
 4. [Usage and examples](#usage-and-examples)
     1. [Install the CNI components](#install-the-cni-components)
     2. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
-5. [ToDo](#todo)
-6. [Limitations](#limitations)
+5. [CNIs segregation and interconnection](#cnis-segregation-and-interconnection)
+7. [Limitations](#limitations)
 
 ## Overview
 
@@ -65,14 +65,31 @@ nomad_cni::macvlan::unicast::v4 {
 
 Multicast shuold be better, but in my environment it wasn't reliable. Feel free to experiment at your own risk.
 
-## ToDo
+## CNIs segregation and interconnection
 
-* VXLANs segregation. At the moment the VXLANs are routed and containers from one VXLAN can connect to containers on a different VXLAN.\
-  We either need to deny traffic across VXLANs and use Consul Connect or selectively open the traffic between VXLANs
-* improve the script in order to detect a link failure from systemd and remove the cron jobs
+By default all CNIs can connect to each other.\
+CNIs segregation is achieved with `iptables` (the module `firewall_multi` is used), and it's enabled by setting `cni_cut_off` to `true`:
+
+```puppet
+class { 'nomad_cni':
+  cni_cut_off  => true
+}
+```
+
+Once you have cut off the CNIs, you can interconnect some of them using the following resource:
+
+```puppet
+nomad_cni::cni_connect {['test-cni-1', 'test-cni-2']: }
+```
+
+If you need encryption, or you need to interconnect only certain services, you can either:
+
+1. help implementing `wireguard` in this module (to enable encryption)
+2. use [Consul Connect](https://www.hashicorp.com/products/consul) (to enable encryption and interconnectio single service)
 
 ## Limitations
 
 * currently only IPv4 is supported
-* currently only `macvlan` plugin is supported (is a different plugin really needed?)
+* currently only `macvlan` plugin is supported (any reason to use a different plugin?)
+* vlxlan are brought up with systemd, but a link failure is not detected by systemd service (there is a cron job to ensure that the network is up)
 * unit test is always on my mind, but it's not yet ready
