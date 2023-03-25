@@ -22,7 +22,7 @@
 # whether to manage the firewall rules for the VXLAN
 #
 # [*interface*] String
-# Name of the network Interface to NAT
+# Name of the network Interface to NAT (this is the interface on the host)
 #
 # [*firewall_provider*] Enum['iptables', 'ip6tables']
 # Iptables provider: iptables or ip6tables
@@ -43,7 +43,7 @@ class nomad_cni (
   Boolean $manage_firewall_nat                     = false,
   Boolean $manage_firewall_vxlan                   = false,
   Integer $firewall_rule_order                     = 150,
-  Enum['iptables', 'ip6tables'] $firewall_provider = 'iptables',
+  Enum['iptables', 'ip6tables'] $firewall_provider = 'iptables', # be aware that ip6tables is NOT supported at the moment
   Boolean $cut_off_vxlan                           = false,
 ) {
   class { 'nomad_cni::config':

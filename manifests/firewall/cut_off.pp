@@ -19,12 +19,13 @@ class nomad_cni::firewall::cut_off (
 
   $cni_names = $facts['nomad_cni_hash'].keys()
   $networks = $cni_names.map |$item| { $cni_names[$item]['network'] }
+  $drop_rule_order = $rule_order + 100
 
   $cni_names.each |$cni_name| {
     $my_network = $cni_names[$cni_name]
     $other_networks = $networks - $my_network
 
-    firewall_multi { "100 drop traffic from other CNIs to ${cni_name}":
+    firewall_multi { "${drop_rule_order} drop traffic from other CNIs to ${cni_name}":
       action      => 'DROP',
       chain       => 'INPUT',
       source      => $other_networks,
