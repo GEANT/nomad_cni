@@ -1,4 +1,4 @@
-# == Define: nomad_cni::connect
+# == Define: nomad_cni::cni_connect
 #
 #
 # == Paramters:
@@ -23,7 +23,7 @@ define nomad_cni::cni_connect (
   Enum['iptables', 'ip6tables'] $provider = 'iptables',
 ) {
   unless defined(Class['nomad_cni::firewall::vxlan']) {
-    fail('nomad_cni::firewall::connect requires nomad_cni::firewall::cni_cut_off to be defined')
+    fail('nomad_cni::cni_connect requires nomad_cni::firewall::cni_cut_off to be defined')
   }
   if $cni_array.size < 2 {
     fail('you need to define at least 2 CNIs to connect')
