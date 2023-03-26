@@ -11,12 +11,14 @@ class nomad_cni::firewall::chain (
 ) {
   if 'iptables' in $provider {
     firewallchain { ['CNI-ISOLATION-INPUT:filter:IPv4', 'CNI-ISOLATION-POSTROUTING:nat:IPv4']:
-      ensure  => present,
+      ensure => present,
+      purge  => true,
     }
   }
   if 'ip6tables' in $provider {
     firewallchain { ['CNI-ISOLATION-INPUT:filter:IPv6', 'CNI-ISOLATION-POSTROUTING:nat:IPv6']:
-      ensure  => present,
+      ensure => present,
+      purge  => true,
     }
   }
 }
