@@ -22,7 +22,7 @@ class nomad_cni::firewall::vxlan (
   assert_private()
 
   ['iptables', 'ip6tables'].each |$iptables_provider| {
-    $ip_version = $provider ? {
+    $ip_version = $iptables_provider ? {
       'iptables'  => 'ip',
       'ip6tables' => 'ip6',
     }
