@@ -23,8 +23,8 @@ class nomad_cni::firewall::vxlan (
 
   ['iptables', 'ip6tables'].each |$iptables_provider| {
     $ip_address = $iptables_provider ? {
-      'iptables'  => $facts['networking'][$interface]['ip'],
-      'ip6tables' => $facts['networking'][$interface]['ip6'],
+      'iptables'  => $facts['networking']['interfaces'][$interface]['ip'],
+      'ip6tables' => $facts['networking']['interfaces'][$interface]['ip6'],
     }
     if $iptables_provider in $provider {
       @@firewall { "100 allow traffic on UDP port 4789 through ${interface} for provider ${iptables_provider}":
