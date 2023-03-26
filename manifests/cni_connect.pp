@@ -32,7 +32,6 @@ define nomad_cni::cni_connect (
   $cni_names = $facts['nomad_cni_hash'].keys()
   $networks = $cni_names.map |$item| { $cni_names[$item]['network'] }
   $cni_array.each |$cni| {
-    # unless $cni in $cni_names { fail("CNI ${cni} is not defined") }
     if ! defined(Nomad_cni::Macvlan::Unicast::V4[$cni]) and ! defined(Nomad_cni::Macvlan::Multicast::V4[$cni]) {
       fail("CNI ${cni} does not exist")
     }
@@ -42,13 +41,16 @@ define nomad_cni::cni_connect (
     $my_network = $cni_names[$cni]['network']
     $other_networks = $networks - $my_network
 
-    firewall_multi { "${firewall_rule_order} allow traffic from other CNIs to ${cni}":
-      action      => 'ACCEPT',
-      chain       => 'INPUT',
-      source      => $other_networks,
-      destination => $my_network,
-      proto       => 'all',
-      provider    => $provider,
+    # it can happen that the fact was not yet uploaded
+    if $cni in $cni_names and ($my_network) {
+      firewall_multi { "${firewall_rule_order} allow traffic from other CNIs to ${cni}":
+        action      => 'ACCEPT',
+        chain       => 'CNI-ISOLATION-INPUT',
+        source      => $other_networks,
+        destination => $my_network,
+        proto       => 'all',
+        provider    => $provider,
+      }
     }
   }
 }

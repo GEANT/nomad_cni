@@ -27,8 +27,8 @@ class nomad_cni::firewall::cni_cut_off (
       $other_networks = $networks - $my_network
 
       firewall_multi { "${rule_order} drop traffic from ${cni} to other CNIs":
-        action      => 'DROP',
-        chain       => 'INPUT',
+        action      => drop,
+        chain       => 'CNI-ISOLATION-INPUT',
         source      => $my_network,
         destination => $other_networks,
         proto       => 'all',

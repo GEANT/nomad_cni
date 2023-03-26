@@ -23,7 +23,7 @@ class nomad_cni::firewall::nat (
 
   # NAT will work on IPv6, but we need to investigate the implications of doing so
   firewall_multi { "${rule_order} NAT CNI through ${interface}":
-    chain    => 'POSTROUTING',
+    chain    => 'CNI-ISOLATION-POSTROUTING',
     jump     => 'MASQUERADE',
     proto    => 'all',
     outiface => 'eth0',

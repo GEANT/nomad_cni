@@ -57,14 +57,20 @@ class nomad_cni (
     keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
   }
 
-
   # == Firewall setting
   #
+  if ($manage_firewall_nat) or ($manage_firewall_vxlan) or ($cni_cut_off) {
+    class { 'nomad_cni::firewall::chain':
+      provider => $firewall_provider,
+    }
+  }
+
   if ($manage_firewall_nat) {
     class { 'nomad_cni::firewall::nat':
       interface  => $interface,
       rule_order => $firewall_rule_order,
       provider   => $firewall_provider,
+      require    => Class['nomad_cni::firewall::chain'],
     }
   }
 
@@ -73,6 +79,7 @@ class nomad_cni (
       interface  => $interface,
       rule_order => $firewall_rule_order,
       provider   => $firewall_provider,
+      require    => Class['nomad_cni::firewall::chain'],
     }
   }
 
@@ -80,6 +87,7 @@ class nomad_cni (
     class { 'nomad_cni::firewall::cni_cut_off':
       rule_order => $firewall_rule_order,
       provider   => $firewall_provider,
+      require    => Class['nomad_cni::firewall::chain'],
     }
   }
 }

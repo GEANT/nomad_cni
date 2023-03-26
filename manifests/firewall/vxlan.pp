@@ -29,9 +29,9 @@ class nomad_cni::firewall::vxlan (
   @@firewall_multi { "${rule_order} allow UDP traffic on UDP port 4789 through ${interface}":
     tag      => "${module_name}_fw_$${facts['agent_specified_environment']}",
     action   => accept,
+    chain    => 'CNI-ISOLATION-INPUT',
     dport    => 4789,
     proto    => udp,
-    chain    => 'INPUT',
     provider => $provider,
     source   => $facts['networking'][$interface][$ip_version];
   }
