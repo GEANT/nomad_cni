@@ -13,7 +13,7 @@ class nomad_cni::firewall::chain (
   Array[Enum['iptables', 'ip6tables']] $provider,
   Integer $rule_order,
 ) {
-  $drop_rule_order = $rule_order + 60
+  $drop_rule_order = $rule_order + 20
 
   if 'iptables' in $provider {
     firewallchain { ['CNI-ISOLATION-INPUT:filter:IPv4', 'CNI-ISOLATION-POSTROUTING:nat:IPv4']:
