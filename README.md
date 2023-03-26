@@ -77,7 +77,7 @@ class { 'nomad_cni':
 }
 ```
 
-Once you have cut off the CNIs, you can interconnect some of them using the following resource:
+Once you have cut off the CNIs, you can interconnect some of them using the following example:
 
 ```puppet
 nomad_cni::cni_connect { ['cni1', 'cni2']: }

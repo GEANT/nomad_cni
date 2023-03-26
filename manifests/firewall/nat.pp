@@ -14,14 +14,15 @@
 #
 class nomad_cni::firewall::nat (
   Integer $rule_order,
-  Enum['iptables', 'ip6tables'] $provider,
+  Array[Enum['iptables', 'ip6tables']] $provider,
   String $interface,
 ) {
   # == this is a private class
   #
   assert_private()
 
-  firewall { "${rule_order} NAT CNI through ${interface} for ${provider}":
+  # NAT will work on IPv6, but we need to investigate the implications of doing so
+  firewall_multi { "${rule_order} NAT CNI through ${interface}":
     chain    => 'POSTROUTING',
     jump     => 'MASQUERADE',
     proto    => 'all',

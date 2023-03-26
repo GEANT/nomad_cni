@@ -34,7 +34,7 @@ define nomad_cni::cni_connect (
   $cni_array.each |$cni| {
     # unless $cni in $cni_names { fail("CNI ${cni} is not defined") }
     if ! defined(Nomad_cni::Macvlan::Unicast::V4[$cni]) and ! defined(Nomad_cni::Macvlan::Multicast::V4[$cni]) {
-      fail("CNI ${cni} is not defined")
+      fail("CNI ${cni} does not exist")
     }
   }
 

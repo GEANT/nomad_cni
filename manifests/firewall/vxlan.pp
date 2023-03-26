@@ -14,7 +14,7 @@
 #
 class nomad_cni::firewall::vxlan (
   Integer $rule_order,
-  Enum['iptables', 'ip6tables'] $provider,
+  Array[Enum['iptables', 'ip6tables']] $provider,
   String $interface,
 ) {
   # == this is a private class
@@ -22,17 +22,17 @@ class nomad_cni::firewall::vxlan (
   assert_private()
 
   $ip_version = $provider ? {
-    'iptables'  => 'ipv4',
-    'ip6tables' => 'ipv6',
+    'iptables'  => 'ip',
+    'ip6tables' => 'ip6',
   }
 
-  @@firewall { "${rule_order} allow UDP traffic on UDP port 4789 through ${interface} for ${provider}":
+  @@firewall_multi { "${rule_order} allow UDP traffic on UDP port 4789 through ${interface}":
     tag      => "${module_name}_fw_$${facts['agent_specified_environment']}",
     action   => accept,
     dport    => 4789,
     proto    => udp,
     chain    => 'INPUT',
-    provider => iptables,
+    provider => $provider,
     source   => $facts['networking'][$interface][$ip_version];
   }
 

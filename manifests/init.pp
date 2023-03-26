@@ -24,8 +24,8 @@
 # [*interface*] String
 # Name of the network Interface to NAT (this is the interface on the host)
 #
-# [*firewall_provider*] Enum['iptables', 'ip6tables']
-# Iptables provider: iptables or ip6tables
+# [*firewall_provider*] Array[Enum['iptables', 'ip6tables']]
+# Iptables providers: ['iptables', 'ip6tables']
 #
 # [*firewall_rule_order*] Integer
 # Iptables rule order
@@ -36,17 +36,17 @@
 class nomad_cni (
   String $cni_version = '1.2.0',
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
-  Boolean $keep_vxlan_up_cron_ensure               = true,
-  Integer[1, 59] $keep_vxlan_up_cron_interval      = 10,
+  Boolean $keep_vxlan_up_cron_ensure                       = true,
+  Integer[1, 59] $keep_vxlan_up_cron_interval              = 10,
   # the parameters below are used to configure the firewall (ignore them if you don't want this module to configure the firewall)
-  String $interface                                = 'eth0',
-  Boolean $manage_firewall_nat                     = false,
-  Boolean $manage_firewall_vxlan                   = false,
-  Integer $firewall_rule_order                     = 150,
-  Enum['iptables', 'ip6tables'] $firewall_provider = 'iptables', # be aware that ip6tables is NOT supported at the moment
-  Boolean $cni_cut_off                             = false,
+  String $interface                                        = 'eth0',
+  Boolean $manage_firewall_nat                             = false,
+  Boolean $manage_firewall_vxlan                           = false,
+  Integer $firewall_rule_order                             = 150,
+  Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # be aware that ip6tables is NOT supported at the moment
+  Boolean $cni_cut_off                                     = false,
 ) {
-  if $firewall_provider == 'ip6tables' {
+  if 'ip6tables' in $firewall_provider {
     fail('ip6tables is not supported at the moment')
   }
 
@@ -57,6 +57,9 @@ class nomad_cni (
     keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
   }
 
+
+  # == Firewall setting
+  #
   if ($manage_firewall_nat) {
     class { 'nomad_cni::firewall::nat':
       interface  => $interface,
