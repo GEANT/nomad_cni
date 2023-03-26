@@ -61,7 +61,8 @@ class nomad_cni (
   #
   if ($manage_firewall_nat) or ($manage_firewall_vxlan) or ($cni_cut_off) {
     class { 'nomad_cni::firewall::chain':
-      provider => $firewall_provider,
+      provider   => $firewall_provider,
+      rule_order => $firewall_rule_order,
     }
   }
 
@@ -85,7 +86,7 @@ class nomad_cni (
 
   if ($cni_cut_off) {
     class { 'nomad_cni::firewall::cni_cut_off':
-      rule_order => $firewall_rule_order,
+      rule_order => $firewall_rule_order + 50,
       provider   => $firewall_provider,
       require    => Class['nomad_cni::firewall::chain'],
     }
