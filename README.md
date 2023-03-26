@@ -20,14 +20,14 @@ The module will also create a Bridge interface and a VXLAN on each Agent and the
 ## Requirements and notes
 
 In addition to the requirements listed in `metadata.json`, **this module requires PuppetDB**.\
-The CNI configuration has a stanza for the DNS settings, but these settings don't work, because Nomad has its own settings for the DNS in the job configuration, and by default Nomad copies over the content of `resolv.conf` from the host onto the container.
+The CNI configuration has a stanza for the DNS settings, but these settings don't work (they're overwritten by the default settings provided by Nomad, or by the settings provided by Nomad in the job configuration).
 
 ## What this module affects <a name="what-this-module-affects"></a>
 
 * Installs the CNI network plugins (via url)
-* Installs a configuration file for every CNI network (`/etc/cni/vxlan.d/vxlan*.conf`)
+* Installs configuration/scripts for every CNI network (`/opt/cni/vxlan/.d/{un,mult}icast.d/*.sh`)
 * Creates a Bridge and a VXLAN for every CNI network (managed via custom script)
-* Optionally, segregates and interconnects CNIs (by default they're open)
+* Optionally, segregates and interconnects CNIs (by default they're open and interconnected)
 
 ## Usage and examples <a name="usage-and-examples"></a>
 
@@ -51,7 +51,7 @@ class { 'nomad_cni':
 ### Create a bunch of CNI networks
 
 `agent_regex` will only match nodes within the same Puppet environment (i.e. on test you won't be able to match a node from the production environment). Alternatively you can use `agent_list`.\
-Using following you can setup to CNI networks, using the unicast vxlan technology:
+Using the following resource declaration you can setup two CNI networks, using the unicast vxlan technology:
 
 ```puppet
 nomad_cni::macvlan::unicast::v4 {
@@ -80,7 +80,7 @@ class { 'nomad_cni':
 Once you have cut off the CNIs, you can interconnect some of them using the following resource:
 
 ```puppet
-nomad_cni::cni_connect {['test-cni-1', 'test-cni-2']: }
+nomad_cni::cni_connect { ['cni1', 'cni2']: }
 ```
 
 If you need encryption, or you need to interconnect only certain services, you can either:
@@ -92,5 +92,5 @@ If you need encryption, or you need to interconnect only certain services, you c
 
 * currently only IPv4 is supported
 * currently only `macvlan` plugin is supported (is there a reason to use a different plugin?)
-* vlxlan are brought up with systemd, but a link failure is not detected by the systemd service (there is a cron job to ensure that the network is up)
+* vlxlan interfaces are brought up by a systemd service, but a link failure is not detected by the systemd service (there is a cron job to ensure that the network is up)
 * unit test is always on my mind, but it's not yet ready

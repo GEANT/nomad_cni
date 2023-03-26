@@ -32,7 +32,10 @@ define nomad_cni::cni_connect (
   $cni_names = $facts['nomad_cni_hash'].keys()
   $networks = $cni_names.map |$item| { $cni_names[$item]['network'] }
   $cni_array.each |$cni| {
-    unless $cni in $cni_names { fail("CNI ${cni} is not defined") }
+    # unless $cni in $cni_names { fail("CNI ${cni} is not defined") }
+    if ! defined(Nomad_cni::Macvlan::Unicast::V4[$cni]) and ! defined(Nomad_cni::Macvlan::Multicast::V4[$cni]) {
+      fail("CNI ${cni} is not defined")
+    }
   }
 
   $cni_names.each |$cni| {

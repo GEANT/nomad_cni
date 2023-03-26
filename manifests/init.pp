@@ -44,8 +44,12 @@ class nomad_cni (
   Boolean $manage_firewall_vxlan                   = false,
   Integer $firewall_rule_order                     = 150,
   Enum['iptables', 'ip6tables'] $firewall_provider = 'iptables', # be aware that ip6tables is NOT supported at the moment
-  Boolean $cni_cut_off                                 = false,
+  Boolean $cni_cut_off                             = false,
 ) {
+  if $firewall_provider == 'ip6tables' {
+    fail('ip6tables is not supported at the moment')
+  }
+
   class { 'nomad_cni::config':
     cni_version                 => $cni_version,
     cni_base_url                => $cni_base_url,
