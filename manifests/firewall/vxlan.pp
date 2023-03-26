@@ -28,7 +28,7 @@ class nomad_cni::firewall::vxlan (
     }
     if $iptables_provider in $provider {
       @@firewall { "100 allow traffic on UDP port 4789 through ${interface} for provider ${iptables_provider}":
-        tag      => "${module_name}_fw_$${facts['agent_specified_environment']}",
+        tag      => "${module_name}_fw_${facts['agent_specified_environment']}",
         action   => accept,
         chain    => 'CNI-ISOLATION-INPUT',
         dport    => 4789,
@@ -39,5 +39,5 @@ class nomad_cni::firewall::vxlan (
     }
   }
 
-  Firewall <<| tag == "${module_name}_fw_$${facts['agent_specified_environment']}" |>>
+  Firewall <<| tag == "${module_name}_fw_${facts['agent_specified_environment']}" |>>
 }
