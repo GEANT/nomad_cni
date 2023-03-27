@@ -109,6 +109,6 @@ If you need encryption, or you need to interconnect only certain services, you c
 ## Limitations
 
 * currently only IPv4 is supported
-* currently only `macvlan` plugin is supported (is there a reason to use a different plugin?)
-* vlxlan interfaces are brought up by a systemd service, but a link failure is not detected by the service (there is a cron job to ensure that the network interfaces are up)
-* unit test is always on my mind, but it's not yet ready
+* only `macvlan` plugin is supported (is a different plugin needed?)
+* vlxlan interfaces are brought up by a systemd service, but a link failure is not detected by this service (there is a cron job to ensure that the network interfaces are up)
+* unit test is always on my mind, but it's not yet ready. Changelog is also missing
