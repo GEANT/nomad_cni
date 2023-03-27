@@ -38,7 +38,9 @@ class nomad_cni (
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
   Boolean $keep_vxlan_up_cron_ensure                       = true,
   Integer[1, 59] $keep_vxlan_up_cron_interval              = 10,
-  # the parameters below are used to configure the firewall (ignore them if you don't want this module to configure the firewall)
+  # the parameters below are used to configure the firewall. 
+  # You can disregard these settings if you don't want the module to configure the firewall
+  # manage_firewall_nat is set to true, so the container can reach the network outside the CNI
   String $interface                                        = 'eth0',
   Boolean $manage_firewall_nat                             = true,
   Boolean $manage_firewall_vxlan                           = false,
