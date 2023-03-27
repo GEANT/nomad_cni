@@ -6,12 +6,12 @@
 # [*provider*] Array[Enum['iptables', 'ip6tables']]
 # Iptables providers: ['iptables', 'ip6tables']
 #
-# [*rule_order*] Integer
+# [*rule_order*] Nomad_cni::Digits
 # Iptables rule order
 #
 class nomad_cni::firewall::chain (
   Array[Enum['iptables', 'ip6tables']] $provider,
-  Integer $rule_order,
+  Nomad_cni::Digits $rule_order,
 ) {
   if 'iptables' in $provider {
     firewallchain { ['CNI-ISOLATION-INPUT:filter:IPv4', 'CNI-ISOLATION-POSTROUTING:nat:IPv4']:

@@ -27,8 +27,8 @@
 # [*firewall_provider*] Array[Enum['iptables', 'ip6tables']]
 # Iptables providers: ['iptables', 'ip6tables']
 #
-# [*firewall_rule_order*] Integer
-# Iptables rule order
+# [*firewall_rule_order*] Nomad_cni::Digits
+# Iptables rule order. It can be integer, or string made by digit and it can start with zero(es)
 #
 # [*cni_cut_off*] Boolean
 # Segregate vxlans with iptables
@@ -43,7 +43,7 @@ class nomad_cni (
   Boolean $manage_firewall_nat                             = false,
   Boolean $manage_firewall_vxlan                           = false,
   Boolean $cni_cut_off                                     = false,
-  String $firewall_rule_order                              = '050',
+  Nomad_cni::Digits $firewall_rule_order                   = 050, # can be integer, or string with digit and it can start with zero(es)
   Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # be aware that ip6tables is NOT supported at the moment
 ) {
   if 'ip6tables' in $firewall_provider {
@@ -59,9 +59,6 @@ class nomad_cni (
 
   # == Firewall setting
   #
-  if regsubst($firewall_rule_order, '^0+', '') =~ Integer {
-    fail('firewall_rule_order must be an integer or digits that starts with zero(es) number')
-  }
   $firewall_vxlan_rule_order = 5
   $firewall_nat_rule_order   = 5
   $firewal_cni_cut_off_order = 15

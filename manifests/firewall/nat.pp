@@ -9,11 +9,11 @@
 # [*provider*] Enum['iptables', 'ip6tables']
 # Iptables provider: iptables or ip6tables
 #
-# [*rule_order*] Integer
+# [*rule_order*] Nomad_cni::Digits
 # Iptables rule order
 #
 class nomad_cni::firewall::nat (
-  Integer $rule_order,
+  Nomad_cni::Digits $rule_order,
   Array[Enum['iptables', 'ip6tables']] $provider,
   String $interface,
 ) {
