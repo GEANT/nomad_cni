@@ -8,7 +8,11 @@
 4. [Usage and examples](#usage-and-examples)
     1. [Install the CNI components](#install-the-cni-components)
     2. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
-5. [CNIs segregation and interconnection](#cnis-segregation-and-interconnection)
+5. [Firewall](#firewall)
+    1. [NAT](#nat)
+    2. [VXLAN traffic](#vxlan-traffic)
+    3. [CNIs segregation](#cnis-segregation)
+    4. [CNIs interconnection](#cnis-interconnection)
 6. [Limitations](#limitations)
 
 ## Overview
@@ -20,7 +24,7 @@ The module will also create a Bridge interface and a VXLAN on each Agent and the
 ## Requirements and notes
 
 In addition to the requirements listed in `metadata.json`, **this module requires PuppetDB**.\
-The CNI configuration has a stanza for the DNS settings, but these settings don't work (they're overwritten by the default settings provided by Nomad, or by the settings provided by Nomad in the job configuration).
+The CNI configuration has a stanza for the [DNS settings](https://www.cni.dev/plugins/current/main/vlan/), but these settings won't work with Nomad. If necessary you can specify these settings for the [DNS in Nomad](https://developer.hashicorp.com/nomad/docs/job-specification/network#dns-1).
 
 ## What this module affects <a name="what-this-module-affects"></a>
 
@@ -66,10 +70,22 @@ nomad_cni::macvlan::unicast::v4 {
 
 Multicast shuold be better, but in my environment it wasn't reliable. Feel free to experiment at your own risk.
 
-## CNIs segregation and interconnection
+## Firewall
 
-By default all CNIs can connect to each other.\
-CNIs segregation is achieved with `iptables` (the module `firewall_multi` is used), and it's enabled by setting `cni_cut_off` to `true`:
+The firewall settings are applied via the modules `puppetlabs/firewall` and `alexharvey/firewall_multi`.\
+The rules are being created under a custom chain, so they can be purged without affecting the default chain.
+
+### NAT
+
+`manage_firewall_nat` is set to `true`. This is kind of mandatory. Without this rule the containers won't be able to connect outside.
+
+### VXLAN traffic
+
+If your firewall is set to drop connections that are not specifically declared and open, you can set `manage_firewall_vxlan` to `true`, to open UDP port 4789 among the Nomad Agents.
+
+### CNIs segregation
+
+By default all CNIs can connect to each other. CNIs segregation is achieved by setting `cni_cut_off` to `true`:
 
 ```puppet
 class { 'nomad_cni':
@@ -77,7 +93,9 @@ class { 'nomad_cni':
 }
 ```
 
-Once you have cut off the CNIs, you can interconnect some of them using the following example:
+### CNIs interconnection
+
+If you applied the CNI segregation (`cni_cut_off` set to `true`), you can interconnect some of them using the following code:
 
 ```puppet
 nomad_cni::cni_connect { ['cni1', 'cni2']: }
@@ -92,5 +110,5 @@ If you need encryption, or you need to interconnect only certain services, you c
 
 * currently only IPv4 is supported
 * currently only `macvlan` plugin is supported (is there a reason to use a different plugin?)
-* vlxlan interfaces are brought up by a systemd service, but a link failure is not detected by the systemd service (there is a cron job to ensure that the network is up)
+* vlxlan interfaces are brought up by a systemd service, but a link failure is not detected by the service (there is a cron job to ensure that the network interfaces are up)
 * unit test is always on my mind, but it's not yet ready

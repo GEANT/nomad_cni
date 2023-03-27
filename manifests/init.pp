@@ -40,7 +40,7 @@ class nomad_cni (
   Integer[1, 59] $keep_vxlan_up_cron_interval              = 10,
   # the parameters below are used to configure the firewall (ignore them if you don't want this module to configure the firewall)
   String $interface                                        = 'eth0',
-  Boolean $manage_firewall_nat                             = false,
+  Boolean $manage_firewall_nat                             = true,
   Boolean $manage_firewall_vxlan                           = false,
   Boolean $cni_cut_off                                     = false,
   Nomad_cni::Digits $firewall_rule_order                   = '050', # string made by digits, which can start with zero(es)
