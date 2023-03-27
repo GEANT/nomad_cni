@@ -43,7 +43,7 @@ class nomad_cni (
   Boolean $manage_firewall_nat                             = false,
   Boolean $manage_firewall_vxlan                           = false,
   Boolean $cni_cut_off                                     = false,
-  Variant[Integer, String] $firewall_rule_order            = 050,
+  String $firewall_rule_order                              = '050',
   Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # be aware that ip6tables is NOT supported at the moment
 ) {
   if 'ip6tables' in $firewall_provider {
