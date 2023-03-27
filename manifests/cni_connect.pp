@@ -9,7 +9,7 @@
 # [*provider*] Enum['iptables', 'ip6tables']
 # Iptables provider: iptables or ip6tables
 #
-# [*firewall_rule_order*] Integer
+# [*firewall_connect_rule_order*] Integer
 # Iptables rule order
 #
 #
@@ -19,7 +19,7 @@
 #
 define nomad_cni::cni_connect (
   Array $cni_array = $name,
-  Integer $firewall_rule_order = 100,
+  Integer $firewall_connect_rule_order = 55,
   Enum['iptables', 'ip6tables'] $provider = 'iptables',
 ) {
   unless defined(Class['nomad_cni::firewall::vxlan']) {
@@ -43,7 +43,7 @@ define nomad_cni::cni_connect (
 
     # it can happen that the fact was not yet uploaded
     if $cni in $cni_names and ($my_network) {
-      firewall_multi { "${firewall_rule_order} allow traffic from other CNIs to ${cni}":
+      firewall_multi { "${firewall_connect_rule_order} allow traffic from other CNIs to ${cni}":
         action      => 'ACCEPT',
         chain       => 'CNI-ISOLATION-INPUT',
         source      => $other_networks,

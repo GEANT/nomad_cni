@@ -13,16 +13,16 @@ class nomad_cni::firewall::chain (
   Array[Enum['iptables', 'ip6tables']] $provider,
   Integer $rule_order,
 ) {
-  $drop_rule_order = $rule_order + 20
-
   if 'iptables' in $provider {
     firewallchain { ['CNI-ISOLATION-INPUT:filter:IPv4', 'CNI-ISOLATION-POSTROUTING:nat:IPv4']:
       ensure => present,
       purge  => true,
     }
-    firewall { "${drop_rule_order} deny all other inbound requests on chain CNI-ISOLATION-INPUT for provider iptables":
-      action   => drop,
-      chain    => 'CNI-ISOLATION-INPUT',
+    firewall { "${rule_order} jump to CNI-ISOLATION-INPUT chain for ${provider}":
+      chain    => 'INPUT',
+      proto    => all,
+      state    => ['NEW'],
+      jump     => 'CNI-ISOLATION-INPUT',
       provider => 'iptables';
     }
   }
@@ -32,9 +32,11 @@ class nomad_cni::firewall::chain (
       ensure => present,
       purge  => true,
     }
-    firewall { "${drop_rule_order} deny all other inbound requests on chain CNI-ISOLATION-INPUT for provider ip6tables":
-      action   => drop,
-      chain    => 'CNI-ISOLATION-INPUT',
+    firewall { "${rule_order} jump to CNI-ISOLATION-INPUT chain for ${provider}":
+      chain    => 'INPUT',
+      proto    => all,
+      state    => ['NEW'],
+      jump     => 'CNI-ISOLATION-INPUT',
       provider => 'ip6tables';
     }
   }
