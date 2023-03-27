@@ -14,11 +14,11 @@ fi
 usage() {
     echo "Usage: $(basename $0) --force --status up --name my_cni"
     echo ""
-    echo "    -h | --help        Print this help and exit"
-    echo "    --name  name/all:  Configure the specific CNI, or all if all/ALL is specified"
-    echo "    --status up/down:  Bring VXLAN and Bridge down"
-    echo "    --force            Force IP configuration"
-    echo "    --purge            Purge VXLANs and systemd service without a matching script"
+    echo "    -h | --help Print this help and exit"
+    echo "    --name      [name/all] Configure the specific CNI, or all if all/ALL is specified"
+    echo "    --status    [up/down/heck] Bring VXLAN and Bridge down"
+    echo "    --force     Force IP configuration"
+    echo "    --purge     Purge VXLANs and systemd service without a matching script"
     echo ""
     exit 3
 }
@@ -40,7 +40,7 @@ purge_stale_ifaces() {
 }
 
 purge_stale_services() {
-    configured_services=$(systemctl list-units cni-id@* --all -l --no-pager --no-legend | awk '{print $NF}')
+    configured_services=$(systemctl list-units cni-id@* --all --full --no-pager --no-legend | awk '{print $NF}')
     for srv in $configured_services; do
         if ! test -f "${BASE_DIR}/multicast.d/${srv}.sh" && ! test -f "${BASE_DIR}/unicast.d/${srv}.sh"; then
             systemctl disable cni-id@${srv}.service
@@ -109,7 +109,7 @@ fi
 lower_status=$(echo $STATUS | tr '[:upper:]' '[:lower:]')
 lower_name=$(echo $NAME | tr '[:upper:]' '[:lower:]')
 
-if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ]; then
+if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ] && [ "$lower_status" != "check" ]; then
     echo -e "ERROR: You must use --status up or --status down\n"
     usage
 fi
@@ -127,6 +127,8 @@ else
     scriptArray=($BASE_DIR/*icast.d/$NAME.sh)
 fi
 
+EXIT_STATUS=0
+
 # == MAIN ==
 #
 # we parse the scripts and bring up/down the vxlan and the bridge
@@ -134,7 +136,14 @@ fi
 for script in ${scriptArray[*]}; do
     vxlan_name=$(basename $script | cut -d'.' -f1)
     source <(grep vxlan_i.= $script) # set vxlan_id and vxlan_ip
-    if [ -n "$FORCE" ]; then
+    if [ "$lower_status" == "check" ]; then
+        if check_status $vxlan_id $vxlan_ip; then
+            $ECHO_CMD "VXLAN $vxlan_id is up"
+        else
+            $ECHO_CMD "VXLAN $vxlan_id is down"
+            EXIT_STATUS=1
+        fi
+    elif [ -n "$FORCE" ]; then
         if [ "$lower_status" == "up" ]; then
             $ECHO_CMD "vxlan $vxlan_id - cni $vxlan_name not configured, bringing up vxlan"
             $script
@@ -156,3 +165,5 @@ for script in ${scriptArray[*]}; do
         fi
     fi
 done
+
+exit $EXIT_STATUS
