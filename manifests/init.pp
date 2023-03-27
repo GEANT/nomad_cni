@@ -59,7 +59,6 @@ class nomad_cni (
 
   # == Firewall setting
   #
-  $firewall_rule_order = '050'
   $nr_leading_zeroes = $firewall_rule_order.match(/^0*/)[0].length
   $leading_zeroes = range(1, $nr_leading_zeroes).map |$item| { 0 }.join()
 
