@@ -18,7 +18,7 @@ class nomad_cni::firewall::chain (
       ensure => present,
       purge  => true,
     }
-    firewall { "${rule_order} jump to CNI-ISOLATION-INPUT chain for ${provider}":
+    firewall { "${rule_order} jump to CNI-ISOLATION-INPUT chain for iptables":
       chain    => 'INPUT',
       proto    => all,
       state    => ['NEW'],
@@ -32,7 +32,7 @@ class nomad_cni::firewall::chain (
       ensure => present,
       purge  => true,
     }
-    firewall { "${rule_order} jump to CNI-ISOLATION-INPUT chain for ${provider}":
+    firewall { "${rule_order} jump to CNI-ISOLATION-INPUT chain for ip6tables":
       chain    => 'INPUT',
       proto    => all,
       state    => ['NEW'],
