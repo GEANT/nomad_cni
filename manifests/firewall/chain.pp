@@ -18,12 +18,17 @@ class nomad_cni::firewall::chain (
       ensure => present,
       purge  => true,
     }
-    firewall { "${rule_order} jump to CNI-ISOLATION-INPUT chain for iptables":
-      chain    => 'INPUT',
-      proto    => all,
-      state    => ['NEW'],
-      jump     => 'CNI-ISOLATION-INPUT',
-      provider => 'iptables';
+    firewall {
+      default:
+        proto    => all,
+        state    => ['NEW'],
+        provider => 'iptables';
+      "${rule_order} jump to CNI-ISOLATION-INPUT chain for iptables":
+        chain => 'INPUT',
+        jump  => 'CNI-ISOLATION-INPUT';
+      "${rule_order} jump to CNI-ISOLATION-POSTROUTING chain for iptables":
+        chain => 'POSTROUTING',
+        jump  => 'CNI-ISOLATION-POSTROUTING';
     }
   }
 
@@ -32,12 +37,17 @@ class nomad_cni::firewall::chain (
       ensure => present,
       purge  => true,
     }
-    firewall { "${rule_order} jump to CNI-ISOLATION-INPUT chain for ip6tables":
-      chain    => 'INPUT',
-      proto    => all,
-      state    => ['NEW'],
-      jump     => 'CNI-ISOLATION-INPUT',
-      provider => 'ip6tables';
+    firewall {
+      default:
+        proto    => all,
+        state    => ['NEW'],
+        provider => 'ip6tables';
+      "${rule_order} jump to CNI-ISOLATION-INPUT chain for ip6tables":
+        chain => 'INPUT',
+        jump  => 'CNI-ISOLATION-INPUT';
+      "${rule_order} jump to CNI-ISOLATION-POSTROUTING chain for ip6tables":
+        chain => 'POSTROUTING',
+        jump  => 'CNI-ISOLATION-POSTROUTING';
     }
   }
 }
