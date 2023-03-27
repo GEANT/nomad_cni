@@ -14,19 +14,19 @@ fi
 usage() {
     echo "Usage: $(basename $0) --force --status up --name my_cni"
     echo ""
-    echo "    -h | --help         Print this help and exit"
-    echo "    --name name/all:  Configure the specific CNI, or all if all/ALL is specified"
+    echo "    -h | --help        Print this help and exit"
+    echo "    --name  name/all:  Configure the specific CNI, or all if all/ALL is specified"
     echo "    --status up/down:  Bring VXLAN and Bridge down"
-    echo "    --force             Force IP configuration"
-    echo "    --purge             Purge VXLANs and systemd service without a matching script"
+    echo "    --force            Force IP configuration"
+    echo "    --purge            Purge VXLANs and systemd service without a matching script"
     echo ""
     exit 3
 }
 
 ifaces_down() {
     vxlan_id=$1
-    ip address show dev vxbr$vxlan_id &>/dev/null && ip link delete vxbr$vxlan_id || true
-    ip address show dev vxlan$vxlan_id &>/dev/null && ip link delete vxlan$vxlan_id || true
+    ip link delete vxbr$vxlan_id || true
+    ip link delete vxlan$vxlan_id || true
 }
 
 purge_stale_ifaces() {
@@ -114,17 +114,17 @@ if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ]; then
     usage
 fi
 
+if [ -n "$STARTED_BY_SYSTEMD" ] || [ -z "$STARTED_BY_CRON" ]; then
+    ECHO_CMD='echo'
+else
+    ECHO_CMD='logger -t VXLAN-wizard'
+fi
+
 shopt -s nullglob
 if [ "$lower_name" == 'all' ]; then
     scriptArray=($BASE_DIR/*icast.d/*.sh)
 else
     scriptArray=($BASE_DIR/*icast.d/$NAME.sh)
-fi
-
-if [ -n "$STARTED_BY_SYSTEMD" ] || [ -z "$STARTED_BY_CRON" ]; then
-    ECHO_CMD='echo'
-else
-    ECHO_CMD='logger -t VXLAN-wizard'
 fi
 
 # == MAIN ==
@@ -134,11 +134,6 @@ fi
 for script in ${scriptArray[*]}; do
     vxlan_name=$(basename $script | cut -d'.' -f1)
     source <(grep vxlan_i.= $script) # set vxlan_id and vxlan_ip
-    if [[ "$script" == *"unicast"* ]]; then
-        TYPE="unicast"
-    elif [[ "$script" == *"multicast"* ]]; then
-        TYPE="multicast"
-    fi
     if [ -n "$FORCE" ]; then
         if [ "$lower_status" == "up" ]; then
             $ECHO_CMD "vxlan $vxlan_id - cni $vxlan_name not configured, bringing up vxlan"
