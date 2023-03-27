@@ -19,7 +19,7 @@
 #
 define nomad_cni::cni_connect (
   Array $cni_array = $name,
-  Integer $firewall_connect_rule_order = 55,
+  Integer $firewall_connect_rule_order = 5,
   Enum['iptables', 'ip6tables'] $provider = 'iptables',
 ) {
   unless defined(Class['nomad_cni::firewall::vxlan']) {

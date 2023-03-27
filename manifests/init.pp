@@ -43,7 +43,7 @@ class nomad_cni (
   Boolean $manage_firewall_nat                             = false,
   Boolean $manage_firewall_vxlan                           = false,
   Boolean $cni_cut_off                                     = false,
-  Integer $firewall_rule_order                             = 50,
+  Variant[Integer, String] $firewall_rule_order            = 050,
   Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # be aware that ip6tables is NOT supported at the moment
 ) {
   if 'ip6tables' in $firewall_provider {
@@ -59,9 +59,12 @@ class nomad_cni (
 
   # == Firewall setting
   #
-  $firewall_vxlan_rule_order = $firewall_rule_order + 5
-  $firewall_nat_rule_order   = $firewall_rule_order + 5
-  $firewal_cni_cut_off_order = $firewall_rule_order + 15
+  if regsubst($firewall_rule_order, '^0+', '') =~ Integer {
+    fail('firewall_rule_order must be an integer or digits that starts with zero(es) number')
+  }
+  $firewall_vxlan_rule_order = 5
+  $firewall_nat_rule_order   = 5
+  $firewal_cni_cut_off_order = 15
 
   if ($manage_firewall_nat) or ($manage_firewall_vxlan) or ($cni_cut_off) {
     class { 'nomad_cni::firewall::chain':
