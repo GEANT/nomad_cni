@@ -27,8 +27,9 @@ class nomad_cni::firewall::chain (
         chain => 'INPUT',
         jump  => 'CNI-ISOLATION-INPUT';
       "${rule_order} jump to CNI-ISOLATION-POSTROUTING chain for iptables":
-        chain => 'POSTROUTING',
-        jump  => 'CNI-ISOLATION-POSTROUTING';
+        chain  => 'POSTROUTING',
+        tables => 'nat',
+        jump   => 'CNI-ISOLATION-POSTROUTING';
     }
   }
 
