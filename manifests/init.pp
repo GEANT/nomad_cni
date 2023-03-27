@@ -63,10 +63,10 @@ class nomad_cni (
   $leading_zeroes = range(1, $nr_leading_zeroes).map |$item| { 0 }.join()
 
   $_firewall_vxlan_rule_order = $firewall_rule_order.regsubst('^0*', '') + 1
-  $firewall_vxlan_rule_order = "${leading_zeroes}${_firewall_vxlan_rule_order}}"
+  $firewall_vxlan_rule_order = "${leading_zeroes}${_firewall_vxlan_rule_order}"
 
   $_firewal_cni_cut_off_order = $firewall_rule_order.regsubst('^0*', '') + 10
-  $firewal_cni_cut_off_order = "${leading_zeroes}${_firewal_cni_cut_off_order}}"
+  $firewal_cni_cut_off_order = "${leading_zeroes}${_firewal_cni_cut_off_order}"
 
   $firewall_nat_rule_order   = $firewall_rule_order
 
