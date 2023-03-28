@@ -21,21 +21,19 @@ class nomad_cni::firewall::vxlan (
   #
   assert_private()
 
-  ['iptables', 'ip6tables'].each |$iptables_provider| {
+  $provider.each |$iptables_provider| {
     $ip_address = $iptables_provider ? {
       'iptables'  => $facts['networking']['interfaces'][$interface]['ip'],
       'ip6tables' => $facts['networking']['interfaces'][$interface]['ip6'],
     }
-    if $iptables_provider in $provider {
-      @@firewall { "${rule_order} allow traffic on UDP port 4789 through ${interface} from ${ip_address} for provider ${iptables_provider}":
-        tag      => "${module_name}_fw_${facts['agent_specified_environment']}",
-        action   => accept,
-        chain    => 'CNI-ISOLATION-INPUT',
-        dport    => 4789,
-        proto    => udp,
-        provider => $iptables_provider,
-        source   => $ip_address;
-      }
+    @@firewall { "${rule_order} allow traffic on UDP port 4789 through ${interface} from ${ip_address} using provider ${iptables_provider}":
+      tag      => "${module_name}_fw_${facts['agent_specified_environment']}",
+      action   => accept,
+      chain    => 'CNI-ISOLATION-INPUT',
+      dport    => 4789,
+      proto    => udp,
+      provider => $iptables_provider,
+      source   => $ip_address;
     }
   }
 

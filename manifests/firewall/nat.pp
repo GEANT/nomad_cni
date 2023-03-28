@@ -22,12 +22,14 @@ class nomad_cni::firewall::nat (
   assert_private()
 
   # NAT will work on IPv6, but we need to investigate the implications of doing so
-  firewall_multi { "${rule_order} NAT CNI through ${interface}":
-    chain    => 'CNI-ISOLATION-POSTROUTING',
-    jump     => 'MASQUERADE',
-    proto    => 'all',
-    outiface => 'eth0',
-    table    => 'nat',
-    provider => $provider,
+  $provider.each |$iptables_provider| {
+    firewall { "${rule_order} NAT CNI through ${interface} using provider ${iptables_provider}":
+      chain    => 'CNI-ISOLATION-POSTROUTING',
+      jump     => 'MASQUERADE',
+      proto    => 'all',
+      outiface => $interface,
+      table    => 'nat',
+      provider => $iptables_provider,
+    }
   }
 }

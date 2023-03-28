@@ -21,22 +21,37 @@ class nomad_cni::firewall::cni_cut_off (
   $networks = $cni_names.map |$item| { $cni_names[$item]['network'] }
   $drop_rule_order = $rule_order + 30
 
-  if $provider.size == 1 {
+  if 'iptables' in $provider {
     $cni_names.each |$cni| {
       $my_network = $cni_names[$cni]['network']
-
-      firewall_multi { "${drop_rule_order} drop traffic from ${cni} to other CNIs":
-        action      => drop,
-        chain       => 'CNI-ISOLATION-INPUT',
-        source      => $my_network,
-        destination => $networks,
-        proto       => 'all',
-        provider    => $provider[0],
+      $networks.each |$network| {
+        firewall { "${drop_rule_order} drop traffic from ${cni} ${my_network} to CNI ${network} using provider iptables":
+          action      => drop,
+          chain       => 'CNI-ISOLATION-INPUT',
+          source      => $my_network,
+          destination => $network,
+          proto       => 'all',
+          provider    => 'iptables',
+        }
       }
     }
-  } else {
-    # place-holder for future implementation
-    fail('IPv6 provider not yet implemented')
+  }
+
+  if 'ip6tables' in $provider {
+    $cni_names.each |$cni| {
+      $my_network = $cni_names[$cni]['network']  # TODO: ipv6 (the custom fact is not yet ready)
+
+      $networks.each |$network| {
+        firewall { "${drop_rule_order} drop traffic from ${cni} ${my_network} to CNI ${network} using provider ip6tables":
+          action      => drop,
+          chain       => 'CNI-ISOLATION-INPUT',
+          source      => $my_network,
+          destination => $network,
+          proto       => 'all',
+          provider    => 'ip6tables',
+        }
+      }
+    }
   }
 }
 # vim: set ts=2 sw=2 et :

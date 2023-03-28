@@ -13,7 +13,7 @@ class nomad_cni::firewall::chain (
   Array[Enum['iptables', 'ip6tables']] $provider,
   Nomad_cni::Digits $rule_order,
 ) {
-  ['iptables', 'ip6tables'].each |$iptables_provider| {
+  $provider.each |$iptables_provider| {
     $chain_proto = $iptables_provider ? {
       'iptables'  => 'IPv4',
       'ip6tables' => 'IPv6',
