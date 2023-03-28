@@ -59,18 +59,33 @@ class nomad_cni (
     keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
   }
 
+  # == create custom fact
+  #
+  ['/etc/facter', '/etc/facter/facts.d'].each | $facts_dir| {
+    unless defined(File[$facts_dir]) {
+      file { $facts_dir: ensure => 'directory', }
+    }
+  }
+
   # == Firewall setting
   #
   $nr_leading_zeroes = $firewall_rule_order.match(/^0*/)[0].length
   $leading_zeroes = range(1, $nr_leading_zeroes).map |$item| { 0 }.join()
 
-  $_firewall_vxlan_rule_order = $firewall_rule_order.regsubst('^0*', '') + 1
-  $firewall_vxlan_rule_order = "${leading_zeroes}${_firewall_vxlan_rule_order}"
+  $_vxlan_rule_order = $firewall_rule_order.regsubst('^0*', '') + 1
+  $vxlan_rule_order = "${leading_zeroes}${_vxlan_rule_order}"
 
-  $_firewal_cni_cut_off_order = $firewall_rule_order.regsubst('^0*', '') + 10
-  $firewal_cni_cut_off_order = "${leading_zeroes}${_firewal_cni_cut_off_order}"
+  $_cni_connect_rule_order = $firewall_rule_order.regsubst('^0*', '') + 1
+  $cni_connect_rule_order = "${leading_zeroes}${_cni_connect_rule_order}"
 
-  $firewall_nat_rule_order   = $firewall_rule_order
+  $_cni_cut_off_rule_order = $firewall_rule_order.regsubst('^0*', '') + 10
+  $cni_cut_off_rule_order = "${leading_zeroes}${_cni_cut_off_rule_order}"
+
+  $nat_rule_order   = $firewall_rule_order
+
+  file { '/etc/facter/facts.d/nomad_cni_firewall_rule_order.yaml':
+    content => "---\ncni_connect_rule_order: \"${cni_connect_rule_order}\"\n"
+  }
 
   if ($manage_firewall_nat) or ($manage_firewall_vxlan) or ($cni_cut_off) {
     class { 'nomad_cni::firewall::chain':
@@ -82,7 +97,7 @@ class nomad_cni (
   if ($manage_firewall_nat) {
     class { 'nomad_cni::firewall::nat':
       interface  => $interface,
-      rule_order => $firewall_nat_rule_order,
+      rule_order => $nat_rule_order,
       provider   => $firewall_provider,
       require    => Class['nomad_cni::firewall::chain'],
     }
@@ -91,7 +106,7 @@ class nomad_cni (
   if ($manage_firewall_vxlan) {
     class { 'nomad_cni::firewall::vxlan':
       interface  => $interface,
-      rule_order => $firewall_vxlan_rule_order,
+      rule_order => $vxlan_rule_order,
       provider   => $firewall_provider,
       require    => Class['nomad_cni::firewall::chain'],
     }
@@ -99,7 +114,7 @@ class nomad_cni (
 
   if ($cni_cut_off) {
     class { 'nomad_cni::firewall::cni_cut_off':
-      rule_order => $firewal_cni_cut_off_order,
+      rule_order => $cni_cut_off_rule_order,
       provider   => $firewall_provider,
       require    => Class['nomad_cni::firewall::chain'],
     }

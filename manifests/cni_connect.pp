@@ -9,7 +9,7 @@
 # [*provider*] Enum['iptables', 'ip6tables']
 # Iptables provider: iptables or ip6tables
 #
-# [*firewall_connect_rule_order*] Integer
+# [*connect_rule_order*] Integer
 # Iptables rule order
 #
 #
@@ -19,7 +19,6 @@
 #
 define nomad_cni::cni_connect (
   Array $cni_array = $name,
-  Integer $firewall_connect_rule_order = 5,
   Enum['iptables', 'ip6tables'] $provider = 'iptables',
 ) {
   unless defined(Class['nomad_cni::firewall::vxlan']) {
@@ -37,22 +36,29 @@ define nomad_cni::cni_connect (
     }
   }
 
-  $cni_names.each |$cni| {
-    $my_network = $facts['nomad_cni_hash'][$cni]['network']
-    $other_networks = $networks - $my_network
+  # if the custom fact is not yet uploaded, we need to wait
+  if ($facts['cni_connect_rule_order']) {
+    $cni_names.each |$cni| {
+      $my_network = $facts['nomad_cni_hash'][$cni]['network']
+      $other_networks = $networks - $my_network
 
-    $other_networks.each | $other | {
-      # it can happen that the fact was not yet uploaded
-      if $cni in $cni_names and ($my_network) {
-        firewall_multi { "${firewall_connect_rule_order} allow traffic from other CNIs to ${cni}":
-          action      => 'ACCEPT',
-          chain       => 'CNI-ISOLATION-INPUT',
-          source      => $other,
-          destination => $my_network,
-          proto       => 'all',
-          provider    => $provider,
+      $other_networks.each | $other | {
+        # it can happen that the fact was not yet uploaded
+        if $cni in $cni_names and ($my_network) {
+          firewall { "${facts['cni_connect_rule_order']} allow traffic from other CNIs to ${cni}":
+            action      => 'ACCEPT',
+            chain       => 'CNI-ISOLATION-INPUT',
+            source      => $other,
+            destination => $my_network,
+            proto       => 'all',
+            provider    => $provider,
+          }
         }
       }
+    }
+  } else {
+    notify { 'fact "cni_connect_rule_order" not yet uploaded':
+      message => 'cni_connect_rule_order fact not yet uploaded. Let\'s wait the next round.',
     }
   }
 }
