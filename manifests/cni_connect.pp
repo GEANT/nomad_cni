@@ -38,7 +38,7 @@ define nomad_cni::cni_connect (
   }
 
   $cni_names.each |$cni| {
-    $my_network = $cni_names[$cni]['network']
+    $my_network = $facts['nomad_cni_hash'][$cni]['network']
     $other_networks = $networks - $my_network
 
     # it can happen that the fact was not yet uploaded

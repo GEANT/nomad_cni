@@ -38,7 +38,7 @@ class nomad_cni::firewall::cni_cut_off (
 
   if 'iptables' in $provider {
     $cni_names.each |$cni| {
-      $my_network = $cni_names[$cni]['network']
+      $my_network = $facts['nomad_cni_hash'][$cni]['network']
       $networks.each |$network| {
         firewall { "${drop_rule_order} drop traffic from ${cni} ${my_network} to CNI ${network} using provider iptables":
           action      => drop,
@@ -54,7 +54,7 @@ class nomad_cni::firewall::cni_cut_off (
 
   if 'ip6tables' in $provider {
     $cni_names.each |$cni| {
-      $my_network = $cni_names[$cni]['network']  # TODO: ipv6 (the custom fact is not yet ready)
+      $my_network = $facts['nomad_cni_hash'][$cni]['network6']  # TODO: ipv6 (the custom fact is not yet ready)
 
       $networks.each |$network| {
         firewall { "${drop_rule_order} drop traffic from ${cni} ${my_network} to CNI ${network} using provider ip6tables":
