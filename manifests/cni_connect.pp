@@ -41,15 +41,17 @@ define nomad_cni::cni_connect (
     $my_network = $facts['nomad_cni_hash'][$cni]['network']
     $other_networks = $networks - $my_network
 
-    # it can happen that the fact was not yet uploaded
-    if $cni in $cni_names and ($my_network) {
-      firewall_multi { "${firewall_connect_rule_order} allow traffic from other CNIs to ${cni}":
-        action      => 'ACCEPT',
-        chain       => 'CNI-ISOLATION-INPUT',
-        source      => $other_networks,
-        destination => $my_network,
-        proto       => 'all',
-        provider    => $provider,
+    $other_networks.each | $other | {
+      # it can happen that the fact was not yet uploaded
+      if $cni in $cni_names and ($my_network) {
+        firewall_multi { "${firewall_connect_rule_order} allow traffic from other CNIs to ${cni}":
+          action      => 'ACCEPT',
+          chain       => 'CNI-ISOLATION-INPUT',
+          source      => $other,
+          destination => $my_network,
+          proto       => 'all',
+          provider    => $provider,
+        }
       }
     }
   }
