@@ -61,9 +61,14 @@ class nomad_cni (
 
   # == create custom fact
   #
-  ['/etc/facter', '/etc/facter/facts.d'].each | $facts_dir| {
-    unless defined(File[$facts_dir]) {
-      file { $facts_dir: ensure => 'directory', }
+  ['/etc/facter', '/etc/facter/facts.d'].each | $facter_dir| {
+    unless defined(File[$facter_dir]) {
+      file { $facter_dir:
+        ensure  => directory,
+        recurse => true,
+        purge   => true,
+        force   => true,
+      }
     }
   }
 
