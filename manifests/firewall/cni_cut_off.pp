@@ -17,8 +17,23 @@ class nomad_cni::firewall::cni_cut_off (
   #
   assert_private()
 
+  $test_hash = {
+    'test_cni_1' => {
+      'id' => '11882895',
+      'network' => '192.168.2.1/24'
+    },
+    'test_cni_2' => {
+      'id' => '5199537',
+      'network' => '192.168.3.1/24'
+    },
+    'test_cni_3' => {
+      'id' => '15782095',
+      'network' => '192.168.4.1/24'
+    }
+  }
+
   $cni_names = $facts['nomad_cni_hash'].keys()
-  $networks = $cni_names.map |$item| { $cni_names[$item]['network'] }
+  $networks = $cni_names.map |$item| { $facts['nomad_cni_hash'][$item]['network'] }
   $drop_rule_order = $rule_order + 30
 
   if 'iptables' in $provider {
