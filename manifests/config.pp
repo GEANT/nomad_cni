@@ -10,16 +10,12 @@
 # [*cni_base_url*] Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
 # URL to download CNI plugins from
 #
-# [*keep_vxlan_up_cron_ensure*] Boolean
-# install cron job to keep VXLANs up
-#
 # [*keep_vxlan_up_cron_interval*] Integer[1, 59]
 # interval in minutes to run cron job to keep VXLANs up
 #
 class nomad_cni::config (
   String $cni_version,
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url,
-  Boolean $keep_vxlan_up_cron_ensure,
   Integer[1, 59] $keep_vxlan_up_cron_interval
 ) {
   # == this is a private class
