@@ -100,7 +100,7 @@ class nomad_cni::config (
     'cni-up.timer':  # get rid of unused VXLANs
       service_source => "puppet:///modules/${module_name}/cni-up.service",
       timer_content  => epp(
-        "${module_name}/bridge-fdb.epp", {
+        "${module_name}/cni-up.service.epp", {
           keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
         }
       );
