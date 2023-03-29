@@ -1,0 +1,12 @@
+[Unit]
+Description=Keep VXLAN CNI up
+Documentation=https://github.com/GEANT/nomad_cni
+Requires=cni-up.service
+
+[Timer]
+Unit=cni-up.service
+OnBootSec=2m
+OnUnitActiveSec=<%= $keep_vxlan_up_cron_interval %>m
+
+[Install]
+WantedBy=timers.target

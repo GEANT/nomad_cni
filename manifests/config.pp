@@ -97,31 +97,17 @@ class nomad_cni::config (
     source => "puppet:///modules/${module_name}/cni-id.service";
   }
 
-  # == create cron job to keep the VXLAN up
-  #
-  $cron_ensure_status = $keep_vxlan_up_cron_ensure ? {
-    true  => present,
-    false => absent,
-  }
-  cron {
-    default:
-      user        => 'root',
-      hour        => '*',
-      month       => '*',
-      monthday    => '*',
-      weekday     => '*',
-      environment => 'STARTED_BY_CRON=yes';
-    # ensure that the VXLANs are up and running (ideally this should be done by systemd)  (FIXME)
-    'keep-vxlan-up':
-      ensure  => $cron_ensure_status,
-      command => 'flock /tmp/vxlan-wizard /usr/local/bin/vxlan-wizard.sh --status up --name all',
-      minute  => "*/${$keep_vxlan_up_cron_interval}";
-    # it unconfigures the VXLANs that are not in use and disable corresponding systemd services
-    # it's also triggered when the directory /opt/cni/vxlan/{multicast,unicast}.d is changed
-    'purge_unused_vxlans':
-      ensure  => present,
-      command => 'flock /tmp/vxlan-wizard /usr/local/bin/vxlan-wizard.sh --purge',
-      minute  => fqdn_rand(59);
+  systemd::timer {
+    'cni-purge.timer':  # ensure that the VXLANs are up and running
+      service_source => "puppet:///modules/${module_name}/cni-purge.service",
+      timer_source   => "puppet:///modules/${module_name}/cni-purge.timer";
+    'cni-up.service':  # get rid of unused VXLANs
+      service_source => "puppet:///modules/${module_name}/cni-up.service",
+      timer_content  => epp(
+        "${module_name}/bridge-fdb.epp", {
+          keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
+        }
+      );
   }
 }
 # vim: set ts=2 sw=2 et :

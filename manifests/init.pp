@@ -9,11 +9,8 @@
 # [*cni_base_url*] Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
 # URL to download CNI plugins from
 #
-# [*keep_vxlan_up_cron_ensure*] Boolean
-# install cron job to keep VXLANs up
-#
 # [*keep_vxlan_up_cron_interval*] Integer[1, 59]
-# interval in minutes to run cron job to keep VXLANs up
+# interval in minutes to run systemdd timer job to keep VXLANs up
 #
 # [*manage_firewall_nat*] Boolean
 # whether to manage the firewall rules for NAT
@@ -36,7 +33,6 @@
 class nomad_cni (
   String $cni_version = '1.2.0',
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
-  Boolean $keep_vxlan_up_cron_ensure                       = true,
   Integer[1, 59] $keep_vxlan_up_cron_interval              = 10,
   # the parameters below are used to configure the firewall. 
   # You can disregard these settings if you don't want the module to configure the firewall
@@ -55,7 +51,6 @@ class nomad_cni (
   class { 'nomad_cni::config':
     cni_version                 => $cni_version,
     cni_base_url                => $cni_base_url,
-    keep_vxlan_up_cron_ensure   => $keep_vxlan_up_cron_ensure,
     keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
   }
 
