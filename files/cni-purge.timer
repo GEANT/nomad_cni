@@ -1,11 +1,7 @@
 [Unit]
 Description=Keep VXLAN CNI up
-Documentation=https://github.com/GEANT/nomad_cni
-Requires=cni-purge.service
 
 [Timer]
-Unit=cni-purge.service
-Environment="STARTED_BY_SYSTEMD=yes"
 OnBootSec=5m
 OnUnitActiveSec=1h
 
