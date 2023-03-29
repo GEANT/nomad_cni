@@ -94,10 +94,10 @@ class nomad_cni::config (
   }
 
   systemd::timer {
-    'cni-purge.timer':  # ensure that the VXLANs are up and running
+    'cni-purge.timer':  # get rid of unused VXLANs
       service_source => "puppet:///modules/${module_name}/cni-purge.service",
       timer_source   => "puppet:///modules/${module_name}/cni-purge.timer";
-    'cni-up.timer':  # get rid of unused VXLANs
+    'cni-up.timer':  # ensure that the VXLANs are up and running
       service_source => "puppet:///modules/${module_name}/cni-up.service",
       timer_content  => epp(
         "${module_name}/cni-up.timer.epp", {
