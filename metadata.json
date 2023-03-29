@@ -9,16 +9,8 @@
   "issues_url": "https://github.com/GEANT/nomad_cni/issues",
   "dependencies": [
     {
-      "name": "puppetlabs/cron_core",
-      "version_requirement": ">= 1.0.0 =< 1.2.0"
-    },
-    {
       "name": "puppetlabs/firewall",
       "version_requirement": ">= 2.0.0 =< 3.3.0"
-    },
-    {
-      "name": "alexharvey/firewall_multi",
-      "version_requirement": ">= 3.0.0 =< 3.5.0"
     },
     {
       "name": "puppetlabs/stdlib",

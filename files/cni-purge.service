@@ -1,0 +1,16 @@
+[Unit]
+Description=VXLAN CNI service for timer execution
+Documentation=https://github.com/GEANT/nomad_cni
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+TimeoutStartSec=0
+ExecStart=/usr/local/bin/vxlan-wizard.sh --purge
+SyslogIdentifier=VXLAN-wizard
+
+[Install]
+WantedBy=multi-user.target

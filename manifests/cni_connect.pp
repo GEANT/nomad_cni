@@ -12,7 +12,6 @@
 # [*connect_rule_order*] Integer
 # Iptables rule order
 #
-#
 # == Example:
 #
 # nomad_cni::cni_connect {['cni1', 'cni2']: }

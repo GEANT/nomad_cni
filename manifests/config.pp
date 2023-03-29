@@ -10,16 +10,12 @@
 # [*cni_base_url*] Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
 # URL to download CNI plugins from
 #
-# [*keep_vxlan_up_cron_ensure*] Boolean
-# install cron job to keep VXLANs up
-#
 # [*keep_vxlan_up_cron_interval*] Integer[1, 59]
 # interval in minutes to run cron job to keep VXLANs up
 #
 class nomad_cni::config (
   String $cni_version,
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url,
-  Boolean $keep_vxlan_up_cron_ensure,
   Integer[1, 59] $keep_vxlan_up_cron_interval
 ) {
   # == this is a private class
@@ -97,31 +93,26 @@ class nomad_cni::config (
     source => "puppet:///modules/${module_name}/cni-id.service";
   }
 
-  # == create cron job to keep the VXLAN up
-  #
-  $cron_ensure_status = $keep_vxlan_up_cron_ensure ? {
-    true  => present,
-    false => absent,
+  systemd::timer {
+    'cni-purge.timer':  # get rid of unused VXLANs
+      service_source => "puppet:///modules/${module_name}/cni-purge.service",
+      timer_source   => "puppet:///modules/${module_name}/cni-purge.timer";
+    'cni-up.timer':  # ensure that the VXLANs are up and running
+      service_source => "puppet:///modules/${module_name}/cni-up.service",
+      timer_content  => epp(
+        "${module_name}/cni-up.timer.epp", {
+          keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
+        }
+      );
   }
-  cron {
-    default:
-      user        => 'root',
-      hour        => '*',
-      month       => '*',
-      monthday    => '*',
-      weekday     => '*',
-      environment => 'STARTED_BY_CRON=yes';
-    # ensure that the VXLANs are up and running (ideally this should be done by systemd)  (FIXME)
-    'keep-vxlan-up':
-      ensure  => $cron_ensure_status,
-      command => 'flock /tmp/vxlan-wizard /usr/local/bin/vxlan-wizard.sh --status up --name all',
-      minute  => "*/${$keep_vxlan_up_cron_interval}";
-    # it unconfigures the VXLANs that are not in use and disable corresponding systemd services
-    # it's also triggered when the directory /opt/cni/vxlan/{multicast,unicast}.d is changed
-    'purge_unused_vxlans':
-      ensure  => present,
-      command => 'flock /tmp/vxlan-wizard /usr/local/bin/vxlan-wizard.sh --purge',
-      minute  => fqdn_rand(59);
+
+  service {
+    'cni-purge.timer':
+      ensure    => running,
+      subscribe => Systemd::Timer['cni-purge.timer'];
+    'cni-up.timer':
+      ensure    => running,
+      subscribe => Systemd::Timer['cni-up.timer'];
   }
 }
 # vim: set ts=2 sw=2 et :
