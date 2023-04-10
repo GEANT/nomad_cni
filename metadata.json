@@ -1,6 +1,6 @@
 {
   "name": "maxadamo-nomad_cni",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "author": "Massimiliano Adamo<maxadamo@gmail.com>",
   "summary": "Nomad CNI management",
   "license": "GPL-3.0",
