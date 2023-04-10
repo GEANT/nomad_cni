@@ -2,6 +2,8 @@
 stages:
   - syntax
   - unit
+  - g10k_deploy
+  - send_notification
 
 default:
   cache:
@@ -26,6 +28,8 @@ validate lint check rubocop-Ruby 2.5.7-Puppet ~> 6:
     - bundle exec rake validate lint check rubocop
   variables:
     PUPPET_GEM_VERSION: '~> 6'
+  tags:
+    - gitlab-runner01-shell01-tag1
 
 parallel_spec-Ruby 2.5.7-Puppet ~> 6:
   stage: unit
@@ -34,6 +38,8 @@ parallel_spec-Ruby 2.5.7-Puppet ~> 6:
     - bundle exec rake parallel_spec
   variables:
     PUPPET_GEM_VERSION: '~> 6'
+  tags:
+    - gitlab-runner01-shell01-tag1
 
 validate lint check rubocop-Ruby 2.7.2-Puppet ~> 7:
   stage: syntax
@@ -42,6 +48,8 @@ validate lint check rubocop-Ruby 2.7.2-Puppet ~> 7:
     - bundle exec rake validate lint check rubocop
   variables:
     PUPPET_GEM_VERSION: '~> 7'
+  tags:
+    - gitlab-runner01-shell01-tag1
 
 parallel_spec-Ruby 2.7.2-Puppet ~> 7:
   stage: unit
@@ -50,4 +58,30 @@ parallel_spec-Ruby 2.7.2-Puppet ~> 7:
     - bundle exec rake parallel_spec
   variables:
     PUPPET_GEM_VERSION: '~> 7'
+  tags:
+    - gitlab-runner01-shell01-tag1
+
+# custom internal jobs
+job_deploy:
+  stage: g10k_deploy
+  when: on_success
+  script:
+    - ${HOME_RUNNER}/bin/ci2puppet.sh ${CI_PROJECT_NAME} ${CI_COMMIT_REF_NAME}
+  tags:
+    - gitlab-runner02-shell01-tag1
+
+job_notification:
+  stage: send_notification
+  when: on_failure
+  variables:
+    MSG: "*ERROR on Commit ID*: ${CI_COMMIT_SHA}\n*Commit Author*: ${GITLAB_USER_NAME}\n*Commit Title*: ${CI_COMMIT_TITLE}\n*Repository*: ${CI_PROJECT_NAME}\n*Branch*: ${CI_COMMIT_REF_NAME}"
+  script:
+    - echo -e "${MSG}" > ${HOME_RUNNER}/${CI_PROJECT_NAME}_msg.txt
+    - cat ${HOME_RUNNER}/${CI_PROJECT_NAME}_rev_count_msg.txt >> ${HOME_RUNNER}/${CI_PROJECT_NAME}_msg.txt
+    - cat ${HOME_RUNNER}/msg_closure.txt >> ${HOME_RUNNER}/${CI_PROJECT_NAME}_msg.txt
+    - /usr/local/bin/upload_to_slack.sh ${HOME_RUNNER}/${CI_PROJECT_NAME}_msg.txt post "Puppet CI Error" "${DEVOPS_CHANNEL}" ${DEVOPSBOT_TOKEN} ERROR
+    - cat ${HOME_RUNNER}/${CI_PROJECT_NAME}_msg.txt | mail -s "Puppet CI Error on Repository ${CI_PROJECT_NAME}" $RCPT
+  tags:
+    - gitlab-runner02-shell01-tag2
+
 
