@@ -130,3 +130,4 @@ If you need encryption, or you need to interconnect only certain services, you c
 * currently only IPv4 is supported
 * only `macvlan` plugin is supported (is a different plugin needed?)
 * changelog is not yet handled
+* unit test is using an internal Gitlab runner. It will be changed soon

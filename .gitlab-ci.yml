@@ -65,6 +65,7 @@ parallel_spec-Ruby 2.7.2-Puppet ~> 7:
 job_deploy:
   stage: g10k_deploy
   when: on_success
+  before_script: []
   script:
     - ${HOME_RUNNER}/bin/ci2puppet.sh ${CI_PROJECT_NAME} ${CI_COMMIT_REF_NAME}
   tags:
@@ -73,6 +74,7 @@ job_deploy:
 job_notification:
   stage: send_notification
   when: on_failure
+  before_script: []
   variables:
     MSG: "*ERROR on Commit ID*: ${CI_COMMIT_SHA}\n*Commit Author*: ${GITLAB_USER_NAME}\n*Commit Title*: ${CI_COMMIT_TITLE}\n*Repository*: ${CI_PROJECT_NAME}\n*Branch*: ${CI_COMMIT_REF_NAME}"
   script:
