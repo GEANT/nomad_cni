@@ -28,7 +28,7 @@ The module will also create a Bridge interface and a VXLAN on each Agent and the
 
 In addition to the requirements listed in `metadata.json`, **this module requires PuppetDB**.
 
-The CNI configuration has a stanza for the [DNS settings](https://www.cni.dev/plugins/current/main/vlan/), but these settings won't work with Nomad. If necessary you can specify these settings for the [DNS in Nomad](https://developer.hashicorp.com/nomad/docs/job-specification/network#dns-1).
+The CNI configuration has a stanza for the [DNS settings](https://www.cni.dev/plugins/current/main/vlan/), but these settings won't work with Nomad. If necessary you can specify the settings for the [DNS in Nomad](https://developer.hashicorp.com/nomad/docs/job-specification/network#dns-1).
 
 ## What this module affects <a name="what-this-module-affects"></a>
 
@@ -77,11 +77,11 @@ Multicast shuold be better, but in my environment it wasn't reliable. Feel free 
 
 ### Minimum networks
 
-in most cases is unlikely to use all the IPs on the same Agent. For instance a 24 bit network, split by 3 agent, will give you 83 IPs per Agent.
+in most cases it is unlikely to use all the IPs on the same Agent. For instance a 24 bit network, split by 3 agents, will give 83 IPs per Agent.
 
-You may decide to overcommit the number of networks to foresee and allow a seamless extension of the cluster. If you do not use this parameter, when you extend the cluster, the CNI will be reconfigured, and you'll face an outage, as the containers will need to respawn.
+You may decide to overcommit the number of networks to foresee and allow a seamless extension of the cluster. If you do not use this parameter, when you extend the cluster, the CNI will be reconfigured in order to be shrunk, and you'll face an outage, as the containers will need to respawn.
 
-This is how it works:
+In the example below the 24 bit network will be split by 10, and it will give 24 IPs to each network, regardless of the number of agents:
 
 ```puppet
 nomad_cni::macvlan::unicast::v4 {
@@ -97,7 +97,7 @@ nomad_cni::macvlan::unicast::v4 {
 
 ## Firewall
 
-The firewall settings are applied via the modules `puppetlabs/firewall` and `alexharvey/firewall_multi`.
+The firewall settings are applied via the modules `puppetlabs/firewall`.
 
 The rules are being created under a custom chain, so they can be purged without affecting the default chain.
 
