@@ -8,6 +8,7 @@
 4. [Usage and examples](#usage-and-examples)
     1. [Install the CNI components](#install-the-cni-components)
     2. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
+    3. [Minimum networks](#minimum-networks)
 5. [Firewall](#firewall)
     1. [NAT](#nat)
     2. [VXLAN traffic](#vxlan-traffic)
@@ -70,6 +71,24 @@ nomad_cni::macvlan::unicast::v4 {
 
 Multicast shuold be better, but in my environment it wasn't reliable. Feel free to experiment at your own risk.
 
+### Minimum networks
+
+in most cases is unlikely to use all the IPs on the same Agent. For instance a 24 bit network, split by 3 agent, will give you 83 IPs per Agent.\
+You may decide to overcommit the number of networks to foresee and allow a seamless extension of the cluster. If you do not use this parameter, when you extend the cluster, the CNI will be reconfigured, and you'll face an outage, as the containers will need to respawn.\
+This is how it works:
+
+```puppet
+nomad_cni::macvlan::unicast::v4 {
+  default:
+    min_networks => 10,
+    agent_regex  => 'nomad0';
+  'cni10':
+    network => '192.168.3.0/24';
+  'cni20':
+    network => '172.16.4.0/22';
+}
+```
+
 ## Firewall
 
 The firewall settings are applied via the modules `puppetlabs/firewall` and `alexharvey/firewall_multi`.\
@@ -103,11 +122,11 @@ nomad_cni::cni_connect { ['cni1', 'cni2']: }
 
 If you need encryption, or you need to interconnect only certain services, you can either:
 
-1. help implementing `wireguard` in this module (to enable encryption)
-2. use [Consul Connect](https://www.hashicorp.com/products/consul) (to enable encryption and interconnect single services)
+1. help implementing `wireguard` in this module
+2. use [Consul Connect](https://developer.hashicorp.com/consul/docs/connect)
 
 ## Limitations
 
 * currently only IPv4 is supported
 * only `macvlan` plugin is supported (is a different plugin needed?)
-* unit test is always on my mind, but it's not yet ready. Changelog is also missing
+* changelog is not yet handled

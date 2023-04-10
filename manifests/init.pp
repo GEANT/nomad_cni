@@ -54,17 +54,12 @@ class nomad_cni (
     keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
   }
 
-  # == create custom fact
+  # == create custom fact directory and avoid conflicts with other modules
   #
-  ['/etc/facter', '/etc/facter/facts.d'].each | $facter_dir| {
-    unless defined(File[$facter_dir]) {
-      file { $facter_dir:
-        ensure  => directory,
-        recurse => true,
-        purge   => true,
-        force   => true,
-      }
-    }
+  exec { "create custom fact directories from ${module_name}":
+    command => 'install -o root -g root -d /etc/facter/facts.d',
+    creates => '/etc/facter/facts.d',
+    path    => '/bin:/usr/bin',
   }
 
   # == Firewall setting
@@ -84,7 +79,8 @@ class nomad_cni (
   $nat_rule_order   = $firewall_rule_order
 
   file { '/etc/facter/facts.d/nomad_cni_firewall_rule_order.yaml':
-    content => "---\ncni_connect_rule_order: \"${cni_connect_rule_order}\"\n"
+    require => Exec["create custom fact directories from ${module_name}"],
+    content => "---\ncni_connect_rule_order: \"${cni_connect_rule_order}\"\n";
   }
 
   if ($manage_firewall_nat) or ($manage_firewall_vxlan) or ($cni_cut_off) {

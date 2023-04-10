@@ -1,6 +1,6 @@
 {
   "name": "maxadamo-nomad_cni",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "author": "Massimiliano Adamo<maxadamo@gmail.com>",
   "summary": "Nomad CNI management",
   "license": "GPL-3.0",
@@ -10,16 +10,21 @@
   "dependencies": [
     {
       "name": "puppetlabs/firewall",
-      "version_requirement": ">= 2.0.0 =< 3.3.0"
+      "version_requirement": ">= 2.0.0 <= 3.3.0"
     },
     {
       "name": "puppetlabs/stdlib",
       "version_requirement": ">= 6.1.0 < 9.0.0"
     },
     {
+      "name": "puppet/archive",
+      "version_requirement": ">= 5.0.0 < 7.0.0"
+    },
+    {
       "name": "puppet/systemd",
       "version_requirement": ">= 2.6.0 < 5.0.0"
     }
+
   ],
   "operatingsystem_support": [
     {
@@ -70,7 +75,7 @@
     "cni",
     "docker"
   ],
-  "pdk-version": "2.6.1",
-  "template-url": "pdk-default#2.5.0",
-  "template-ref": "tags/2.5.0-0-g369d483"
+  "pdk-version": "2.7.1",
+  "template-url": "pdk-default#2.7.4",
+  "template-ref": "tags/2.7.4-0-g58edf57"
 }

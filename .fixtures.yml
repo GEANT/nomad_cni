@@ -2,9 +2,20 @@
 # See https://github.com/puppetlabs/puppetlabs_spec_helper#using-fixtures for details
 ---
 fixtures:
+  forge_modules:
+    archive:
+      repo: "puppet/archive"
+      ref: "6.1.1"
+    firewall:
+      repo: "puppetlabs/firewall"
+      ref: "3.3.0"
+    systemd:
+      repo: "puppet/systemd"
+      ref: "3.5.1"
+    stdlib:
+      repo: "puppetlabs/stdlib"
+      ref: "8.1.0"
   repositories:
-    stdlib: 'https://github.com/puppetlabs/puppetlabs-stdlib.git'
-    systemd: 'https://github.com/voxpupuli/puppet-systemd.git'
     facts: 'https://github.com/puppetlabs/puppetlabs-facts.git'
     puppet_agent: 'https://github.com/puppetlabs/puppetlabs-puppet_agent.git'
     provision: 'https://github.com/puppetlabs/provision.git'

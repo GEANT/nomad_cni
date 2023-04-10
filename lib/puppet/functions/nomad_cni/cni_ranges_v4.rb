@@ -5,6 +5,10 @@ require 'ipaddr'
 #
 # agent_names: Array of strings containing the names of the Nomad agents
 #
+# min_networks: Optional integer, allows to overcommit the number of network.
+#               It can be undef of greater than number of agents. Unused networks
+#               won't be assigned to any agent (and won't be returned by the function)
+#
 # Returns: Array of arrays, and each array contains:
 #        - the name of the agent
 #        - the gateway for the CNI that will be assigned to the VXLAN on the host
@@ -23,10 +27,11 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
   dispatch :calculate_cni_ranges_v4 do
     param 'Stdlib::IP::Address::V4::CIDR', :network_address
     param 'Array[String]', :agent_names
+    param 'Optional[Integer]', :min_networks
     return_type 'Array[Array]'
   end
 
-  def calculate_cni_ranges_v4(network_address, agent_names)
+  def calculate_cni_ranges_v4(network_address, agent_names, min_networks)
     netmask = network_address.split('/')[1].to_i
     address = network_address.split('/')[0].to_s
     first_ip = IPAddr.new(network_address).to_range.first.to_s
@@ -39,9 +44,16 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
     last_ip_int = IPAddr.new(network_address).to_range.last.to_i
     first_ip_int = IPAddr.new(network_address).to_range.first.to_i
     free_hosts = last_ip_int - first_ip_int - 1
-
     agent_number = agent_names.length
-    chunk_size = (free_hosts / agent_number).floor
+
+    if !min_networks.nil?
+      raise ArgumentError, "Invalid number of networks: #{min_networks}. It must be Undef or greater than the number of agents: #{agent_number}" if min_networks < agent_number
+      number_of_networks = min_networks
+    else
+      number_of_networks = agent_number
+    end
+
+    chunk_size = (free_hosts / number_of_networks).floor
     agents_array = (0..agent_number - 1).to_a
     agents_array.map do |item|
       [

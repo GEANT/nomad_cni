@@ -9,9 +9,6 @@
 # [*provider*] Enum['iptables', 'ip6tables']
 # Iptables provider: iptables or ip6tables
 #
-# [*connect_rule_order*] Integer
-# Iptables rule order
-#
 # == Example:
 #
 # nomad_cni::cni_connect {['cni1', 'cni2']: }

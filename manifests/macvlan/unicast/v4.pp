@@ -5,40 +5,45 @@
 # == Paramters:
 #
 # [*cni_name*] String
-# the name of the CNI
+#   the name of the CNI
 #
 # [*network*] Stdlib::IP::Address::V4::CIDR
-# Network and Mask for the CNI
+#   Network and Mask for the CNI
 #
 # [*agent_regex*] String
-# (requires PuppetDB) a string that match the hostnames of the Nomad agents (use either agent_list or agent_regex)
+#   (requires PuppetDB) a string that match the hostnames of the Nomad agents (use either agent_list or agent_regex)
 #
 # [*agent_list*] Array
-# a list of the Nomad agents  (use either agent_list or agent_regex)
+#   a list of the Nomad agents  (use either agent_list or agent_regex)
 #
 # [*iface*] String
-# network interface on the Nomad agents
+#   network interface on the Nomad agents
 #
 # [*cni_proto_version*] String
-# version of the CNI protocol
+#   version of the CNI protocol
 #
 # [*nolearning*] Boolean
-# disable learning of MAC addresses on the bridge interface
-# it DID NOT WORK AS EXPECTED. It may require testing and maybe an improved configuration
+#   disable learning of MAC addresses on the bridge interface
+#   DID NOT WORK AS EXPECTED. It may require testing and maybe an improved configuration
+#
+# [*min_networks*] Optional[Integer]
+#   minimum number of networks to be created. If the number of agents is less than this number, the module will fail
+#   check the README file for more details
 #
 define nomad_cni::macvlan::unicast::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
-  String $cni_name          = $name,
-  String $agent_regex       = undef,
-  Array $agent_list         = [],
-  String $iface             = 'eth0',
-  String $cni_proto_version = '1.0.0',
-  Boolean $nolearning       = false,  # please read the docs carefully before enabling this option
+  String $cni_name                = $name,
+  Optional[String] $agent_regex   = undef,
+  Array $agent_list               = [],
+  String $iface                   = 'eth0',
+  String $cni_proto_version       = '1.0.0',
+  Boolean $nolearning             = false,  # please read the docs carefully before enabling this option
+  Optional[Integer] $min_networks = undef,
 ) {
   # == ensure that nomad_cni class was included and that the name is not reserved
   #
   unless defined(Class['nomad_cni']) {
-    fail('nomad_cni::macvlan::v4 requires nomad_cni')
+    fail('nomad_cni::macvlan::unicast::v4 requires nomad_cni')
   }
   if $cni_name == 'all' {
     fail('the name \'all\' is reserved and it cannot be used as a CNI name')
@@ -84,7 +89,7 @@ define nomad_cni::macvlan::unicast::v4 (
 
   $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
   $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
-  $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
+  $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
   service { "cni-id@${cni_name}.service":

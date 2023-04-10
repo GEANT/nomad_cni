@@ -22,18 +22,23 @@
 # [*cni_proto_version*] String
 # version of the CNI protocol
 #
+# [*min_networks*] Optional[Integer]
+#   minimum number of networks to be created. If the number of agents is less than this number, the module will fail
+#   check the README file for more details
+#
 define nomad_cni::macvlan::multicast::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
-  String $cni_name          = $name,
-  String $agent_regex       = undef,
-  Array $agent_list         = [],
-  String $iface             = 'eth0',
-  String $cni_proto_version = '1.0.0',
+  String $cni_name                = $name,
+  Optional[String] $agent_regex   = undef,
+  Array $agent_list               = [],
+  String $iface                   = 'eth0',
+  String $cni_proto_version       = '1.0.0',
+  Optional[Integer] $min_networks = undef,
 ) {
   # == ensure that nomad_cni class was included and that the name is not reserved
   #
   unless defined(Class['nomad_cni']) {
-    fail('nomad_cni::macvlan::v4 requires nomad_cni')
+    fail('nomad_cni::macvlan::multicast::v4 requires nomad_cni')
   }
   if $cni_name == 'all' {
     fail('the name \'all\' is reserved and it cannot be used as a CNI name')
@@ -63,7 +68,7 @@ define nomad_cni::macvlan::multicast::v4 (
     ).map |$item| { $item['facts.networking.hostname'] }
   }
 
-  $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names)
+  $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
   $vxlan_id = seeded_rand(16777215, $network) + 1
   $multicast_group = nomad_cni::int_to_v4(seeded_rand(268435455, $network) + 1)
 
