@@ -29,7 +29,7 @@ validate lint check rubocop-Ruby 2.5.7-Puppet ~> 6:
   variables:
     PUPPET_GEM_VERSION: '~> 6'
   tags:
-    - gitlab-runner01-shell01-tag1
+    - shared-docker-runner-prod-gitlab-runner02
 
 parallel_spec-Ruby 2.5.7-Puppet ~> 6:
   stage: unit
@@ -39,7 +39,7 @@ parallel_spec-Ruby 2.5.7-Puppet ~> 6:
   variables:
     PUPPET_GEM_VERSION: '~> 6'
   tags:
-    - gitlab-runner01-shell01-tag1
+    - shared-docker-runner-prod-gitlab-runner02
 
 validate lint check rubocop-Ruby 2.7.2-Puppet ~> 7:
   stage: syntax
@@ -49,7 +49,7 @@ validate lint check rubocop-Ruby 2.7.2-Puppet ~> 7:
   variables:
     PUPPET_GEM_VERSION: '~> 7'
   tags:
-    - gitlab-runner01-shell01-tag1
+    - shared-docker-runner-prod-gitlab-runner02
 
 parallel_spec-Ruby 2.7.2-Puppet ~> 7:
   stage: unit
@@ -59,7 +59,7 @@ parallel_spec-Ruby 2.7.2-Puppet ~> 7:
   variables:
     PUPPET_GEM_VERSION: '~> 7'
   tags:
-    - gitlab-runner01-shell01-tag1
+    - shared-docker-runner-prod-gitlab-runner02
 
 # custom internal jobs
 job_deploy:
