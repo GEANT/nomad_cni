@@ -73,7 +73,8 @@
   "tags": [
     "nomad",
     "cni",
-    "docker"
+    "docker",
+    "hashicorp"
   ],
   "pdk-version": "2.7.1",
   "template-url": "pdk-default#2.7.4",
