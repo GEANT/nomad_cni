@@ -9,6 +9,7 @@
     1. [Install the CNI components](#install-the-cni-components)
     2. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
     3. [Minimum networks](#minimum-networks)
+        1. [developer note](#developer-note)
 5. [Firewall](#firewall)
     1. [NAT](#nat)
     2. [VXLAN traffic](#vxlan-traffic)
@@ -20,7 +21,7 @@
 
 This module configures CNI networks on the Nomad agents, and it aims to replace a more complex software-defined network solution (like as Calico, Weave, Cilium...).
 
-Whilst Calico uses `etcd` and `nerdctl` to leverage and centralize the configuration of the CNI within the cluster, this module splits a network range by the number of Nomad agents, and assigns each range to a different agent.
+Whilst Calico uses `etcd` and `nerdctl` to leverage and centralize the configuration of the CNI within the cluster, this module splits a network range by the number of Nomad agents (or by `min_networks` parameter), and assigns each range to a different agent.
 
 The module will also create a Bridge interface and a VXLAN on each Agent and the VXLANs will be interconnected and bridged with the host network.
 
@@ -79,7 +80,7 @@ Multicast shuold be better, but in my environment it wasn't reliable. Feel free 
 
 in most cases it is unlikely to use all the IPs on the same Agent. For instance a 24 bit network, split by 3 agents, will give 83 IPs per Agent.
 
-You may decide to overcommit the number of networks to foresee and allow a seamless extension of the Nomad cluster. If you do not use this parameter, when you extend the cluster, the CNI will be reconfigured in order to be shrunk, and you'll face an outage, as the containers will need to respawn.
+You may decide to overcommit the number of networks, to foresee and allow a seamless extension of the Nomad cluster. If you do not use this parameter, when you extend the cluster, the CNI will be reconfigured in order to be shrunk, and you'll face an outage, as the containers will need to respawn.
 
 In the example below the 24 bit network will be split by 10, and it will give 24 IPs to each network, regardless of the number of agents:
 
@@ -95,7 +96,7 @@ nomad_cni::macvlan::unicast::v4 {
 }
 ```
 
-#### note for the developer
+#### developer note
 
 this part requires manual testing: extending a cluster and check the behavior. We are assuming that adding a new Mac address onto Bridge FDB will not require a service restart.
 

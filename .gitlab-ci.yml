@@ -89,5 +89,3 @@ job_notification:
     - cat ${HOME_RUNNER}/${CI_PROJECT_NAME}_msg.txt | mail -s "Puppet CI Error on Repository ${CI_PROJECT_NAME}" $RCPT
   tags:
     - gitlab-runner02-shell01-tag2
-
-

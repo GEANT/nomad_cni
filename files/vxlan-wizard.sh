@@ -12,7 +12,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 usage() {
-    echo "Usage: $(basename $0) --force --status up --name my_cni"
+    echo "Usage: $(basename $0) --force --status <up>/<down> --name <my_cni>"
     echo ""
     echo "    -h|--help  Print this help and exit"
     echo "    --name     [name/all] Configure the specific CNI, or all if all/ALL is specified"
