@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'nomad_cni::macvlan::multicast::v4', type: :define do
+describe 'nomad_cni::macvlan::multicast::v4' do
   let :title do
     'cni_spec_test'
   end
@@ -38,6 +38,19 @@ describe 'nomad_cni::macvlan::multicast::v4', type: :define do
         network: '192.168.3.0/24',
         agent_list: ['test-nomad01.example.org', 'test-nomad02.example.org', 'test-nomad03.example.org'],
       )
+      is_expected.to contain_service('cni-id@cni_spec_test.service').with(
+        ensure: 'running', enable: true,
+        require: 'Systemd::Unit_file[cni-id@.service]',
+        notify: 'Exec[nomad_cni reload nomad service]'
+      )
+      is_expected.to contain_service('cni-purge.timer').with(
+        ensure: 'running',
+        subscribe: 'Systemd::Timer[cni-purge.timer]',
+      )
+      is_expected.to contain_service('cni-up.timer').with(
+        ensure: 'running',
+        subscribe: 'Systemd::Timer[cni-up.timer]',
+      )
     }
     # it { pp catalogue.resources }
   end
@@ -68,8 +81,20 @@ describe 'nomad_cni::macvlan::multicast::v4', type: :define do
         network: '192.168.3.0/24',
         agent_list: ['test-nomad01.example.org', 'test-nomad02.example.org', 'test-nomad03.example.org'],
       )
+      is_expected.to contain_service('cni-id@cni_spec_test.service').with(
+        ensure: 'running', enable: true,
+        require: 'Systemd::Unit_file[cni-id@.service]',
+        notify: 'Exec[nomad_cni reload nomad service]'
+      )
+      is_expected.to contain_service('cni-purge.timer').with(
+        ensure: 'running',
+        subscribe: 'Systemd::Timer[cni-purge.timer]',
+      )
+      is_expected.to contain_service('cni-up.timer').with(
+        ensure: 'running',
+        subscribe: 'Systemd::Timer[cni-up.timer]',
+      )
     }
-    # it { pp catalogue.resources }
   end
 
   context 'CentOS_7' do
@@ -98,7 +123,19 @@ describe 'nomad_cni::macvlan::multicast::v4', type: :define do
         network: '192.168.3.0/24',
         agent_list: ['test-nomad01.example.org', 'test-nomad02.example.org', 'test-nomad03.example.org'],
       )
+      is_expected.to contain_service('cni-id@cni_spec_test.service').with(
+        ensure: 'running', enable: true,
+        require: 'Systemd::Unit_file[cni-id@.service]',
+        notify: 'Exec[nomad_cni reload nomad service]'
+      )
+      is_expected.to contain_service('cni-purge.timer').with(
+        ensure: 'running',
+        subscribe: 'Systemd::Timer[cni-purge.timer]',
+      )
+      is_expected.to contain_service('cni-up.timer').with(
+        ensure: 'running',
+        subscribe: 'Systemd::Timer[cni-up.timer]',
+      )
     }
-    # it { pp catalogue.resources }
   end
 end

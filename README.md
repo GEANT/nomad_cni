@@ -79,7 +79,7 @@ Multicast shuold be better, but in my environment it wasn't reliable. Feel free 
 
 in most cases it is unlikely to use all the IPs on the same Agent. For instance a 24 bit network, split by 3 agents, will give 83 IPs per Agent.
 
-You may decide to overcommit the number of networks to foresee and allow a seamless extension of the cluster. If you do not use this parameter, when you extend the cluster, the CNI will be reconfigured in order to be shrunk, and you'll face an outage, as the containers will need to respawn.
+You may decide to overcommit the number of networks to foresee and allow a seamless extension of the Nomad cluster. If you do not use this parameter, when you extend the cluster, the CNI will be reconfigured in order to be shrunk, and you'll face an outage, as the containers will need to respawn.
 
 In the example below the 24 bit network will be split by 10, and it will give 24 IPs to each network, regardless of the number of agents:
 
@@ -94,6 +94,10 @@ nomad_cni::macvlan::unicast::v4 {
     network => '172.16.4.0/22';
 }
 ```
+
+#### note for the developer
+
+this part requires manual testing: extending a cluster and check the behavior. We are assuming that adding a new Mac address onto Bridge FDB will not require a service restart.
 
 ## Firewall
 
@@ -137,4 +141,4 @@ If you need encryption, or you need to interconnect only certain services, you c
 * currently only IPv4 is supported
 * only `macvlan` plugin is supported (is a different plugin needed?)
 * changelog is not yet handled
-* unit test is using an internal Gitlab runner. It will be changed soon
+* unit test is using an internal Gitlab runner. This will be changed soon
