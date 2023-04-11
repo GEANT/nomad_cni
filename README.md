@@ -102,7 +102,7 @@ this part requires manual testing: extending a cluster and check the behavior. W
 
 ## Firewall
 
-The firewall settings are applied via the modules `puppetlabs/firewall`.
+The firewall settings are applied via the module `puppetlabs/firewall`.
 
 The rules are being created under a custom chain, so they can be purged without affecting the default chain.
 
@@ -112,11 +112,11 @@ The rules are being created under a custom chain, so they can be purged without 
 
 ### VXLAN traffic
 
-If your firewall is set to drop connections that are not specifically declared and open, you can set `manage_firewall_vxlan` to `true`, to open UDP port 4789 among the Nomad Agents.
+If your firewall is set to drop connections that are not specifically declared, you can set `manage_firewall_vxlan` to `true`, to open UDP port 4789 among the Nomad Agents.
 
 ### CNIs segregation
 
-By default all CNIs can connect to each other. CNIs segregation is achieved by setting `cni_cut_off` to `true`:
+By default all CNIs are interconneccted. CNIs segregation is achieved by setting `cni_cut_off` to `true`:
 
 ```puppet
 class { 'nomad_cni':
@@ -126,7 +126,7 @@ class { 'nomad_cni':
 
 ### CNIs interconnection
 
-If you applied the CNI segregation (`cni_cut_off` set to `true`), you can interconnect some of them using the following code:
+If you applied CNI segregation (`cni_cut_off` set to `true`), you can interconnect some of them using the following code:
 
 ```puppet
 nomad_cni::cni_connect { ['cni1', 'cni2']: }
@@ -139,7 +139,7 @@ If you need encryption, or you need to interconnect only certain services, you c
 
 ## Limitations
 
-* currently only IPv4 is supported
+* only IPv4 is currently supported (I started adding few bits for IPv6 but it's not working)
 * only `macvlan` plugin is supported (is a different plugin needed?)
 * changelog is not yet handled
-* unit test is using an internal Gitlab runner. This will be changed soon
+* CI is currently using an internal Gitlab runner. GitHub action will come soon.
