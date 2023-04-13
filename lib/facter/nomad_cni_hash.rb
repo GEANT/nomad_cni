@@ -22,7 +22,7 @@ Facter.add(:nomad_cni) do
       cni_hash.merge!({
                         cni_name => {
                           'id' => vxlan_id,
-                         'network' => vxlan_network
+                          'network' => vxlan_network
                         }
                       })
     end
