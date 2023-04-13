@@ -48,8 +48,8 @@ function nomad_cni::host_network(
   $public_network = [
     'public' => {
       'cidr' => "${fqdn_ip}/${fqdn_cidr}",
-      'interface' => $iface
-    }
+      'interface' => $iface,
+    },
   ]
 
   if !empty($facts['nomad_cni_hash']) {
@@ -58,7 +58,7 @@ function nomad_cni::host_network(
       {
         $cni => {
           'cidr' => $facts['nomad_cni_hash'][$cni]['network'],
-          'interface' => "vxbr${facts['nomad_cni_hash'][$cni]['id']}"
+          'interface' => "vxbr${facts['nomad_cni_hash'][$cni]['id']}",
         }
       }
     }
