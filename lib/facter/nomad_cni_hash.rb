@@ -7,19 +7,20 @@ Facter.add('nomad_cni_hash') do
   # }
   #
   setcode do
-    cni_hash = {}
-    cni_scripts = Dir.glob('/opt/cni/vxlan/*cast.d/*.sh')
-    cni_scripts.each do |cni_script|
-      cni_name = File.basename(cni_script, '.sh')
-      vxlan_network = File.read(cni_script).match(%r{^vxlan_network="(.*)"})[1]
-      vxlan_id = File.read(cni_script).match(%r{^vxlan_id=(\d+)})[1]
-      cni_hash.merge!({
-                        cni_name => {
-                          'id' => vxlan_id,
-                         'network' => vxlan_network
-                        }
-                      })
-    end
+      cni_hash = {}
+      cni_scripts = Dir.glob('/opt/cni/vxlan/*cast.d/*.sh')
+      cni_scripts.select! {|cni| not cni.end_with?('_bridge_fdb.sh') }
+      cni_scripts.each do |cni_script|
+        cni_name = File.basename(cni_script, '.sh')
+        vxlan_network = File.read(cni_script).match(%r{^vxlan_network="(.*)"})[1]
+        vxlan_id = File.read(cni_script).match(%r{^vxlan_id=(\d+)})[1]
+        cni_hash.merge!({
+                          cni_name => {
+                            'id' => vxlan_id,
+                           'network' => vxlan_network
+                          }
+                        })
+      end
     cni_hash
   rescue
     {}
