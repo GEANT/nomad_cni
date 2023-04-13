@@ -9,7 +9,7 @@ require 'facter'
 #   'cni2' => { 'id' => '5678901', 'network' => '192.168.10.0/24' }
 # }
 #
-Facter.add(:nomad_cni) do
+Facter.add(:nomad_cni_hash) do
   confine kernel: 'Linux'
   setcode do
     cni_hash = {}
