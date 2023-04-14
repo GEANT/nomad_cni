@@ -15,7 +15,10 @@
     2. [VXLAN traffic](#vxlan-traffic)
     3. [CNIs segregation](#cnis-segregation)
     4. [CNIs interconnection](#cnis-interconnection)
-6. [Limitations](#limitations)
+6. [Using the VoxPupuli Nomad module](#using-the-voxpupuli-nomad-module)
+    1. [host_network](#host_network)
+    1. [Nomad jobs example](#nomad-job-example)
+7. [Limitations](#limitations)
 
 ## Overview
 
@@ -137,9 +140,65 @@ If you need encryption, or you need to interconnect only certain services, you c
 1. help implementing `wireguard` in this module
 2. use [Consul Connect](https://developer.hashicorp.com/consul/docs/connect)
 
+## Using the VoxPupuli Nomad module
+
+### host_network
+
+the client stanza in the Agent configuration has a section to configure the `host_network`.
+
+The job will be registered on Consul using the IP assigned to the host_network and will open a socket only on the host_network. If you do not follow these steps the socket will be open either on the Agent IP, on the bridge, and on the Container.
+
+This module provides a function that you can use in conjunction with [VoxPupuli Nomad Module](https://forge.puppet.com/modules/puppet/nomad).
+
+Assuming that Nomad agent is listening on `eth0`, you need to add the following key to the configuration hash of your agent
+
+```puppet
+host_network => nomad_cni::host_network('eth0')
+```
+
+as a result, you'll get something like the following in the agent configurations
+
+```json
+    "host_network": [
+      {
+        "public": {
+          "cidr": "183.197.195.193/22",
+          "interface": "eth0"
+        }
+      },
+      {
+        "foo": {
+          "cidr": "192.168.2.1/24",
+          "interface": "vxbr11882895"
+        }
+      },
+      {
+        "bar": {
+          "cidr": "192.168.3.1/24",
+          "interface": "vxbr5199537"
+        }
+      },
+... and so on....
+```
+
+### Nomad job example
+
+If you have a host_network called `foo`, this is how the network stanza looks like in your job (as you can see, you no longer need to use dynamic ports with CNI private networks)
+
+```hcl
+  network {
+    mode = "cni/foo"
+    port "grafana" {
+      static       = 3000
+      host_network = "foo"
+    }
+  }
+```
+
 ## Limitations
 
 * only IPv4 is currently supported (I started adding few bits for IPv6 but it's not working)
 * only `macvlan` plugin is supported (is a different plugin needed?)
 * changelog is not yet handled
 * CI is currently using an internal Gitlab runner. GitHub action will come soon.
+* Missing test for functions
