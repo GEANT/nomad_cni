@@ -142,25 +142,28 @@ If you need encryption, or you need to interconnect only certain services, you c
 
 ## Add CNIs to Nomad
 
+The client stanza of the Agent configuration has a section called `host_network`.
+
+Using the host_network, the job will be registered on Consul using the IP belonging to the host_network and will open a socket only on the host_network.
+
+If you do not follow these steps the socket will be open either on the Agent IP, on the bridge, and on the Container, and you defeat the purpose of using CNI.
+
 ### add host_network using VoxPupuli Nomad module
 
-the client stanza of the Agent configuration has a section called `host_network`.
+This module provides a function that you can use to pass a parameter to [VoxPupuli Nomad Module](https://forge.puppet.com/modules/puppet/nomad).
 
-The job will be registered on Consul using the IP assigned to the host_network and will open a socket only on the host_network. If you do not follow these steps the socket will be open either on the Agent IP, on the bridge, and on the Container.
-
-This module provides a function that you can use in conjunction with [VoxPupuli Nomad Module](https://forge.puppet.com/modules/puppet/nomad).
-
-Assuming that Nomad agent is listening on `eth0`, you need to add the following key to the configuration hash of your agent
+Assuming that Nomad agent is listening on `eth0`, you can use the following code
 
 ```puppet
 $host_network_array = nomad_cni::host_network_v4(
-  $facts['networking']['interfaces'][$iface]['ip'],
-  $facts['networking']['interfaces'][$iface]['netmask'],
+  $facts['networking']['interfaces']['eth0']['ip'],
+  $facts['networking']['interfaces']['eth0']['netmask'],
   $facts['nomad_cni_hash'],
-  'eth0')
+  'eth0'
+)
 ```
 
-and int the nomad configuration hash, you can add the following:
+and int the nomad configuration hash, you can add the following
 
 ```puppet
 host_network => $host_network_array,
