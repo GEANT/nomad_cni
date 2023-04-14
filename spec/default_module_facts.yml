@@ -8,7 +8,7 @@ nomad_cni_hash:
     network: "192.168.2.1/24"
   test_cni_2:
     id: "5199537"
-    network": "192.168.3.1/24"
+    network: "192.168.3.1/24"
   test_cni_3:
     id: "15782095"
     network: "192.168.4.1/24"

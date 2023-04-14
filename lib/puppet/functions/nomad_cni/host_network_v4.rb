@@ -1,3 +1,4 @@
+require 'facter'
 require 'ipaddr'
 # == Function: nomad_cni::host_network_v4
 #
@@ -46,14 +47,14 @@ require 'ipaddr'
 #
 Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
   dispatch :calculate_host_network_v4 do
-    param 'Stdlib::IP::Address::V4::Nosubnet', :ip
-    param 'Stdlib::IP::Address::V4::Nosubnet', :netmask
-    param 'Hash', :cni_hash
     param 'String', :iface
     return_type 'Variant[Array[0, 0], Array[Hash]]'
   end
 
-  def calculate_host_network_v4(ip, netmask, cni_hash, iface)
+  def calculate_host_network_v4(iface)
+    ip = Facter.value("networking.interfaces.#{iface}.ip")
+    netmask = Facter.value("networking.interfaces.#{iface}.netmask")
+    cni_hash = Facter.value('nomad_cni_hash')
     cidr = IPAddr.new(netmask).to_i.to_s(2).count('1')
     public_network = [{ 'public' => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } }]
 
@@ -61,7 +62,7 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
       cni_host_network = []
     else
       cni_names = cni_hash.keys
-      cni_host_network = cni_names.map { |cni| { cni => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } } }
+      cni_host_network = cni_names.map { |cni| { cni => { 'cidr' => cni_hash[cni]['network'], 'interface' => "vxbr#{cni_hash[cni]['network']}" } } }
     end
     cni_host_network + public_network
   end
