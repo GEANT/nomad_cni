@@ -152,7 +152,7 @@ If you do not follow these steps the socket will be open either on the Agent IP,
 
 This module provides a function that can be used to pass the `host_network` parameter to [VoxPupuli Nomad Module](https://forge.puppet.com/modules/puppet/nomad).
 
-Assuming that Nomad agent is listening on `eth0`, you can add the following key in your Nomad configuration hash the following code
+Assuming that Nomad agent is listening on `eth0`, you can add the following key in your Nomad configuration hash
 
 ```puppet
 host_network => nomad_cni::host_network_v4('eth0')
