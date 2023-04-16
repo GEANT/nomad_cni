@@ -131,7 +131,7 @@ define nomad_cni::macvlan::unicast::v4 (
         }
       ),
       order   => seeded_rand(20000, "vxlan_${vxlan_id}_${agent['ip']}"),
-      require => File["${vxlan_dir}/unicast.d/${cni_name}.sh"],
+      require => File["/opt/cni/config/${cni_name}.conflist"],
     }
   }
 
