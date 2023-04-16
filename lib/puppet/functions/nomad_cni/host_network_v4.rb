@@ -62,7 +62,7 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
     ip1.include?(ip2) || ip2.include?(ip1)
   end
 
-  def has_overlapping_networks?(networks)
+  def overlapping_networks?(networks)
     # Iterate over each network and compare it to every other network
     (0...networks.length).each do |i|
       (i + 1...networks.length).each do |j|
@@ -88,11 +88,15 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
     else
       cni_names = cni_hash.keys
       cni_networks = cni_names.map { |cni| cni_hash[cni]['network'] }
-      overlaps = has_overlapping_networks?(cni_networks)
+      overlaps = overlapping_networks?(cni_networks)
       if overlaps
         raise Puppet::ParseError, "CNI networks #{overlaps.join(' and ')} overlap"
       end
-      cni_host_network = cni_names.map { |cni| { cni => { 'cidr' => cni_hash[cni]['network'], 'interface' => "vxbr#{cni_hash[cni]['network']}" } } }
+      cni_host_network = cni_names.map do |cni|
+        {
+          cni => { 'cidr' => cni_hash[cni]['network'], 'interface' => "vxbr#{cni_hash[cni]['network']}" }
+        }
+      end
     end
     cni_host_network + public_network
   end
