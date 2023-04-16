@@ -93,7 +93,7 @@ define nomad_cni::macvlan::unicast::v4 (
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
-  # == create the CNI relevant systemd service
+  # == create the CNI systemd service
   #
   service { "cni-id@${cni_name}.service":
     ensure  => running,
@@ -165,7 +165,7 @@ define nomad_cni::macvlan::unicast::v4 (
         mode         => '0644',
         validate_cmd => "/usr/local/bin/cni-validator.rb --cidr ${network} --conf-file /opt/cni/config/${cni_name}.conflist --tmp-file %",
         require      => [
-          File['/opt/cni/config', '/usr/local/bin/cni-validator.sh', '/run/cni'],
+          File['/opt/cni/config', '/usr/local/bin/cni-validator.rb', '/run/cni'],
           Package['docopt']
         ],
         notify       => Service["cni-id@${cni_name}.service"],

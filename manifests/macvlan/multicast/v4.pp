@@ -72,7 +72,7 @@ define nomad_cni::macvlan::multicast::v4 (
   $vxlan_id = seeded_rand(16777215, $network) + 1
   $multicast_group = nomad_cni::int_to_v4(seeded_rand(268435455, $network) + 1)
 
-  # == create the CNI relevant systemd service
+  # == create the CNI systemd service
   #
   service { "cni-id@${cni_name}.service":
     ensure  => running,
@@ -89,7 +89,7 @@ define nomad_cni::macvlan::multicast::v4 (
         owner   => 'root',
         group   => 'root',
         mode    => '0755',
-        require => File['/opt/cni/vxlan/multicast.d'],
+        require => File['/opt/cni/vxlan/multicast.d', "/opt/cni/config/${cni_name}.conflist"],
         content => epp(
           "${module_name}/multicast-vxlan.sh.epp", {
             vxlan_id        => $vxlan_id,
@@ -105,7 +105,7 @@ define nomad_cni::macvlan::multicast::v4 (
         mode         => '0644',
         validate_cmd => "/usr/local/bin/cni-validator.rb --cidr ${network} --conf-file /opt/cni/config/${cni_name}.conflist --tmp-file %",
         require      => [
-          File['/opt/cni/config', '/usr/local/bin/cni-validator.sh', '/run/cni'],
+          File['/opt/cni/config', '/usr/local/bin/cni-validator.rb', '/run/cni'],
           Package['docopt']
         ],
         notify       => Service["cni-id@${cni_name}.service"],
