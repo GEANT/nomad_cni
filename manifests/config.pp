@@ -26,7 +26,7 @@ class nomad_cni::config (
     '/opt/cni/config', '/opt/cni/vxlan',
     '/opt/cni/vxlan/unicast_bridge_fdb.d',
     '/opt/cni/vxlan/unicast.d',
-    '/opt/cni/vxlan/multicast.d'
+    '/opt/cni/vxlan/multicast.d',
   ]
 
   # == create necessary files
