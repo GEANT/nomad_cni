@@ -1,6 +1,7 @@
 #!/opt/puppetlabs/puppet/bin/ruby
 #
-# ensure that the network is unique
+# ensure that the networks that have been configured
+# are not overlapping
 #
 require 'json'
 require 'docopt'
