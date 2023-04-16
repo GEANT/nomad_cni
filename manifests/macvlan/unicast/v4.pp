@@ -153,6 +153,7 @@ define nomad_cni::macvlan::unicast::v4 (
             iface         => $iface,
             vxlan_netmask => $cni_item[4],
             nolearning    => $nolearning,
+            cni_name      => $cni_name,
           }
         );
       }

@@ -11,7 +11,7 @@ ip address show dev vxbr<%= $vxlan_id %> &>/dev/null && ip link delete vxbr<%= $
 ip link add vxlan<%= $vxlan_id %> type vxlan id <%= $vxlan_id %> dev <%= $iface %> dstport 4789 local <%= $agent_ip %><% if ($nolearning) { %> nolearning<% } %>
 
 # populate bridge DB
-/opt/cni/vxlan/unicast_bridge_fdb.d/<%= $vxlan_id %>_bridge_fdb.sh
+/opt/cni/vxlan/unicast_bridge_fdb.d/<%= $cni_name %>_bridge_fdb.sh
 
 # bring up the vxlan interface
 ip link set up dev vxlan<%= $vxlan_id %>
