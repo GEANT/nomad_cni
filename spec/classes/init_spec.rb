@@ -55,6 +55,9 @@ describe 'nomad_cni' do
       is_expected.to contain_file('/etc/facter/facts.d/nomad_cni_firewall_rule_order.yaml').with(
         content: "---\ncni_connect_rule_order: \"051\"\n",
       )
+      is_expected.to contain_file('/opt/cni/vxlan/multicast.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
+      is_expected.to contain_file('/opt/cni/vxlan/unicast.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
+      is_expected.to contain_file('/opt/cni/vxlan/unicast_bridge_fdb.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
     }
   end
 
@@ -105,6 +108,9 @@ describe 'nomad_cni' do
       is_expected.to contain_file('/etc/facter/facts.d/nomad_cni_firewall_rule_order.yaml').with(
         content: "---\ncni_connect_rule_order: \"051\"\n",
       )
+      is_expected.to contain_file('/opt/cni/vxlan/multicast.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
+      is_expected.to contain_file('/opt/cni/vxlan/unicast.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
+      is_expected.to contain_file('/opt/cni/vxlan/unicast_bridge_fdb.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
     }
   end
 
@@ -155,6 +161,9 @@ describe 'nomad_cni' do
       is_expected.to contain_file('/etc/facter/facts.d/nomad_cni_firewall_rule_order.yaml').with(
         content: "---\ncni_connect_rule_order: \"051\"\n",
       )
+      is_expected.to contain_file('/opt/cni/vxlan/multicast.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
+      is_expected.to contain_file('/opt/cni/vxlan/unicast.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
+      is_expected.to contain_file('/opt/cni/vxlan/unicast_bridge_fdb.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
     }
   end
 end

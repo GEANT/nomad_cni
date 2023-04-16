@@ -22,6 +22,13 @@ class nomad_cni::config (
   #
   assert_private()
 
+  $cni_directories = [
+    '/opt/cni/config', '/opt/cni/vxlan',
+    '/opt/cni/vxlan/unicast_bridge_fdb.d',
+    '/opt/cni/vxlan/unicast.d',
+    '/opt/cni/vxlan/multicast.d'
+  ]
+
   # == create necessary files
   #
   file {
@@ -31,7 +38,7 @@ class nomad_cni::config (
       mode  => '0755';
     ['/opt/cni', '/opt/cni/bin', '/run/cni']:
       ensure => directory;
-    ['/opt/cni/config', '/opt/cni/vxlan', '/opt/cni/vxlan/unicast.d', '/opt/cni/vxlan/multicast.d']:
+    $cni_directories:
       ensure  => directory,
       purge   => true,
       recurse => true,

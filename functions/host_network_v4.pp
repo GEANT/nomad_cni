@@ -37,13 +37,16 @@
 function nomad_cni::host_network_v4(
   String $iface,
 ) >> Variant[Array[0, 0], Array[Hash]] {
-  $my_ip = $facts['networking']['interfaces'][$iface]['ip']
-  $my_mask = $facts['networking']['interfaces'][$iface]['netmask']
-  $my_cidr = inline_template("<%= require 'ipaddr'; IPAddr.new(@my_mask).to_i.to_s(2).count('1') %>")
+  unless $iface in $facts['networking']['interfaces'] {
+    fail("Interface ${iface} not found in \$facts['networking']['interfaces']")
+  }
+  $ip = $facts['networking']['interfaces'][$iface]['ip']
+  $mask = $facts['networking']['interfaces'][$iface]['netmask']
+  $cidr = inline_template("<%= require 'ipaddr'; IPAddr.new(@mask).to_i.to_s(2).count('1') %>")
 
   $public_network = [
     'public' => {
-      'cidr' => "${my_ip}/${my_cidr}",
+      'cidr' => "${ip}/${cidr}",
       'interface' => $iface,
     },
   ]

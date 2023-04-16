@@ -87,6 +87,7 @@ define nomad_cni::macvlan::unicast::v4 (
     }
   }
 
+  $vxlan_dir = '/opt/cni/vxlan'
   $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
   $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
@@ -99,26 +100,26 @@ define nomad_cni::macvlan::unicast::v4 (
     notify  => Exec["${module_name} reload nomad service"];
   }
 
-  concat { "/opt/cni/vxlan/unicast.d/${cni_name}_bridge_fdb.sh":
+  concat { "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh":
     owner   => 'root',
     group   => 'root',
     mode    => '0755',
-    require => File["/opt/cni/vxlan/unicast.d/${cni_name}.sh"],
+    require => File["${vxlan_dir}/unicast.d/${cni_name}.sh"],
     notify  => Exec["populate bridge fdb for ${cni_name}"];
   }
 
   concat::fragment { "vxlan_${vxlan_id}_header":
-    target  => "/opt/cni/vxlan/unicast.d/${cni_name}_bridge_fdb.sh",
-    content => "#!/bin/bash\nPATH=/usr/sbin:/usr/bin:/sbin:/bin\n",
-    require => File["/opt/cni/vxlan/unicast.d/${cni_name}.sh"],
+    target  => "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh",
+    source  => "puppet:///modules/${module_name}/unicast-bridge-fdb-header.sh",
+    require => File["${vxlan_dir}/unicast.d/${cni_name}.sh"],
     order   => '0001',
   }
 
   $agents_pretty_inventory.each |$agent| {
     concat::fragment { "vxlan_${vxlan_id}_${agent['name']}":
-      target  => "/opt/cni/vxlan/unicast.d/${cni_name}_bridge_fdb.sh",
+      target  => "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh",
       content => epp(
-        "${module_name}/unicast-bridge-fdb.epp", {
+        "${module_name}/unicast-bridge-fdb.sh.epp", {
           agent_mac  => $agent['mac'],
           agent_ip   => $agent['ip'],
           vxlan_id   => $vxlan_id,
@@ -130,7 +131,7 @@ define nomad_cni::macvlan::unicast::v4 (
   }
 
   exec { "populate bridge fdb for ${cni_name}":
-    command     => "/opt/cni/vxlan/unicast.d/${cni_name}_bridge_fdb.sh",
+    command     => "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh",
     refreshonly => true;
   }
 
@@ -138,14 +139,14 @@ define nomad_cni::macvlan::unicast::v4 (
   #
   $cni_ranges_v4.each |$cni_item| {
     if $cni_item[0] == $facts['networking']['hostname'] {
-      file { "/opt/cni/vxlan/unicast.d/${cni_name}.sh":
+      file { "${vxlan_dir}/unicast.d/${cni_name}.sh":
         owner   => 'root',
         group   => 'root',
         mode    => '0755',
-        require => File['/opt/cni/vxlan/unicast.d'],
+        require => File["${vxlan_dir}/unicast.d"],
         notify  => Service["cni-id@${cni_name}.service"],
         content => epp(
-          "${module_name}/unicast-vxlan-script.sh.epp", {
+          "${module_name}/unicast-vxlan.sh.epp", {
             agent_ip      => $facts['networking']['interfaces'][$iface]['ip'],
             vxlan_id      => $vxlan_id,
             vxlan_ip      => $cni_item[1],
@@ -155,31 +156,6 @@ define nomad_cni::macvlan::unicast::v4 (
           }
         );
       }
-      #concat::fragment {
-      #  "vxlan_${vxlan_id}_header":
-      #    target  => "/opt/cni/vxlan/unicast.d/${cni_name}.sh",
-      #    content => epp(
-      #      "${module_name}/unicast-vxlan-script-header.sh.epp", {
-      #        agent_ip      => $facts['networking']['interfaces'][$iface]['ip'],
-      #        vxlan_id      => $vxlan_id,
-      #        vxlan_ip      => $cni_item[1],
-      #        iface         => $iface,
-      #        vxlan_netmask => $cni_item[4],
-      #        nolearning    => $nolearning,
-      #      }
-      #    ),
-      #    order   => '0001';
-      #  "vxlan_${vxlan_id}_footer":
-      #    target  => "/opt/cni/vxlan/unicast.d/${cni_name}.sh",
-      #    content => epp(
-      #      "${module_name}/unicast-vxlan-script-footer.sh.epp", {
-      #        vxlan_id      => $vxlan_id,
-      #        vxlan_ip      => $cni_item[1],
-      #        vxlan_netmask => $cni_item[4]
-      #      }
-      #    ),
-      #    order   => 'zzzz';
-      #}
       file { "/opt/cni/config/${cni_name}.conflist":
         mode         => '0644',
         validate_cmd => "/usr/local/bin/cni-validator.sh -n ${network} -f /opt/cni/config/${cni_name}.conflist -t %",
