@@ -89,7 +89,7 @@ define nomad_cni::macvlan::multicast::v4 (
         mode    => '0755',
         require => File['/opt/cni/vxlan/multicast.d'],
         content => epp(
-          "${module_name}/multicast-vxlan-script.sh.epp", {
+          "${module_name}/multicast-vxlan.sh.epp", {
             vxlan_id        => $vxlan_id,
             vxlan_ip        => $cni_item[1],
             iface           => $iface,
