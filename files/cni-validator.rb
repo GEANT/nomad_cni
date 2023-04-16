@@ -4,6 +4,7 @@
 #
 require 'json'
 require 'docopt'
+require 'ipaddr'
 
 doc = <<DOCOPT
 CNI Duplicates checker.
@@ -29,15 +30,29 @@ end
 cidr = args['--cidr']
 conf_file = args['--conf-file']
 tmp_file = args['--tmp-file']
-occurrences_count = 0
+overlaps_count = 0
 files_array = [tmp_file]
 files_array.push(conf_file) if File.file?(conf_file)
 
-Dir.glob('/opt/cni/config/*').each do |f|
-  next if files_array.include?(f)
-  next unless File.readlines(f).any? { |line| line.include?(cidr) }
-  occurrences_count += 1
-  puts "Network #{cidr} already exists in #{f}"
+def networks_overlap?(network1, network2)
+  ip1 = IPAddr.new(network1)
+  ip2 = IPAddr.new(network2)
+
+  # Check if the network addresses are the same
+  return true if ip1.to_s == ip2.to_s
+
+  # Check if the networks overlap
+  ip1.include?(ip2) || ip2.include?(ip1)
 end
 
-exit 1 if occurrences_count > 0
+# Check if the network overlaps with any other network in the CNI config files
+Dir.glob('/opt/cni/config/*').each do |f|
+  subnet = JSON.parse(test)['plugins'][1]['ipam']['ranges'][0][0]['subnet']
+  next unless networks_overlap?(cidr, subnet)
+  overlaps_count += 1
+  puts "Network #{cidr} overlaps with #{subnet} in #{f}"
+end
+
+exit 1 if occurrences_count > 0 || overlaps_count > 0
+
+# vim: ft=ruby
