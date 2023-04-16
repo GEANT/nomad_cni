@@ -9,7 +9,6 @@
     1. [Install the CNI components](#install-the-cni-components)
     2. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
     3. [Minimum networks](#minimum-networks)
-        1. [developer note](#developer-note)
 5. [Firewall](#firewall)
     1. [NAT](#nat)
     2. [VXLAN traffic](#vxlan-traffic)
@@ -62,7 +61,7 @@ class { 'nomad_cni':
 
 ### Create a bunch of CNI networks
 
-`agent_regex` will only match nodes within the same Puppet environment (i.e. on test you won't be able to match a node from the production environment). Alternatively you can use `agent_list`.
+`agent_regex` will only match nodes within the same Puppet environment. Alternatively you can use `agent_list` to supply a list of nomad agents.
 
 Using the following resource declaration you can setup two CNI networks, using the unicast vxlan technology:
 
@@ -83,7 +82,7 @@ Multicast shuold be better, but in my environment it wasn't reliable. Feel free 
 
 in most cases it is unlikely to use all the IPs on the same Agent. For instance a 24 bit network, split by 3 agents, will give 83 IPs per Agent.
 
-You may decide to overcommit the number of networks, to foresee and allow a seamless extension of the Nomad cluster. If you do not use this parameter, when you extend the cluster, the CNI will be reconfigured in order to be shrunk, and you'll face an outage, as the containers will need to respawn.
+You may decide to overcommit the number of networks, to foresee and allow a seamless extension of the Nomad cluster. If you do not use this parameter, when you extend the cluster, the CNI will need to be reconfigured on all the agents, and you'll face an outage (the containers will loose connectivity and need to respawn).
 
 In the example below the 24 bit network will be split by 10, and it will give 24 IPs to each network, regardless of the number of agents:
 
@@ -99,9 +98,7 @@ nomad_cni::macvlan::unicast::v4 {
 }
 ```
 
-#### developer note
-
-this part requires manual testing: extending a cluster and check the behavior. We are assuming that adding a new Mac address onto Bridge FDB will not require a service restart.
+**developer note:** this part needs to be proved and requires manual testing, by extending a cluster and checking the behavior. We are assuming that adding a new Mac address onto Bridge FDB does not require a service restart.
 
 ## Firewall
 
@@ -135,7 +132,7 @@ If you applied CNI segregation (`cni_cut_off` set to `true`), you can interconne
 nomad_cni::cni_connect { ['cni1', 'cni2']: }
 ```
 
-If you need encryption, or you need to interconnect only certain services, you can either:
+If you need encryption, or you need to interconnect only certain services within the CNI, you can either:
 
 1. help implementing `wireguard` in this module
 2. use [Consul Connect](https://developer.hashicorp.com/consul/docs/connect)
@@ -152,49 +149,49 @@ If you do not follow these steps the socket will be open either on the Agent IP,
 
 This module provides a function that can be used to pass the `host_network` parameter to [VoxPupuli Nomad Module](https://forge.puppet.com/modules/puppet/nomad).
 
-Assuming that Nomad agent is listening on `eth0`, you can add the following key in your Nomad configuration hash
+Assuming that the Nomad agent is listening on `eth0`, you can add the following key in your Nomad configuration hash
 
 ```puppet
 host_network => nomad_cni::host_network_v4('eth0')
 ```
 
-as a result, you'll get something like the following in the agent configurations
+as a result, you'll get something like the following in the agent configuration
 
 ```json
-    "host_network": [
-      {
-        "public": {
-          "cidr": "183.197.195.193/22",
-          "interface": "eth0"
-        }
-      },
-      {
-        "foo": {
-          "cidr": "192.168.2.1/24",
-          "interface": "vxbr11882895"
-        }
-      },
-      {
-        "bar": {
-          "cidr": "192.168.3.1/24",
-          "interface": "vxbr5199537"
-        }
-      },
+"host_network": [
+  {
+    "public": {
+      "cidr": "183.184.185.186/22",
+      "interface": "eth0"
+    }
+  },
+  {
+    "foo": {
+      "cidr": "192.168.2.1/24",
+      "interface": "vxbr11882895"
+    }
+  },
+  {
+    "bar": {
+      "cidr": "192.168.3.1/24",
+      "interface": "vxbr5199537"
+    }
+  },
 ... and so on....
 ```
 
 ### Nomad job example
 
-If you have a host_network called `foo`, this is how the network stanza looks like in your job (as you can see, you no longer need to use dynamic ports with CNI isolated networks)
+If you have a `host_network` called `foo`, this is how the network stanza looks like in your job (as you can see, you no longer need to use dynamic ports with CNI isolated networks)
 
 ```hcl
-  network {
-    mode = "cni/foo"
-    port "grafana" {
-      static       = 3000
-      host_network = "foo"
-    }
+network {
+  mode = "cni/foo"
+  port "grafana" {
+    static       = 3000
+    host_network = "foo"
   }
+}
 ```
 
 ## Limitations
