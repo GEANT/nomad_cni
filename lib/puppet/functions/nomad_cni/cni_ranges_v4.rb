@@ -54,6 +54,10 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
     end
 
     chunk_size = (free_hosts / number_of_networks).floor
+    if chunk_size < 3
+      # we have one gateway, one first usable IP, and one last usable IP
+      raise ArgumentError, "Invalid network address: #{network_address}. The network is too small to be split in #{number_of_networks} networks"
+    end
     agents_array = (0..agent_number - 1).to_a
     agents_array.map do |item|
       [

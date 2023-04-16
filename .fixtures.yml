@@ -6,6 +6,9 @@ fixtures:
     archive:
       repo: "puppet/archive"
       ref: "6.1.1"
+    concat:
+      repo: "puppetlabs/concat"
+      ref: "8.0.0"
     firewall:
       repo: "puppetlabs/firewall"
       ref: "3.3.0"
