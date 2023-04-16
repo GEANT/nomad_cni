@@ -47,12 +47,13 @@ end
 
 # Check if the network overlaps with any other network in the CNI config files
 Dir.glob('/opt/cni/config/*').each do |f|
-  subnet = JSON.parse(test)['plugins'][1]['ipam']['ranges'][0][0]['subnet']
+  conf_file = File.read(f)
+  subnet = JSON.parse(conf_file)['plugins'][1]['ipam']['ranges'][0][0]['subnet']
   next unless networks_overlap?(cidr, subnet)
   overlaps_count += 1
   puts "Network #{cidr} overlaps with #{subnet} in #{f}"
 end
 
-exit 1 if occurrences_count > 0 || overlaps_count > 0
+exit 1 if overlaps_count > 0 || overlaps_count > 0
 
 # vim: ft=ruby
