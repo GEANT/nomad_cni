@@ -43,8 +43,10 @@ class nomad_cni::config (
       purge   => true,
       recurse => true,
       force   => true;
-    '/usr/local/bin/cni-validator.sh':
-      source => "puppet:///modules/${module_name}/cni-validator.sh";
+    '/usr/local/bin/cni-validator.sh':  # legacy
+      ensure => absent;
+    '/usr/local/bin/cni-validator.rb':
+      source => "puppet:///modules/${module_name}/cni-validator.rb";
     '/usr/local/bin/vxlan-wizard.sh':
       source => "puppet:///modules/${module_name}/vxlan-wizard.sh";
   }
@@ -67,13 +69,15 @@ class nomad_cni::config (
     subscribe   => File['/opt/cni/vxlan/unicast.d', '/opt/cni/vxlan/multicast.d'];
   }
 
-  # == install python3-demjson and fping
+  # == install docopt gem and fping package
   #
-  ['python3-demjson', 'fping'].each |String $package| {
-    unless defined(Package[$package]) {
-      package { $package: ensure => present, }
+  unless defined(Package['docopt']) {
+    package { 'docopt':
+      ensure   => present,
+      provider => 'puppet_gem',
     }
   }
+  unless defined(Package['fping']) { package { 'fping': ensure => present } }
 
   # == install CNI plugins
   #

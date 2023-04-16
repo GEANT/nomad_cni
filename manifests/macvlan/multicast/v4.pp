@@ -1,6 +1,6 @@
 # == Define: nomad_cni::macvlan::multicast::v4
 #
-# configure CNI and VXLAN/Bridge for Nomad
+# configure CNI and Multicast VXLAN/Bridge for Nomad
 #
 # == Paramters:
 #
@@ -72,6 +72,8 @@ define nomad_cni::macvlan::multicast::v4 (
   $vxlan_id = seeded_rand(16777215, $network) + 1
   $multicast_group = nomad_cni::int_to_v4(seeded_rand(268435455, $network) + 1)
 
+  # == create the CNI relevant systemd service
+  #
   service { "cni-id@${cni_name}.service":
     ensure  => running,
     enable  => true,
@@ -79,7 +81,7 @@ define nomad_cni::macvlan::multicast::v4 (
     notify  => Exec["${module_name} reload nomad service"];
   }
 
-  # == create CNI config file, collect all the fragments for the script and add the footer
+  # == create CNI config file and VXLAN script
   #
   $cni_ranges_v4.each |$cni_item| {
     if $cni_item[0] == $facts['networking']['hostname'] {
@@ -101,10 +103,10 @@ define nomad_cni::macvlan::multicast::v4 (
       }
       file { "/opt/cni/config/${cni_name}.conflist":
         mode         => '0644',
-        validate_cmd => "/usr/local/bin/cni-validator.sh -n ${network} -f /opt/cni/config/${cni_name}.conflist -t %",
+        validate_cmd => "/usr/local/bin/cni-validator.rb --cidr ${network} --conf-file /opt/cni/config/${cni_name}.conflist --tmp-file %",
         require      => [
           File['/opt/cni/config', '/usr/local/bin/cni-validator.sh', '/run/cni'],
-          Package['python3-demjson']
+          Package['docopt']
         ],
         notify       => Service["cni-id@${cni_name}.service"],
         content      => to_json_pretty(

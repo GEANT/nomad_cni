@@ -1,6 +1,6 @@
 # == Define: nomad_cni::macvlan::unicast::v4
 #
-# configure CNI and VXLAN/Bridge for Nomad
+# configure CNI and Unicast VXLAN/Bridge for Nomad
 #
 # == Paramters:
 #
@@ -93,6 +93,8 @@ define nomad_cni::macvlan::unicast::v4 (
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
+  # == create the CNI relevant systemd service
+  #
   service { "cni-id@${cni_name}.service":
     ensure  => running,
     enable  => true,
@@ -100,6 +102,8 @@ define nomad_cni::macvlan::unicast::v4 (
     notify  => Exec["${module_name} reload nomad service"];
   }
 
+  # == create and run Bridge FDB script
+  #
   concat { "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh":
     owner   => 'root',
     group   => 'root',
@@ -159,10 +163,10 @@ define nomad_cni::macvlan::unicast::v4 (
       }
       file { "/opt/cni/config/${cni_name}.conflist":
         mode         => '0644',
-        validate_cmd => "/usr/local/bin/cni-validator.sh -n ${network} -f /opt/cni/config/${cni_name}.conflist -t %",
+        validate_cmd => "/usr/local/bin/cni-validator.rb --cidr ${network} --conf-file /opt/cni/config/${cni_name}.conflist --tmp-file %",
         require      => [
           File['/opt/cni/config', '/usr/local/bin/cni-validator.sh', '/run/cni'],
-          Package['python3-demjson']
+          Package['docopt']
         ],
         notify       => Service["cni-id@${cni_name}.service"],
         content      => to_json_pretty(
