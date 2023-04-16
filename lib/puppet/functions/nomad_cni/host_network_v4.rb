@@ -1,4 +1,3 @@
-require 'facter'
 require 'ipaddr'
 # == Function: nomad_cni::host_network_v4
 #
