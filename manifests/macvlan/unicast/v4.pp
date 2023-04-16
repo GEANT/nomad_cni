@@ -108,15 +108,14 @@ define nomad_cni::macvlan::unicast::v4 (
     owner   => 'root',
     group   => 'root',
     mode    => '0755',
-    require => File["${vxlan_dir}/unicast.d/${cni_name}.sh", "/opt/cni/config/${cni_name}.conflist"],
+    require => File["${vxlan_dir}/unicast.d/${cni_name}.sh"],
     notify  => Exec["populate bridge fdb for ${cni_name}"];
   }
 
   concat::fragment { "vxlan_${vxlan_id}_header":
-    target  => "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh",
-    source  => "puppet:///modules/${module_name}/unicast-bridge-fdb-header.sh",
-    require => File["${vxlan_dir}/unicast.d/${cni_name}.sh"],
-    order   => '0001',
+    target => "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh",
+    source => "puppet:///modules/${module_name}/unicast-bridge-fdb-header.sh",
+    order  => '0001',
   }
 
   $agents_pretty_inventory.each |$agent| {
@@ -147,7 +146,7 @@ define nomad_cni::macvlan::unicast::v4 (
         owner   => 'root',
         group   => 'root',
         mode    => '0755',
-        require => File["${vxlan_dir}/unicast.d"],
+        require => File["${vxlan_dir}/unicast.d", "/opt/cni/config/${cni_name}.conflist"],
         notify  => Service["cni-id@${cni_name}.service"],
         content => epp(
           "${module_name}/unicast-vxlan.sh.epp", {
