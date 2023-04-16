@@ -54,6 +54,6 @@ Dir.glob('/opt/cni/config/*').each do |f|
   puts "Network #{cidr} overlaps with #{subnet} in #{f}"
 end
 
-exit 1 if overlaps_count > 0 || overlaps_count > 0
+exit 1 if overlaps_count > 0
 
 # vim: ft=ruby
