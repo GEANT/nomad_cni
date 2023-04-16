@@ -51,6 +51,31 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
     return_type 'Variant[Array[0, 0], Array[Hash]]'
   end
 
+  def networks_overlap?(network1, network2)
+    ip1 = IPAddr.new(network1)
+    ip2 = IPAddr.new(network2)
+
+    # Check if the network addresses are the same
+    return true if ip1.to_s == ip2.to_s
+
+    # Check if the networks overlap
+    ip1.include?(ip2) || ip2.include?(ip1)
+  end
+
+  def has_overlapping_networks?(networks)
+    # Iterate over each network and compare it to every other network
+    (0...networks.length).each do |i|
+      (i + 1...networks.length).each do |j|
+        if networks_overlap?(networks[i], networks[j])
+          return [networks[i], networks[j]]
+        end
+      end
+    end
+
+    # If no overlapping networks are found, return nil
+    nil
+  end
+
   def calculate_host_network_v4(iface)
     ip = call_function('fact', "networking.interfaces.#{iface}.ip")
     netmask = call_function('fact', "networking.interfaces.#{iface}.netmask")
@@ -62,6 +87,11 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
       cni_host_network = []
     else
       cni_names = cni_hash.keys
+      cni_networks = cni_names.map { |cni| cni_hash[cni]['network'] }
+      overlaps = has_overlapping_networks?(cni_networks)
+      if overlaps
+        raise Puppet::ParseError, "CNI networks #{overlaps.join(' and ')} overlap"
+      end
       cni_host_network = cni_names.map { |cni| { cni => { 'cidr' => cni_hash[cni]['network'], 'interface' => "vxbr#{cni_hash[cni]['network']}" } } }
     end
     cni_host_network + public_network
