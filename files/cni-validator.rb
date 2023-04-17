@@ -14,10 +14,10 @@ Usage:
   #{__FILE__} -h | --help
 
 Options:
-  -h --help               Show this screen.
-  --cidr=<CIDR>           CIDR to check.
-  --puppet-tmp-file=<TMPFILE>    Puppet temporary fi.
-  --conf-file=<CONFFILE>  The file resource that we are validating.
+  -h --help                    Show this screen.
+  --cidr=<CIDR>                CIDR to check.
+  --puppet-tmp-file=<TMPFILE>  Puppet temporary fi.
+  --conf-file=<CONFFILE>       The file resource that we are validating.
 
 DOCOPT
 
