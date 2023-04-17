@@ -5,3 +5,4 @@
 # /opt/cni/vlan/unicast.d, that creates the vxlan interface
 #
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
+
