@@ -63,7 +63,7 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
       cni_names = cni_hash.keys
       cni_host_network = cni_names.map do |cni|
         {
-          cni => { 'cidr' => cni_hash[cni]['network'], 'interface' => "vxbr#{cni_hash[cni]['network']}" }
+          cni => { 'cidr' => cni_hash[cni]['network'], 'interface' => "vxbr#{cni_hash[cni]['id']}" }
         }
       end
     end
