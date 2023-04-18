@@ -1,5 +1,5 @@
 require 'ipaddr'
-# Function to split a network by a given number of hosts (Nomad agents)
+# Function to transform decimal to IP address
 #
 # multicast_int_addr: IP address converted to decimal integer
 #
