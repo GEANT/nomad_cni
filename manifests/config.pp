@@ -74,7 +74,7 @@ class nomad_cni::config (
   unless defined(Package['docopt']) {
     package { 'docopt':
       ensure   => present,
-      provider => 'puppet_gem',
+      provider => 'gem',
     }
   }
   unless defined(Package['fping']) { package { 'fping': ensure => present } }

@@ -1,4 +1,4 @@
-#!/opt/puppetlabs/puppet/bin/ruby
+#!/usr/bin/env ruby
 #
 # ensure that the networks are not overlapping
 #
