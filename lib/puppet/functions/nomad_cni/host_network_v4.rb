@@ -55,7 +55,7 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
     netmask = call_function('fact', "networking.interfaces.#{iface}.netmask")
     cni_hash = call_function('fact', 'nomad_cni_hash')
     cidr = IPAddr.new(netmask).to_i.to_s(2).count('1')
-    public_network = [{ 'public' => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } }]
+    public_network = [{ 'public_v4' => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } }]
 
     if cni_hash.empty?
       cni_host_network = []
