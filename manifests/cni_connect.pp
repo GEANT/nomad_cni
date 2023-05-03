@@ -1,7 +1,7 @@
 # == Define: nomad_cni::cni_connect
 #
 #
-# == Paramters:
+# == Parameters
 #
 # [*cni_array*] Array
 # CNIs to interconnect

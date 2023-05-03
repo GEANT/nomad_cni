@@ -1,7 +1,7 @@
 # Class: nomad_cni::firewall::nat
 #
 #
-# == Paramters:
+# == Parameters
 #
 # [*interface*] String
 # Name of the network Interface to NAT

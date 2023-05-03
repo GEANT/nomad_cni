@@ -1,7 +1,7 @@
 # Class: nomad_cni::firewall::chain
 #
 #
-# == Paramters:
+# == Parameters
 #
 # [*provider*] Array[Enum['iptables', 'ip6tables']]
 # Iptables providers: ['iptables', 'ip6tables']

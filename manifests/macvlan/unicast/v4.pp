@@ -2,7 +2,7 @@
 #
 # configure CNI and Unicast VXLAN/Bridge for Nomad
 #
-# == Paramters:
+# == Parameters
 #
 # [*cni_name*] String
 #   the name of the CNI
@@ -93,8 +93,10 @@ define nomad_cni::macvlan::unicast::v4 (
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
-  # == create the CNI systemd service
-  #
+  # allow traffic from the CNI network to the host
+  nomad_cni::macvlan::unicast::firewall { "vxbr${vxlan_id}": }
+
+  # create the CNI systemd service
   service { "cni-id@${cni_name}.service":
     ensure  => running,
     enable  => true,
@@ -102,8 +104,7 @@ define nomad_cni::macvlan::unicast::v4 (
     notify  => Exec["${module_name} reload nomad service"];
   }
 
-  # == create and run Bridge FDB script
-  #
+  # create and run Bridge FDB script
   concat { "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh":
     owner   => 'root',
     group   => 'root',

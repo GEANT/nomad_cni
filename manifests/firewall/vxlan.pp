@@ -1,7 +1,7 @@
 # Class: nomad_cni::firewall::vxlan
 #
 #
-# == Paramters:
+# == Parameters
 #
 # [*interface*] String
 # Name of the network Interface to NAT

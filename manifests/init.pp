@@ -1,7 +1,7 @@
 # == Class: nomad_cni
 #
 #
-# == Paramters:
+# == Parameters
 #
 # [*cni_version*] String
 # version of CNI to install

@@ -2,7 +2,7 @@
 #
 # configure CNI and Multicast VXLAN/Bridge for Nomad
 #
-# == Paramters:
+# == Parameters
 #
 # [*cni_name*] String
 # the name of the CNI

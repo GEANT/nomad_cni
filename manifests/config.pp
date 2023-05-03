@@ -2,7 +2,7 @@
 #
 # This class installs the CNI plugins and python3-demjson
 #
-# == Paramters:
+# == Parameters
 #
 # [*cni_version*] String
 # version of CNI to install

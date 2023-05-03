@@ -1,7 +1,7 @@
 # Class: nomad_cni::firewall::cni_cutoff
 #
 #
-# == Paramters:
+# == Parameters
 #
 # [*provider*] Enum['iptables', 'ip6tables']
 # Iptables provider: iptables or ip6tables
