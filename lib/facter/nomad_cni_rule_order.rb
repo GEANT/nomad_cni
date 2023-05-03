@@ -4,7 +4,7 @@ require 'facter'
 
 # This facter returns the rule ordfer for the CNI chain
 #
-Facter.add(:nomad_cni_hash) do
+Facter.add(:nomad_cni_rule_order) do
   confine kernel: 'Linux'
   setcode do
     Facter::Util::Resolution.exec('iptables-save | awk /"CNI-ISOLATION-INPUT chain"/').split('"')[1].split.first
