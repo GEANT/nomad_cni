@@ -17,7 +17,8 @@
 6. [Add CNIs to Nomad](#add-cnis-to-nomad)
     1. [add host_network using VoxPupuli Nomad module](#add-host_network-using-voxpupuli-nomad-module)
     1. [Nomad job example](#nomad-job-example)
-7. [Limitations](#limitations)
+7. [Register your services to Consul](#register-your-services-to-consul)
+8. [Limitations](#limitations)
 
 ## Overview
 
@@ -190,6 +191,29 @@ network {
   port "grafana" {
     static       = 3000
     host_network = "foo"
+  }
+}
+```
+
+### Register your services to Consul
+
+If you register the service at `task` level, using the default settings, Nomad will register to Consul the IP of gateway of the CNI (instead of the IP of the container) and the service will be unreachable.
+
+The service block must be defined at `group` level, and not `task` level, and it has be configured as following (`address_mode = "alloc"` is the most important):
+
+```hcl
+service {
+  name         = "test-service-http"
+  provider     = "consul"
+  address_mode = "alloc"
+  port         = "http"
+  tags         = ["tcp"]
+  check {
+    name     = "http_tcp_check"
+    type     = "tcp"
+    port     = "http"
+    interval = "5s"
+    timeout  = "2s"
   }
 }
 ```
