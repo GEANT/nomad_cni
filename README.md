@@ -199,7 +199,7 @@ network {
 
 If you register the service at `task` level, using the default settings, Nomad will register to Consul the IP of gateway of the CNI (instead of the IP of the container) and the service will be unreachable.
 
-The service block must be defined at `group` level, and not `task` level, and it has be configured as following (`address_mode = "alloc"` is the most important):
+The service block must be defined at `group` level, and it must contain `address_mode = "alloc"` either in the `service` block and in the `check` block:
 
 ```hcl
 service {
@@ -209,11 +209,12 @@ service {
   port         = "http"
   tags         = ["tcp"]
   check {
-    name     = "http_tcp_check"
-    type     = "tcp"
-    port     = "http"
-    interval = "5s"
-    timeout  = "2s"
+    name         = "http_tcp_check"
+    address_mode = "alloc"
+    type         = "tcp"
+    port         = "http"
+    interval     = "5s"
+    timeout      = "2s"
   }
 }
 ```
