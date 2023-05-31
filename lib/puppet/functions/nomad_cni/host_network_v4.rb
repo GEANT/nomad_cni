@@ -17,6 +17,9 @@ require 'ipaddr'
 # [*ip*] Stdlib::IP::Address::V4::Nosubnet
 #   IP address of the Nomad agent
 #
+# [*ip_type*] Optional[String]
+#   IP type to use. It can be 'v4' or 'v6'. If undef, it defaults to 'v4'
+#
 # [*netmask*] Stdlib::IP::Address::V4::Nosubnet
 #   netmask address of the Nomad agent. This is not the CIDR notation, but the netmask. For instance: 255.255.255.0
 #
@@ -47,12 +50,20 @@ require 'ipaddr'
 Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
   dispatch :calculate_host_network_v4 do
     param 'String', :iface
+    optional_param 'Variant[String, Undef]', :ip_type
     return_type 'Variant[Array[0, 0], Array[Hash]]'
   end
 
   def calculate_host_network_v4(iface)
-    ip = call_function('fact', "networking.interfaces.#{iface}.ip")
-    netmask = call_function('fact', "networking.interfaces.#{iface}.netmask")
+    if !defined?(ip_type) || ip_type == 'v4'
+      ip = call_function('fact', "networking.interfaces.#{iface}.ip")
+      netmask = call_function('fact', "networking.interfaces.#{iface}.netmask")
+    elsif ip_type == 'v6'
+      ip = call_function('fact', "networking.interfaces.#{iface}.ip6")
+      netmask = call_function('fact', "networking.interfaces.#{iface}.netmask6")
+    else
+      raise ArgumentError, "Invalid IP type: #{ip_type}. It must be 'v4' or 'v6' or undef. Undef defaults to 'v4'"
+    end
     cni_hash = call_function('fact', 'nomad_cni_hash')
     cidr = IPAddr.new(netmask).to_i.to_s(2).count('1')
     public_network = [{ 'public_v4' => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } }]
