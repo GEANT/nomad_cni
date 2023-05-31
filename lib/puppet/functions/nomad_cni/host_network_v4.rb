@@ -54,8 +54,8 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
     return_type 'Variant[Array[0, 0], Array[Hash]]'
   end
 
-  def calculate_host_network_v4(iface)
-    if !defined?(ip_type) || ip_type == 'v4'
+  def calculate_host_network_v4(iface, ip_type = 'v4')
+    if ip_type == 'v4'
       ip = call_function('fact', "networking.interfaces.#{iface}.ip")
       netmask = call_function('fact', "networking.interfaces.#{iface}.netmask")
       cidr = IPAddr.new(netmask).to_i.to_s(2).count('1')
