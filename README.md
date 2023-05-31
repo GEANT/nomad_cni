@@ -181,6 +181,14 @@ as a result, you'll get something like the following in the agent configuration
 ... and so on....
 ```
 
+If you have dual stack IP configuration, the network that it's not defined will be the default network for your jobs.
+
+If you want to default to your host `ipv4`, you need to include `ipv6` instead, and you can do as following:
+
+```puppet
+host_network => nomad_cni::host_network_v4('eth0', 'v6')
+```
+
 ### Nomad job example
 
 If you have a `host_network` called `foo`, this is how the network stanza looks like in your job (as you can see, you no longer need to use dynamic ports with CNI isolated networks)

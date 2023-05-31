@@ -18,7 +18,7 @@ require 'ipaddr'
 #   IP address of the Nomad agent
 #
 # [*ip_type*] Optional[String]
-#   IP type to use. It can be 'v4' or 'v6'. If undef, it defaults to 'v4'
+#   IP type to use. It can be 'v4' or 'v6' or 'any. If undef, it defaults to 'v4'
 #
 # [*netmask*] Stdlib::IP::Address::V4::Nosubnet
 #   netmask address of the Nomad agent. This is not the CIDR notation, but the netmask. For instance: 255.255.255.0
@@ -58,15 +58,28 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
     if !defined?(ip_type) || ip_type == 'v4'
       ip = call_function('fact', "networking.interfaces.#{iface}.ip")
       netmask = call_function('fact', "networking.interfaces.#{iface}.netmask")
+      cidr = IPAddr.new(netmask).to_i.to_s(2).count('1')
+      public_network = [{ 'public_v4' => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } }]
     elsif ip_type == 'v6'
       ip = call_function('fact', "networking.interfaces.#{iface}.ip6")
       netmask = call_function('fact', "networking.interfaces.#{iface}.netmask6")
+      cidr = IPAddr.new(netmask).to_i.to_s(2).count('1')
+      public_network = [{ 'public_v6' => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } }]
+    elsif ip_type == 'any'
+      ip = call_function('fact', "networking.interfaces.#{iface}.ip")
+      netmask = call_function('fact', "networking.interfaces.#{iface}.netmask")
+      cidr = IPAddr.new(netmask).to_i.to_s(2).count('1')
+      ip_six = call_function('fact', "networking.interfaces.#{iface}.ip6")
+      netmask_six = call_function('fact', "networking.interfaces.#{iface}.netmask6")
+      cidr_six = IPAddr.new(netmask_six).to_i.to_s(2).count('1')
+      public_network = [
+        { 'public_v4' => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } },
+        { 'public_v6' => { 'cidr' => "#{ip_six}/#{cidr_six}", 'interface' => iface } },
+      ]
     else
-      raise ArgumentError, "Invalid IP type: #{ip_type}. It must be 'v4' or 'v6' or undef. Undef defaults to 'v4'"
+      raise ArgumentError, "Invalid IP type: #{ip_type}. It must be 'v4' or 'v6' 'any' or undef. if undef, it defaults to 'v4'"
     end
     cni_hash = call_function('fact', 'nomad_cni_hash')
-    cidr = IPAddr.new(netmask).to_i.to_s(2).count('1')
-    public_network = [{ 'public_v4' => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } }]
 
     if cni_hash.empty?
       cni_host_network = []
