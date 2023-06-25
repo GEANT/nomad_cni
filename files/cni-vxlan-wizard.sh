@@ -119,7 +119,7 @@ fi
 if [ -n "$STARTED_BY_SYSTEMD" ] || [ -z "$STARTED_BY_CRON" ]; then
     ECHO_CMD='echo'
 else
-    ECHO_CMD='logger -t VXLAN-wizard'
+    ECHO_CMD='logger -t CNI-VXLAN-wizard'
 fi
 
 shopt -s nullglob
@@ -162,7 +162,9 @@ for script in ${scriptArray[*]}; do
         check_status $vxlan_id $vxlan_ip
         vxlan_status="$?"
         if [ $vxlan_status == "0" ]; then
-            $ECHO_CMD "VXLAN $vxlan_id is already configured"
+            if [ -z "$STARTED_BY_SYSTEMD" ] || [ -n "$STARTED_BY_CRON" ]; then # we dont want to pollute the logs
+                $ECHO_CMD "VXLAN $vxlan_id is already configured"
+            fi
         else
             if [ "$lower_status" == "up" ]; then
                 if [ $vxlan_status == "1" ]; then
