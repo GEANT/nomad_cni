@@ -10,8 +10,8 @@ Environment="STARTED_BY_SYSTEMD=yes"
 User=root
 Group=root
 TimeoutStartSec=0
-ExecStart=/usr/local/bin/vxlan-wizard.sh --status up --name all
-SyslogIdentifier=VXLAN-wizard
+ExecStart=/usr/local/bin/cni-vxlan-wizard.sh --status up --name all
+SyslogIdentifier=CNI-VXLAN-wizard
 
 [Install]
 WantedBy=multi-user.target

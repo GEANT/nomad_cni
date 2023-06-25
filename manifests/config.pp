@@ -47,8 +47,8 @@ class nomad_cni::config (
       ensure => absent;
     '/usr/local/bin/cni-validator.rb':
       source => "puppet:///modules/${module_name}/cni-validator.rb";
-    '/usr/local/bin/vxlan-wizard.sh':
-      source => "puppet:///modules/${module_name}/vxlan-wizard.sh";
+    '/usr/local/bin/cni-vxlan-wizard.sh':
+      source => "puppet:///modules/${module_name}/cni-vxlan-wizard.sh";
   }
 
   # == define Nomad service reload
@@ -62,8 +62,8 @@ class nomad_cni::config (
   # == purge unused VXLANs (triggered by directory changes)
   #
   exec { 'purge_unused_vxlans':
-    command     => 'flock /tmp/vxlan-wizard vxlan-wizard.sh --purge',
-    require     => File['/usr/local/bin/vxlan-wizard.sh'],
+    command     => 'flock /tmp/cni-vxlan-wizard cni-vxlan-wizard.sh --purge',
+    require     => File['/usr/local/bin/cni-vxlan-wizard.sh'],
     path        => ['/usr/local/bin', '/usr/bin'],
     refreshonly => true,
     subscribe   => File['/opt/cni/vxlan/unicast.d', '/opt/cni/vxlan/multicast.d'];

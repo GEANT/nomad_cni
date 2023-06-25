@@ -59,7 +59,7 @@ describe 'nomad_cni' do
       is_expected.to contain_file('/opt/cni/vxlan/unicast.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
       is_expected.to contain_file('/opt/cni/vxlan/unicast_bridge_fdb.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
       is_expected.to contain_file('/usr/local/bin/cni-validator.rb').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/cni-validator.rb')
-      is_expected.to contain_file('/usr/local/bin/vxlan-wizard.sh').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/vxlan-wizard.sh')
+      is_expected.to contain_file('/usr/local/bin/cni-vxlan-wizard.sh').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/cni-vxlan-wizard.sh')
       is_expected.to contain_package('docopt').with(ensure: 'present', provider: 'gem')
       is_expected.to contain_package('fping').with(ensure: 'present')
     }
@@ -116,7 +116,7 @@ describe 'nomad_cni' do
       is_expected.to contain_file('/opt/cni/vxlan/unicast.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
       is_expected.to contain_file('/opt/cni/vxlan/unicast_bridge_fdb.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
       is_expected.to contain_file('/usr/local/bin/cni-validator.rb').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/cni-validator.rb')
-      is_expected.to contain_file('/usr/local/bin/vxlan-wizard.sh').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/vxlan-wizard.sh')
+      is_expected.to contain_file('/usr/local/bin/cni-vxlan-wizard.sh').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/cni-vxlan-wizard.sh')
       is_expected.to contain_package('docopt').with(ensure: 'present', provider: 'gem')
       is_expected.to contain_package('fping').with(ensure: 'present')
     }
@@ -173,7 +173,7 @@ describe 'nomad_cni' do
       is_expected.to contain_file('/opt/cni/vxlan/unicast.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
       is_expected.to contain_file('/opt/cni/vxlan/unicast_bridge_fdb.d').with(ensure: 'directory', owner: 'root', group: 'root', mode: '0755', purge: true, recurse: true, force: true)
       is_expected.to contain_file('/usr/local/bin/cni-validator.rb').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/cni-validator.rb')
-      is_expected.to contain_file('/usr/local/bin/vxlan-wizard.sh').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/vxlan-wizard.sh')
+      is_expected.to contain_file('/usr/local/bin/cni-vxlan-wizard.sh').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/cni-vxlan-wizard.sh')
       is_expected.to contain_package('docopt').with(ensure: 'present', provider: 'gem')
       is_expected.to contain_package('fping').with(ensure: 'present')
     }
