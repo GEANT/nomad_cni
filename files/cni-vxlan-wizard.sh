@@ -55,8 +55,10 @@ check_status() {
     vxlan_ip=$2
     if ip address show dev vxbr$vxlan_id &>/dev/null && ip address show dev vxlan$vxlan_id &>/dev/null && fping -c1 -t500 $vxlan_ip &>/dev/null; then
         return 0
-    else
+    elif ip address show dev vxbr$vxlan_id &>/dev/null && ip address show dev vxlan$vxlan_id &>/dev/null && ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
         return 1
+    else
+        return 2
     fi
 }
 
@@ -137,7 +139,9 @@ for script in ${scriptArray[*]}; do
     vxlan_name=$(basename $script | cut -d'.' -f1)
     source <(grep vxlan_i.= $script) # set vxlan_id and vxlan_ip
     if [ "$lower_status" == "check" ]; then
-        if check_status $vxlan_id $vxlan_ip; then
+        check_status $vxlan_id $vxlan_ip
+        vxlan_status="$?"
+        if [ $vxlan_status == "0"]; then
             $ECHO_CMD "VXLAN $vxlan_id is up"
         else
             $ECHO_CMD "VXLAN $vxlan_id is down"

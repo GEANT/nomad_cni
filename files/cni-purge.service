@@ -1,5 +1,5 @@
 [Unit]
-Description=VXLAN CNI service for timer execution
+Description=CNI VXLAN purge service for timer execution. Purge VXLAN interfaces without a matching configuration.
 Documentation=https://github.com/GEANT/nomad_cni
 Wants=network-online.target
 After=network-online.target

@@ -1,5 +1,5 @@
 [Unit]
-Description=Keep VXLAN CNI up
+Description=Purge VXLAN interfaces without a matching configuration
 
 [Timer]
 OnBootSec=5m

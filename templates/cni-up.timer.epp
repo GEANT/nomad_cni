@@ -1,5 +1,5 @@
 [Unit]
-Description=Keep VXLAN CNI up
+Description=Keep CNI VXLAN up
 
 [Timer]
 OnBootSec=2m
