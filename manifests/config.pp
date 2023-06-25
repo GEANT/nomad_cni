@@ -49,6 +49,8 @@ class nomad_cni::config (
       source => "puppet:///modules/${module_name}/cni-validator.rb";
     '/usr/local/bin/cni-vxlan-wizard.sh':
       source => "puppet:///modules/${module_name}/cni-vxlan-wizard.sh";
+    '/usr/local/bin/vxlan-wizard.sh':
+      ensure => absent;
   }
 
   # == define Nomad service reload

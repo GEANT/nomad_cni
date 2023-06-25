@@ -16,7 +16,7 @@ usage() {
     echo ""
     echo "    -h|--help  Print this help and exit"
     echo "    --name     [name/all] Configure the specific CNI, or all if all/ALL is specified"
-    echo "    --status   [up/down/heck] Bring VXLAN and Bridge down"
+    echo "    --status   [up/down/check] Bring VXLAN and Bridge down"
     echo "    --force    Force IP configuration"
     echo "    --purge    Purge VXLANs and systemd service without a matching script"
     echo ""
@@ -137,15 +137,18 @@ EXIT_STATUS=0
 #
 for script in ${scriptArray[*]}; do
     vxlan_name=$(basename $script | cut -d'.' -f1)
-    source <(grep vxlan_i.= $script) # set vxlan_id and vxlan_ip
+    source <(grep -E vxlan_"[i|n]".*= $script) # set vxlan_id, vxlan_ip and vxlan_network
     if [ "$lower_status" == "check" ]; then
         check_status $vxlan_id $vxlan_ip
         vxlan_status="$?"
         if [ $vxlan_status == "0"]; then
             $ECHO_CMD "VXLAN $vxlan_id is up"
+        elif if [ $vxlan_status == "1"]; then
+            $ECHO_CMD "VXLAN $vxlan_id is up but $vxlan_ip not reachable"
+            EXIT_STATUS=1
         else
             $ECHO_CMD "VXLAN $vxlan_id is down"
-            EXIT_STATUS=1
+            EXIT_STATUS=2
         fi
     elif [ -n "$FORCE" ]; then
         if [ "$lower_status" == "up" ]; then
@@ -156,12 +159,28 @@ for script in ${scriptArray[*]}; do
             ifaces_down $vxlan_id
         fi
     else
-        if check_status $vxlan_id $vxlan_ip; then
+        check_status $vxlan_id $vxlan_ip
+        vxlan_status="$?"
+        if [ $vxlan_status == "0"]; then
             $ECHO_CMD "VXLAN $vxlan_id is already configured"
         else
             if [ "$lower_status" == "up" ]; then
-                $ECHO_CMD "vxlan $vxlan_id - cni $vxlan_name not configured, bringing up vxlan"
-                $script
+                if [ $vxlan_status == "1"]; then
+                    # the interface is up but the IP is not reachable
+                    $ECHO_CMD "vxlan $vxlan_ip - cni $vxlan_name not reachable, bringing up vxlan IP"
+                    ip addr add $vxlan_network dev vxbr$vxlan_id &>/dev/null || true  # bring IP up and ignore errors
+                    sleep .5  # is this really needed?
+                    if ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
+                        $ECHO_CMD "vxlan $vxlan_id - cni $vxlan_name still not working. Reloading vxlan"
+                        $script  # reload vxlan
+                    else
+                        $ECHO_CMD "vxlan $vxlan_id - cni $vxlan_name is now working"
+                    fi
+                else
+                    # the interface is down
+                    $ECHO_CMD "vxlan $vxlan_id - cni $vxlan_name not configured, bringing up vxlan"
+                    $script # reload vxlan
+                fi
             else
                 $ECHO_CMD echo "vxlan $vxlan_id - cni $vxlan_name bringing down vxlan and bridge"
                 ifaces_down $vxlan_id
