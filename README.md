@@ -229,7 +229,8 @@ service {
 
 ## Limitations
 
-* only IPv4 is currently supported (I started adding few bits for IPv6 but it's not working)
-* only `macvlan` plugin is supported (is a different plugin needed?)
+* only IPv4 is currently supported (I started working on IPv6 but it's not in a usable state at the moment)
+* only `macvlan` plugin is supported (are there reasons to support different plugins?)
+* `multicast` is not properly tested
 * changelog is not yet handled
 * CI is currently using an internal Gitlab runner. GitHub action will come soon.

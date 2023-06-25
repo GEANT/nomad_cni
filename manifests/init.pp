@@ -36,7 +36,7 @@
 class nomad_cni (
   String $cni_version = '1.2.0',
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
-  Integer $keep_vxlan_up_timer_interval                    = 5,
+  Integer $keep_vxlan_up_timer_interval                    = 1,
   Enum[
     'usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'
   ] $keep_vxlan_up_timer_unit                              = 'minutes',
