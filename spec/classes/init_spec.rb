@@ -31,7 +31,8 @@ describe 'nomad_cni' do
       is_expected.to contain_class('nomad_cni::config').with(
         cni_version: '1.2.0',
         cni_base_url: 'https://github.com/containernetworking/plugins/releases/download',
-        keep_vxlan_up_cron_interval: 5,
+        keep_vxlan_up_timer_interval: 5,
+        keep_vxlan_up_timer_unit: 'minutes',
       )
       is_expected.to contain_class('nomad_cni::firewall::chain').with(provider: ['iptables'], rule_order: '050')
       is_expected.to contain_class('nomad_cni::firewall::nat').with(
@@ -88,7 +89,8 @@ describe 'nomad_cni' do
       is_expected.to contain_class('nomad_cni::config').with(
         cni_version: '1.2.0',
         cni_base_url: 'https://github.com/containernetworking/plugins/releases/download',
-        keep_vxlan_up_cron_interval: 5,
+        keep_vxlan_up_timer_interval: 5,
+        keep_vxlan_up_timer_unit: 'minutes',
       )
       is_expected.to contain_class('nomad_cni::firewall::chain').with(provider: ['iptables'], rule_order: '050')
       is_expected.to contain_class('nomad_cni::firewall::nat').with(
@@ -145,7 +147,8 @@ describe 'nomad_cni' do
       is_expected.to contain_class('nomad_cni::config').with(
         cni_version: '1.2.0',
         cni_base_url: 'https://github.com/containernetworking/plugins/releases/download',
-        keep_vxlan_up_cron_interval: 5,
+        keep_vxlan_up_timer_interval: 5,
+        keep_vxlan_up_timer_unit: 'minutes',
       )
       is_expected.to contain_class('nomad_cni::firewall::chain').with(provider: ['iptables'], rule_order: '050')
       is_expected.to contain_class('nomad_cni::firewall::nat').with(
