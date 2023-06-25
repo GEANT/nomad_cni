@@ -10,13 +10,17 @@
 # [*cni_base_url*] Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
 # URL to download CNI plugins from
 #
-# [*keep_vxlan_up_cron_interval*] Integer[1, 59]
-# interval in minutes to run cron job to keep VXLANs up
+# [*keep_vxlan_up_timer_interval*] Integer
+# interval in minutes to run systemdd timer job to keep VXLANs up
+#
+# [*keep_vxlan_up_timer_unit*] Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
+# timer unit for the time interval: default minutes
 #
 class nomad_cni::config (
   String $cni_version,
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url,
-  Integer[1, 59] $keep_vxlan_up_cron_interval
+  Integer $keep_vxlan_up_timer_interval,
+  Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'] $keep_vxlan_up_timer_unit
 ) {
   # == this is a private class
   #
@@ -114,7 +118,8 @@ class nomad_cni::config (
       service_source => "puppet:///modules/${module_name}/cni-up.service",
       timer_content  => epp(
         "${module_name}/cni-up.timer.epp", {
-          keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
+          keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
+          keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
         }
       );
   }

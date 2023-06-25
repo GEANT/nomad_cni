@@ -9,8 +9,11 @@
 # [*cni_base_url*] Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
 # URL to download CNI plugins from
 #
-# [*keep_vxlan_up_cron_interval*] Integer[1, 59]
+# [*keep_vxlan_up_timer_interval*] Integer
 # interval in minutes to run systemdd timer job to keep VXLANs up
+#
+# [*keep_vxlan_up_timer_unit*] Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
+# timer unit for the time interval: default minutes
 #
 # [*manage_firewall_nat*] Boolean
 # whether to manage the firewall rules for NAT
@@ -33,7 +36,10 @@
 class nomad_cni (
   String $cni_version = '1.2.0',
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
-  Integer[1, 59] $keep_vxlan_up_cron_interval              = 5,
+  Integer $keep_vxlan_up_timer_interval                    = 5,
+  Enum[
+    'usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'
+  ] $keep_vxlan_up_timer_unit                              = 'minutes',
   # the parameters below are used to configure the firewall. 
   # You can disregard these settings if you don't want the module to configure the firewall
   # manage_firewall_nat is set to true, so the container can reach the network outside the CNI
@@ -49,9 +55,10 @@ class nomad_cni (
   }
 
   class { 'nomad_cni::config':
-    cni_version                 => $cni_version,
-    cni_base_url                => $cni_base_url,
-    keep_vxlan_up_cron_interval => $keep_vxlan_up_cron_interval,
+    cni_version                  => $cni_version,
+    cni_base_url                 => $cni_base_url,
+    keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
+    keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
   }
 
   # == create custom fact directory and avoid conflicts with other modules

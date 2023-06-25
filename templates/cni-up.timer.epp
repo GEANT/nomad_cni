@@ -3,7 +3,7 @@ Description=Keep CNI VXLAN up
 
 [Timer]
 OnBootSec=2m
-OnUnitActiveSec=<%= $keep_vxlan_up_cron_interval %>m
+OnUnitActiveSec=<%= $keep_vxlan_up_timer_interval %><%= $keep_vxlan_up_timer_unit %>
 
 [Install]
 WantedBy=timers.target
