@@ -39,3 +39,4 @@ class nomad_cni::firewall::vxlan (
 
   Firewall <<| tag == "${module_name}_fw_${facts['agent_specified_environment']}" |>>
 }
+# vim: set ts=2 sw=2 et :

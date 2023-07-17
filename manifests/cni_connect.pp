@@ -58,3 +58,4 @@ define nomad_cni::cni_connect (
     }
   }
 }
+# vim: set ts=2 sw=2 et :

@@ -83,9 +83,9 @@ Multicast shuold be better, but in my environment it wasn't reliable. Feel free 
 
 in most cases it is unlikely to use all the IPs on the same Agent. For instance a 24 bit network, split by 3 agents, will give 83 IPs per Agent.
 
-You may decide to overcommit the number of networks, to foresee and allow a seamless extension of the Nomad cluster. If you do not use this parameter, when you extend the cluster, the CNI will need to be reconfigured on all the agents, and you'll face an outage (the containers will loose connectivity and need to respawn).
+You may decide to overcommit the number of networks, to foresee and allow a seamless extension of the Nomad cluster. If you do not use this parameter, when you extend the cluster, the CNI needs to be reconfigured on all the agents, and you'll experience an outage (the containers loose connectivity and need to be respawned).
 
-In the example below the 24 bit network will be split by 10, and it will give 24 IPs to each network, regardless of the number of agents:
+In the example below the 24 bit network will be split by 10, and it will assign 24 IPs for each network, regardless of the number of agents:
 
 ```puppet
 nomad_cni::macvlan::unicast::v4 {
@@ -98,8 +98,6 @@ nomad_cni::macvlan::unicast::v4 {
     network => '172.16.4.0/22';
 }
 ```
-
-**developer note:** this part needs to be proved and requires manual testing, by extending a cluster and checking the behavior. We are assuming that adding a new Mac address onto Bridge FDB does not require a service restart.
 
 ## Firewall
 
@@ -133,10 +131,7 @@ If you applied CNI segregation (`cni_cut_off` set to `true`), you can interconne
 nomad_cni::cni_connect { ['cni1', 'cni2']: }
 ```
 
-If you need encryption, or you need to interconnect only certain services within the CNI, you can either:
-
-1. help implementing `wireguard` in this module
-2. use [Consul Connect](https://developer.hashicorp.com/consul/docs/connect)
+If you need encryption, or you need to interconnect only certain services within the CNI, you could use [Consul Connect](https://developer.hashicorp.com/consul/docs/connect)
 
 ## Add CNIs to Nomad
 
