@@ -1,4 +1,4 @@
-bridge fdb append 00:00:00:00:00:00 dev vxln<%= $vxlan_id %>@<%= $iface_suffix %> dst <%= $agent_ip %>
+bridge fdb append 00:00:00:00:00:00 dev vxln<%= $vxlan_id %><%= $iface_suffix %> dst <%= $agent_ip %>
 <% if ($nolearning) { -%>
-bridge fdb append <%= $agent_mac %> dev vxln<%= $vxlan_id %>@<%= $iface_suffix %> dst <%= $agent_ip %>
+bridge fdb append <%= $agent_mac %> dev vxln<%= $vxlan_id %><%= $iface_suffix %> dst <%= $agent_ip %>
 <% } -%>
