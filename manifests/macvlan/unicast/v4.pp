@@ -92,7 +92,7 @@ define nomad_cni::macvlan::unicast::v4 (
   $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
   $vxlan_id = seeded_rand(9999999, $network) + 1  # max vxlan ID is 16777215, but we can use only 8 digits
-  $iface_suffix = seeded_rand_string(3, $facts['hostname'])
+  $iface_suffix = seeded_rand_string(3, $facts['networking']['hostname'])
 
   # allow traffic from the CNI network to the host
   nomad_cni::macvlan::unicast::firewall { "vxbr${vxlan_id}": }
