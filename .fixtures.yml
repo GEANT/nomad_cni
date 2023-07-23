@@ -17,7 +17,7 @@ fixtures:
       ref: "3.5.1"
     stdlib:
       repo: "puppetlabs/stdlib"
-      ref: "8.1.0"
+      ref: "8.6.0"
   repositories:
     facts: 'https://github.com/puppetlabs/puppetlabs-facts.git'
     puppet_agent: 'https://github.com/puppetlabs/puppetlabs-puppet_agent.git'

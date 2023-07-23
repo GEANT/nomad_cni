@@ -12,11 +12,11 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 usage() {
-    echo "Usage: $(basename $0) --force --status <up>/<down> --name <my_cni>"
+    echo "Usage: $(basename $0) --force --status up/down --name <cni_name>"
     echo ""
     echo "    -h|--help  Print this help and exit"
-    echo "    --name     [name/all] Configure the specific CNI, or all if all/ALL is specified"
-    echo "    --status   [up/down/check] Bring VXLAN and Bridge down"
+    echo "    --name     Configure a specific CNI, or all/ALL [<cni_name>/all]"
+    echo "    --status   Bring VXLAN and Bridge down [up/down/check] "
     echo "    --force    Force IP configuration"
     echo "    --purge    Purge VXLANs and systemd service without a matching script"
     echo ""
@@ -25,16 +25,18 @@ usage() {
 
 ifaces_down() {
     vxlan_id=$1
-    ip link delete vxbr$vxlan_id || true
-    ip link delete vxlan$vxlan_id || true
+    vxlan_suffix=$2
+    ip link delete "vxbr${vxlan_id}@${vxlan_suffix}" || true
+    ip link delete "vxln${vxlan_id}@${vxlan_suffix}" || true
 }
 
 purge_stale_ifaces() {
-    vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vxlan[0-9]+:/{sub("vxlan", ""); print $2}')
-    for vxlan_iface in $vxlan_ifaces_up; do
-        if ! grep -qrw $vxlan_iface $BASE_DIR/{multicast,unicast}.d; then
+    vxbr_ifaces_up=$(ip -o link show | awk -F': ' '/[0-9]+: vxbr(.*):/{sub("vxbr", ""); print $2}')
+    for vxlan_iface in $vxbr_ifaces_up; do
+        vxlan_id=$(echo $vxlan_iface | cut -d'@' -f1)
+        if ! grep -qrw $vxlan_id $BASE_DIR/{multicast,unicast}.d; then
             ip link delete vxbr$vxlan_iface &>/dev/null || true
-            ip link delete vxlan$vxlan_iface &>/dev/null || true
+            ip link delete vxln$vxlan_iface &>/dev/null || true
         fi
     done
 }
@@ -50,12 +52,21 @@ purge_stale_services() {
     done
 }
 
+purge_old_vxlan_ifaces () {
+    # this is needed to clean up old vxlan interfaces. Their name is vxlan<id>
+    for vxlan_iface in $(ip -o link show | awk -F': ' '/[0-9]+: vxlan(.*):/{print $2}'); do
+        ip link delete vxbr$vxlan_iface &>/dev/null || true
+        ip link delete vxln$vxlan_iface &>/dev/null || true
+    done
+}
+
 check_status() {
     vxlan_id=$1
     vxlan_ip=$2
-    if ip address show dev vxbr$vxlan_id &>/dev/null && ip address show dev vxlan$vxlan_id &>/dev/null && fping -c1 -t500 $vxlan_ip &>/dev/null; then
+    vxlan_suffix=$3
+    if ip address show dev "vxbr${vxlan_id}@${vxlan_suffix}" &>/dev/null && ip address show dev "vxln${vxlan_id}@${vxlan_suffix}" &>/dev/null && fping -c1 -t500 $vxlan_ip &>/dev/null; then
         return 0
-    elif ip address show dev vxbr$vxlan_id &>/dev/null && ip address show dev vxlan$vxlan_id &>/dev/null && ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
+    elif ip address show dev "vxbr${vxlan_id}@${vxlan_suffix}" &>/dev/null && ip address show dev "vxln${vxlan_id}@${vxlan_suffix}" &>/dev/null && ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
         return 1
     else
         return 2
@@ -97,11 +108,12 @@ done
 
 if [ -n "$PURGE" ]; then
     if [ $parameters -gt 0 ]; then
-        echo -e "\nERROR: --purge cannot be used with other options\n"
+        echo -e "\nERROR: You cannot use --purge with other parameters\n"
         usage
     fi
     purge_stale_ifaces
     purge_stale_services
+    purge_old_vxlan_ifaces
     exit 0
 elif [ $parameters -lt 2 ]; then
     echo -e "\nERROR: You must use --name <cni_name> and --status <up>/<down>\n"
@@ -137,7 +149,7 @@ EXIT_STATUS=0
 #
 for script in ${scriptArray[*]}; do
     vxlan_name=$(basename $script | cut -d'.' -f1)
-    source <(grep -E "vxlan_[i|n].*=" $script) # set vxlan_id, vxlan_ip and vxlan_network
+    source <(grep -E "vxlan_[i|n|s].*=" $script) # set vxlan_id, vxlan_ip and vxlan_network
     if [ "$lower_status" == "check" ]; then
         check_status $vxlan_id $vxlan_ip
         vxlan_status="$?"
@@ -156,10 +168,10 @@ for script in ${scriptArray[*]}; do
             $script
         else
             $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name bringing down vxlan and bridge"
-            ifaces_down $vxlan_id
+            ifaces_down $vxlan_id $vxlan_suffix
         fi
     else
-        check_status $vxlan_id $vxlan_ip
+        check_status $vxlan_id $vxlan_ip $vxlan_suffix
         vxlan_status="$?"
         if [ $vxlan_status == "0" ]; then
             if [ -z "$STARTED_BY_SYSTEMD" ] || [ -n "$STARTED_BY_CRON" ]; then # we dont want to pollute the logs
@@ -170,11 +182,11 @@ for script in ${scriptArray[*]}; do
                 if [ $vxlan_status == "1" ]; then
                     # the interface is up but the IP is not reachable
                     $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name not reachable, bringing up vxlan IP $vxlan_ip"
-                    ip addr add $vxlan_network dev vxbr$vxlan_id &>/dev/null || true  # bring IP up and ignore errors
-                    sleep .5  # is this really needed?
+                    ip addr add $vxlan_network dev vxbr$vxlan_id &>/dev/null || true # bring IP up and ignore errors
+                    sleep .5                                                         # is this really needed?
                     if ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
                         $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name still not working. Reloading vxlan"
-                        $script  # reload vxlan
+                        $script # reload vxlan
                     else
                         $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name is now working"
                     fi
@@ -185,7 +197,7 @@ for script in ${scriptArray[*]}; do
                 fi
             else
                 $ECHO_CMD echo "VXLAN $vxlan_id - CNI $vxlan_name bringing down vxlan and bridge"
-                ifaces_down $vxlan_id
+                ifaces_down $vxlan_id $vxlan_suffix
             fi
         fi
     fi

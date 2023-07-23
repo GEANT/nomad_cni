@@ -91,7 +91,8 @@ define nomad_cni::macvlan::unicast::v4 (
   $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
   $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
-  $vxlan_id = seeded_rand(16777215, $network) + 1
+  $vxlan_id = seeded_rand(9999999, $network) + 1  # max vxlan ID is 16777215, but we can use only 8 digits
+  $iface_suffix = seeded_rand_string(3, $facts['hostname'])
 
   # allow traffic from the CNI network to the host
   nomad_cni::macvlan::unicast::firewall { "vxbr${vxlan_id}": }
@@ -124,10 +125,11 @@ define nomad_cni::macvlan::unicast::v4 (
       target  => "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh",
       content => epp(
         "${module_name}/unicast-bridge-fdb.sh.epp", {
-          agent_mac  => $agent['mac'],
-          agent_ip   => $agent['ip'],
-          vxlan_id   => $vxlan_id,
-          nolearning => $nolearning,
+          agent_mac    => $agent['mac'],
+          agent_ip     => $agent['ip'],
+          vxlan_id     => $vxlan_id,
+          nolearning   => $nolearning,
+          iface_suffix => $iface_suffix,
         }
       ),
       order   => seeded_rand(20000, "vxlan_${vxlan_id}_${agent['ip']}"),
@@ -158,6 +160,7 @@ define nomad_cni::macvlan::unicast::v4 (
             vxlan_netmask => $cni_item[4],
             nolearning    => $nolearning,
             cni_name      => $cni_name,
+            iface_suffix  => $iface_suffix,
           }
         );
       }

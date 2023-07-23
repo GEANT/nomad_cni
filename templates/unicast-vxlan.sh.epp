@@ -4,20 +4,20 @@ vxlan_ip="<%= $vxlan_ip %>"
 vxlan_network="<%= $vxlan_ip %>/<%= $vxlan_netmask %>"
 
 # delete vxlan and bridge interface if they exist
-ip address show dev vxlan<%= $vxlan_id %> &>/dev/null && ip link delete vxlan<%= $vxlan_id %>
-ip address show dev vxbr<%= $vxlan_id %> &>/dev/null && ip link delete vxbr<%= $vxlan_id %>
+ip address show dev vxln<%= $vxlan_id %>@<%= $iface_suffix %> &>/dev/null && ip link delete vxln<%= $vxlan_id %>@<%= $iface_suffix %>
+ip address show dev vxbr<%= $vxlan_id %>@<%= $iface_suffix %> &>/dev/null && ip link delete vxbr<%= $vxlan_id %>@<%= $iface_suffix %>
 
 # create vxlan interface
-ip link add vxlan<%= $vxlan_id %> type vxlan id <%= $vxlan_id %> dev <%= $iface %> dstport 4789 local <%= $agent_ip %><% if ($nolearning) { %> nolearning<% } %>
+ip link add vxln<%= $vxlan_id %>@<%= $iface_suffix %> type vxlan id <%= $vxlan_id %> dev <%= $iface %> dstport 4789 local <%= $agent_ip %><% if ($nolearning) { %> nolearning<% } %>
 
 # populate bridge DB
 /opt/cni/vxlan/unicast_bridge_fdb.d/<%= $cni_name %>_bridge_fdb.sh
 
 # bring up the vxlan interface
-ip link set up dev vxlan<%= $vxlan_id %>
+ip link set up dev vxln<%= $vxlan_id %>@<%= $iface_suffix %>
 
 # bring up the bridge
-brctl addbr vxbr<%= $vxlan_id %>
-brctl addif vxbr<%= $vxlan_id %> vxlan<%= $vxlan_id %>
-ip addr add <%= $vxlan_ip %>/<%= $vxlan_netmask %> dev vxbr<%= $vxlan_id %>
-ip link set up dev vxbr<%= $vxlan_id %>
+brctl addbr vxbr<%= $vxlan_id %>@<%= $iface_suffix %>
+brctl addif vxbr<%= $vxlan_id %>@<%= $iface_suffix %> vxln<%= $vxlan_id %>@<%= $iface_suffix %>
+ip addr add <%= $vxlan_ip %>/<%= $vxlan_netmask %> dev vxbr<%= $vxlan_id %>@<%= $iface_suffix %>
+ip link set up dev vxbr<%= $vxlan_id %>@<%= $iface_suffix %>

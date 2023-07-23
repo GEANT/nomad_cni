@@ -65,6 +65,18 @@
       "operatingsystemrelease": [
         "18.04"
       ]
+    },
+    {
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "20.04"
+      ]
+    },
+    {
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "22.04"
+      ]
     }
   ],
   "requirements": [
