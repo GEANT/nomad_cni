@@ -54,9 +54,9 @@ purge_stale_services() {
 
 purge_old_vxlan_ifaces () {
     # this is needed to clean up old vxlan interfaces. Their name is vxlan<id>
-    for vxlan_iface in $(ip -o link show | awk -F': ' '/[0-9]+: vxlan(.*):/{print $2}'); do
+    for vxlan_iface in $(ip -o link show | awk -F': ' '/[0-9]+: vxlan(.*):/{sub("vxlan", ""); print $2}'); do
         ip link delete vxbr$vxlan_iface &>/dev/null || true
-        ip link delete vxln$vxlan_iface &>/dev/null || true
+        ip link delete vxlan$vxlan_iface &>/dev/null || true
     done
 }
 
