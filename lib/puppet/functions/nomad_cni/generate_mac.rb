@@ -21,10 +21,7 @@ Puppet::Functions.create_function(:'nomad_cni::generate_mac') do
     mac_address = hashed_value[0..11]
 
     # Format the MAC address with colons
-    formatted_mac_address = mac_address.scan(%r{.{2}}).join(':')
-
-    # Add a common MAC address prefix (Optional, but it can make it look more like a MAC address)
-    final_mac_address = "02:#{formatted_mac_address}"
+    final_mac_address = mac_address.scan(%r{.{2}}).join(':')
 
     final_mac_address
   end
