@@ -17,11 +17,14 @@ Puppet::Functions.create_function(:'nomad_cni::generate_mac') do
     # Hash the IP address to generate a unique value
     hashed_value = Digest::MD5.hexdigest(input_string)
 
-    # Take the first 6 bytes of the hash to form the MAC address
-    mac_address = hashed_value[0..11]
+    # Take the first 5 bytes of the hash to form the MAC address
+    mac_address = hashed_value[0..9]
 
     # Format the MAC address with colons
-    final_mac_address = mac_address.scan(%r{.{2}}).join(':')
+    formatted_mac_address = mac_address.scan(%r{.{2}}).join(':')
+
+    # Add a common MAC address prefix (Optional, but it can make it look more like a MAC address)
+    final_mac_address = "02:#{formatted_mac_address}"
 
     final_mac_address
   end
