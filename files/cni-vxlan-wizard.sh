@@ -14,11 +14,11 @@ fi
 usage() {
     echo "Usage: $(basename $0) --force --status up/down --name <cni_name>"
     echo ""
-    echo "    -h|--help  Print this help and exit"
-    echo "    --name     Configure a specific CNI, or all/ALL [<cni_name>/all]"
-    echo "    --status   Bring VXLAN and Bridge down [up/down/check] "
-    echo "    --force    Force IP configuration"
-    echo "    --purge    Purge VXLANs and systemd service without a matching script"
+    echo "  -h|--help  Print this help and exit"
+    echo "  --name     Configure a specific CNI, or all/ALL [<cni_name>/all]"
+    echo "  --status   Bring VXLAN and Bridge down [up/down/check] "
+    echo "  --force    Force IP configuration"
+    echo "  --purge    Purge VXLANs and systemd service without a matching script"
     echo ""
     exit 3
 }
@@ -109,7 +109,7 @@ if [ -n "$PURGE" ]; then
     purge_stale_services
     exit 0
 elif [ $parameters -lt 2 ]; then
-    echo -e "\nERROR: You must use --name <cni_name> and --status <up>/<down>\n"
+    echo -e "\nERROR: You must use --name <cni_name> and --status up/down\n"
     usage
 fi
 
