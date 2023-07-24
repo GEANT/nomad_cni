@@ -153,14 +153,15 @@ define nomad_cni::macvlan::unicast::v4 (
         notify  => Service["cni-id@${cni_name}.service"],
         content => epp(
           "${module_name}/unicast-vxlan.sh.epp", {
-            agent_ip      => $facts['networking']['interfaces'][$iface]['ip'],
-            vxlan_id      => $vxlan_id,
-            vxlan_ip      => $cni_item[1],
-            iface         => $iface,
-            vxlan_netmask => $cni_item[4],
-            nolearning    => $nolearning,
-            cni_name      => $cni_name,
-            mac_address   => $vxbr_mac_address,
+            agent_ip          => $facts['networking']['interfaces'][$iface]['ip'],
+            vxlan_id          => $vxlan_id,
+            vxlan_ip          => $cni_item[1],
+            iface             => $iface,
+            vxlan_netmask     => $cni_item[4],
+            nolearning        => $nolearning,
+            cni_name          => $cni_name,
+            vxbr_mac_address  => $vxbr_mac_address,
+            vxlan_mac_address => $vxlan_mac_address,
           }
         );
       }
