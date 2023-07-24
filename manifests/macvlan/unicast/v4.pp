@@ -182,7 +182,7 @@ define nomad_cni::macvlan::unicast::v4 (
               },
               {
                 type             => 'macvlan',
-                master           => "vxbr${vxlan_id}",
+                master           => "vxbr${vxlan_id}${iface_suffix}",
                 isDefaultGateway => false,
                 forceAddress     => false,
                 ipMasq           => true,
