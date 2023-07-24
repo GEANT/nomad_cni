@@ -33,7 +33,8 @@ ifaces_down() {
 purge_stale_ifaces() {
     vxbr_ifaces_up=$(ip -o link show | awk -F': ' '/[0-9]+: vxbr(.*):/{sub("vxbr", ""); print $2}')
     for vxlan_iface in $vxbr_ifaces_up; do
-        vxlan_id=$(echo $vxlan_iface | cut -d'@' -f1)
+        # remove the last 4 chars from the interface name to obtain the vxlan_id
+        vxlan_id=${vxlan_iface%????}
         if ! grep -qrw $vxlan_id $BASE_DIR/{multicast,unicast}.d; then
             ip link delete vxbr$vxlan_iface &>/dev/null || true
             ip link delete vxln$vxlan_iface &>/dev/null || true
@@ -45,18 +46,11 @@ purge_stale_services() {
     configured_services=$(systemctl list-units cni-id@* --all --full --no-pager --no-legend | awk '{print $NF}')
     for srv in $configured_services; do
         if ! test -f "${BASE_DIR}/multicast.d/${srv}.sh" && ! test -f "${BASE_DIR}/unicast.d/${srv}.sh"; then
-            systemctl disable cni-id@${srv}.service
-            systemctl stop cni-id@${srv}.service
-            rm -f /etc/systemd/system/cni-id@${srv}.service
+            systemctl stop cni-id@${srv}.service || true
+            systemctl disable cni-id@${srv}.service || true
+            find /etc/systemd/system/ -name "cni-id@${srv}.service" -delete
+            systemctl daemon-reload
         fi
-    done
-}
-
-purge_old_vxlan_ifaces () {
-    # this is needed to clean up old vxlan interfaces. Their name is vxlan<id>
-    for vxlan_iface in $(ip -o link show | awk -F': ' '/[0-9]+: vxlan(.*):/{sub("vxlan", ""); print $2}'); do
-        ip link delete vxbr$vxlan_iface &>/dev/null || true
-        ip link delete vxlan$vxlan_iface &>/dev/null || true
     done
 }
 
@@ -113,7 +107,6 @@ if [ -n "$PURGE" ]; then
     fi
     purge_stale_ifaces
     purge_stale_services
-    purge_old_vxlan_ifaces
     exit 0
 elif [ $parameters -lt 2 ]; then
     echo -e "\nERROR: You must use --name <cni_name> and --status <up>/<down>\n"

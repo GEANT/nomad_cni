@@ -50,6 +50,13 @@ class nomad_cni (
   Nomad_cni::Digits $firewall_rule_order                   = '050', # string made by digits, which can start with zero(es)
   Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # be aware that ip6tables is NOT supported at the moment
 ) {
+  # temporary notification to ask for reboot
+  if /^vxlan(\d+)$/ in $facts['networking']['interfaces'].keys {
+    notify { "Reboot required after installing this version of ${module_name}":
+      message => "Reboot required after installing this version of ${module_name}",
+    }
+  }
+
   if 'ip6tables' in $firewall_provider {
     fail('ip6tables is not supported at the moment')
   }
