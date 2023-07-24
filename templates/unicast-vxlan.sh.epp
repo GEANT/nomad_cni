@@ -1,5 +1,6 @@
 # variables used in the main script
 vxlan_id=<%= $vxlan_id %>
+vxlan_suffix="<%= $iface_suffix %>"
 vxlan_ip="<%= $vxlan_ip %>"
 vxlan_network="<%= $vxlan_ip %>/<%= $vxlan_netmask %>"
 

@@ -69,7 +69,8 @@ define nomad_cni::macvlan::multicast::v4 (
   }
 
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
-  $vxlan_id = seeded_rand(16777215, $network) + 1
+  $vxlan_id = seeded_rand(9999999, $network) + 1  # max vxlan ID is 16777215, but we can use only 8 digits
+  $iface_suffix = seeded_rand_string(4, $facts['networking']['hostname'])
   $multicast_group = nomad_cni::int_to_v4(seeded_rand(268435455, $network) + 1)
 
   # == create the CNI systemd service
@@ -119,7 +120,7 @@ define nomad_cni::macvlan::multicast::v4 (
               },
               {
                 type             => 'macvlan',
-                master           => "vxbr${vxlan_id}",
+                master           => "vxbr${vxlan_id}${iface_suffix}",
                 isDefaultGateway => false,
                 forceAddress     => false,
                 ipMasq           => true,

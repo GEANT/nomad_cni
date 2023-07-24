@@ -52,8 +52,8 @@ class nomad_cni (
 ) {
   # temporary notification to ask for reboot
   if /^vxlan(\d+)$/ in $facts['networking']['interfaces'].keys {
-    notify { "Reboot required after installing this version of ${module_name}":
-      message => "Reboot required after installing this version of ${module_name}",
+    notify { "${module_name} REBOOT REQUIRED":
+      message => "REBOOT REQUIRED after installing this version of ${module_name}",
     }
   }
 
