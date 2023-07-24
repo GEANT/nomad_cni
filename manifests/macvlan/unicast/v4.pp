@@ -142,7 +142,8 @@ define nomad_cni::macvlan::unicast::v4 (
   # == create CNI config file, collect all the fragments for the script and add the footer
   #
   $cni_ranges_v4.each |$cni_item| {
-    $mac_address = nomad_cni::generate_mac("${cni_item[1]}${facts['networking']['hostname']}")
+    $vxbr_mac_address = nomad_cni::generate_mac("${cni_item[1]}${facts['networking']['hostname']}")
+    $vxlan_mac_address = nomad_cni::generate_mac("${cni_item[1]}${cni_item[4]}${facts['networking']['hostname']}")
     if $cni_item[0] == $facts['networking']['hostname'] {
       file { "${vxlan_dir}/unicast.d/${cni_name}.sh":
         owner   => 'root',
@@ -159,7 +160,7 @@ define nomad_cni::macvlan::unicast::v4 (
             vxlan_netmask => $cni_item[4],
             nolearning    => $nolearning,
             cni_name      => $cni_name,
-            mac_address   => $mac_address,
+            mac_address   => $vxbr_mac_address,
           }
         );
       }
