@@ -182,8 +182,8 @@ define nomad_cni::macvlan::unicast::v4 (
                 type => 'loopback'
               },
               {
-                type             => 'macvlan',
-                master           => "vxbr${vxlan_id}",
+                type             => 'bridge',
+                bridge           => "vxbr${vxlan_id}",
                 isDefaultGateway => false,
                 forceAddress     => false,
                 ipMasq           => true,
