@@ -50,6 +50,9 @@ class nomad_cni (
   Nomad_cni::Digits $firewall_rule_order                   = '050', # string made by digits, which can start with zero(es)
   Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # be aware that ip6tables is NOT supported at the moment
 ) {
+  if $facts['nomad_cni_upgrade'] {
+    fail("\nnomad_cni_upgrade fact is set.\nPlease remove all the files under /opt/cni/vxlan/config, run puppet and REBOOT the server\n")
+  }
   if 'ip6tables' in $firewall_provider {
     fail('ip6tables is not supported at the moment')
   }
