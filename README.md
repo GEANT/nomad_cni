@@ -67,7 +67,7 @@ class { 'nomad_cni':
 Using the following resource declaration you can setup two CNI networks, using the unicast vxlan technology:
 
 ```puppet
-nomad_cni::macvlan::unicast::v4 {
+nomad_cni::bridge::unicast::v4 {
   default:
     agent_regex => 'nomad0';
   'cni1':
@@ -88,7 +88,7 @@ You may decide to overcommit the number of networks, to foresee and allow a seam
 In the example below the 24 bit network will be split by 10, and it will assign 24 IPs for each network, regardless of the number of agents:
 
 ```puppet
-nomad_cni::macvlan::unicast::v4 {
+nomad_cni::bridge::unicast::v4 {
   default:
     min_networks => 10,
     agent_regex  => 'nomad0';
@@ -225,7 +225,5 @@ service {
 ## Limitations
 
 * only IPv4 is currently supported (I started working on IPv6 but it's not in a usable state at the moment)
-* only `macvlan` plugin is supported (are there reasons to support different plugins?)
-* `multicast` is not properly tested
 * changelog is not yet handled
 * CI is currently using an internal Gitlab runner. GitHub action will come soon.
