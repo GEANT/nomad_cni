@@ -105,7 +105,7 @@ define nomad_cni::bridge::unicast::v4 (
   }
 
   # create and run Bridge FDB script
-  concat { "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}_bridge_fdb.sh":
+  concat { "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh":
     owner   => 'root',
     group   => 'root',
     mode    => '0755',
@@ -114,14 +114,14 @@ define nomad_cni::bridge::unicast::v4 (
   }
 
   concat::fragment { "vxlan_${vxlan_id}_header":
-    target => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}_bridge_fdb.sh",
+    target => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
     source => "puppet:///modules/${module_name}/unicast-bridge-fdb-header.sh",
     order  => '0001',
   }
 
   $agents_pretty_inventory.each |$agent| {
     concat::fragment { "vxlan_${vxlan_id}_${agent['name']}":
-      target  => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}_bridge_fdb.sh",
+      target  => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
       content => epp(
         "${module_name}/unicast-bridge-fdb.sh.epp", {
           agent_mac  => $agent['mac'],
@@ -135,7 +135,7 @@ define nomad_cni::bridge::unicast::v4 (
   }
 
   exec { "populate bridge fdb for ${cni_name}":
-    command     => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}_bridge_fdb.sh",
+    command     => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
     refreshonly => true;
   }
 
