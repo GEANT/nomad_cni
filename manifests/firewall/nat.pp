@@ -23,7 +23,7 @@ class nomad_cni::firewall::nat (
 
   # NAT will work on IPv6, but we need to investigate the implications of doing so
   $provider.each |$iptables_provider| {
-    firewall { "003 accept inbound related established rules for ${iptables_provider}":
+    firewall { "003 accept forward related established rules for ${iptables_provider} module ${module_name}":
       chain    => 'FORWARD',
       action   => accept,
       provider => $iptables_provider,
