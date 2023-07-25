@@ -28,9 +28,8 @@ class nomad_cni::config (
 
   $cni_directories = [
     '/opt/cni/config', '/opt/cni/vxlan',
-    '/opt/cni/vxlan/unicast_bridge_fdb.d',
+    '/opt/cni/vxlan/unicast-bridge-fdb.d',
     '/opt/cni/vxlan/unicast.d',
-    '/opt/cni/vxlan/multicast.d',
   ]
 
   # == create necessary files
@@ -72,7 +71,7 @@ class nomad_cni::config (
     require     => File['/usr/local/bin/cni-vxlan-wizard.sh'],
     path        => ['/usr/local/bin', '/usr/bin'],
     refreshonly => true,
-    subscribe   => File['/opt/cni/vxlan/unicast.d', '/opt/cni/vxlan/multicast.d'];
+    subscribe   => File['/opt/cni/vxlan/unicast.d'];
   }
 
   # == install docopt gem and fping package

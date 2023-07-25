@@ -32,7 +32,7 @@ ifaces_down() {
 purge_stale_ifaces() {
     vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vxlan[0-9]+:/{sub("vxlan", ""); print $2}')
     for vxlan_iface in $vxlan_ifaces_up; do
-        if ! grep -qrw $vxlan_iface $BASE_DIR/{multicast,unicast}.d; then
+        if ! grep -qrw $vxlan_iface $BASE_DIR/unicast.d; then
             ip link delete vxbr$vxlan_iface &>/dev/null || true
             ip link delete vxlan$vxlan_iface &>/dev/null || true
         fi
@@ -42,7 +42,7 @@ purge_stale_ifaces() {
 purge_stale_services() {
     configured_services=$(systemctl list-units cni-id@* --all --full --no-pager --no-legend | awk '{print $NF}')
     for srv in $configured_services; do
-        if ! test -f "${BASE_DIR}/multicast.d/${srv}.sh" && ! test -f "${BASE_DIR}/unicast.d/${srv}.sh"; then
+        if ! test -f "${BASE_DIR}/unicast.d/${srv}.sh"; then
             systemctl disable cni-id@${srv}.service
             systemctl stop cni-id@${srv}.service
             rm -f /etc/systemd/system/cni-id@${srv}.service

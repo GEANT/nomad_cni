@@ -12,7 +12,7 @@ ip link add vxlan<%= $vxlan_id %> type vxlan id <%= $vxlan_id %> dev <%= $iface 
 ip link set dev vxlan<%= $vxlan_id %> address <%= $vxlan_mac_address %>
 
 # populate bridge DB
-/opt/cni/vxlan/unicast_bridge_fdb.d/<%= $cni_name %>_bridge_fdb.sh
+/opt/cni/vxlan/unicast-bridge-fdb.d/<%= $cni_name %>_bridge_fdb.sh
 
 # bring up the vxlan interface
 ip link set up dev vxlan<%= $vxlan_id %>

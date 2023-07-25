@@ -1,4 +1,4 @@
-# == Define: nomad_cni::macvlan::unicast::v4
+# == Define: nomad_cni::bridge::unicast::v4
 #
 # configure CNI and Unicast VXLAN/Bridge for Nomad
 #
@@ -30,7 +30,7 @@
 #   minimum number of networks to be created. If the number of agents is less than this number, the module will fail
 #   check the README file for more details
 #
-define nomad_cni::macvlan::unicast::v4 (
+define nomad_cni::bridge::unicast::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
   String $cni_name                = $name,
   Optional[String] $agent_regex   = undef,
@@ -43,7 +43,7 @@ define nomad_cni::macvlan::unicast::v4 (
   # == ensure that nomad_cni class was included and that the name is not reserved
   #
   unless defined(Class['nomad_cni']) {
-    fail('nomad_cni::macvlan::unicast::v4 requires nomad_cni')
+    fail('nomad_cni::bridge::unicast::v4 requires nomad_cni')
   }
   if $cni_name == 'all' {
     fail('the name \'all\' is reserved and it cannot be used as a CNI name')
@@ -94,7 +94,7 @@ define nomad_cni::macvlan::unicast::v4 (
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
   # allow traffic from the CNI network to the host
-  nomad_cni::macvlan::unicast::firewall { "vxbr${vxlan_id}": }
+  nomad_cni::bridge::unicast::firewall { "vxbr${vxlan_id}": }
 
   # create the CNI systemd service
   service { "cni-id@${cni_name}.service":
@@ -105,7 +105,7 @@ define nomad_cni::macvlan::unicast::v4 (
   }
 
   # create and run Bridge FDB script
-  concat { "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh":
+  concat { "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}_bridge_fdb.sh":
     owner   => 'root',
     group   => 'root',
     mode    => '0755',
@@ -114,14 +114,14 @@ define nomad_cni::macvlan::unicast::v4 (
   }
 
   concat::fragment { "vxlan_${vxlan_id}_header":
-    target => "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh",
+    target => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}_bridge_fdb.sh",
     source => "puppet:///modules/${module_name}/unicast-bridge-fdb-header.sh",
     order  => '0001',
   }
 
   $agents_pretty_inventory.each |$agent| {
     concat::fragment { "vxlan_${vxlan_id}_${agent['name']}":
-      target  => "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh",
+      target  => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}_bridge_fdb.sh",
       content => epp(
         "${module_name}/unicast-bridge-fdb.sh.epp", {
           agent_mac  => $agent['mac'],
@@ -135,7 +135,7 @@ define nomad_cni::macvlan::unicast::v4 (
   }
 
   exec { "populate bridge fdb for ${cni_name}":
-    command     => "${vxlan_dir}/unicast_bridge_fdb.d/${cni_name}_bridge_fdb.sh",
+    command     => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}_bridge_fdb.sh",
     refreshonly => true;
   }
 

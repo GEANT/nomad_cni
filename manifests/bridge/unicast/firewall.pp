@@ -1,4 +1,4 @@
-# == Define: nomad_cni::macvlan::unicast::firewall
+# == Define: nomad_cni::bridge::unicast::firewall
 #
 # allow traffic from the VXLAN interface to the host
 #
@@ -8,7 +8,7 @@
 #   the name of the VXLAN interface
 #
 #
-define nomad_cni::macvlan::unicast::firewall (String $vxlan_interface=$title) {
+define nomad_cni::bridge::unicast::firewall (String $vxlan_interface=$title) {
   if $facts['nomad_cni_rule_order'] {
     $nr_leading_zeroes = $facts['nomad_cni_rule_order'].match(/^0*/)[0].length
     $leading_zeroes = range(1, $nr_leading_zeroes).map |$item| { 0 }.join()
