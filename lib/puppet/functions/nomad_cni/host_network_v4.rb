@@ -59,12 +59,14 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
       ip = call_function('fact', "networking.interfaces.#{iface}.ip")
       netmask = call_function('fact', "networking.interfaces.#{iface}.netmask")
       cidr = IPAddr.new(netmask).to_i.to_s(2).count('1')
-      public_network = [{ 'public_v4' => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } }]
+      network_addr = IPAddr.new(ip).mask(netmask).to_s + "/#{cidr}"
+      public_network = [{ 'public_v4' => { 'cidr' => network_addr, 'interface' => iface } }]
     elsif ip_type == 'v6'
       ip = call_function('fact', "networking.interfaces.#{iface}.ip6")
       netmask = call_function('fact', "networking.interfaces.#{iface}.netmask6")
       cidr = IPAddr.new(netmask).to_i.to_s(2).count('1')
-      public_network = [{ 'public_v6' => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } }]
+      network_addr = IPAddr.new(ip).mask(netmask).to_s + "/#{cidr}"
+      public_network = [{ 'public_v6' => { 'cidr' => network_addr, 'interface' => iface } }]
     elsif ip_type == 'any'
       ip = call_function('fact', "networking.interfaces.#{iface}.ip")
       netmask = call_function('fact', "networking.interfaces.#{iface}.netmask")
@@ -72,9 +74,11 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
       ip_six = call_function('fact', "networking.interfaces.#{iface}.ip6")
       netmask_six = call_function('fact', "networking.interfaces.#{iface}.netmask6")
       cidr_six = IPAddr.new(netmask_six).to_i.to_s(2).count('1')
+      network_addr = IPAddr.new(ip).mask(netmask).to_s + "/#{cidr}"
+      network_addr_six = IPAddr.new(ip_six).mask(netmask_six).to_s + "/#{cidr_six}"
       public_network = [
-        { 'public_v4' => { 'cidr' => "#{ip}/#{cidr}", 'interface' => iface } },
-        { 'public_v6' => { 'cidr' => "#{ip_six}/#{cidr_six}", 'interface' => iface } },
+        { 'public_v4' => { 'cidr' => network_addr_six, 'interface' => iface } },
+        { 'public_v6' => { 'cidr' => network_addr_six, 'interface' => iface } },
       ]
     else
       raise ArgumentError, "Invalid IP type: #{ip_type}. It must be 'v4' or 'v6' 'any' or undef. if undef, it defaults to 'v4'"
