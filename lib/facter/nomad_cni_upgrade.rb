@@ -8,7 +8,7 @@ require 'facter'
 Facter.add(:nomad_cni_upgrade) do
   confine kernel: 'Linux'
   setcode do
-    macvlan = Facter::Util::Resolution.exec('grep -how macvlan /opt/cni/config/*.conflist')
+    macvlan = Facter::Util::Resolution.exec('grep -how vxbr /opt/cni/vxlan/unicast.d/*.sh')
     if macvlan.empty?
       false
     else
