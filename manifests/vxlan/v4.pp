@@ -1,4 +1,4 @@
-# == Define: nomad_cni::bridge::unicast::v4
+# == Define: nomad_cni::vxlan::v4
 #
 # configure CNI and Unicast VXLAN/Bridge for Nomad
 #
@@ -30,7 +30,7 @@
 #   minimum number of networks to be created. If the number of agents is less than this number, the module will fail
 #   check the README file for more details
 #
-define nomad_cni::bridge::unicast::v4 (
+define nomad_cni::vxlan::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
   String $cni_name                = $name,
   Optional[String] $agent_regex   = undef,
@@ -43,7 +43,7 @@ define nomad_cni::bridge::unicast::v4 (
   # == ensure that nomad_cni class was included and that the name is not reserved
   #
   unless defined(Class['nomad_cni']) {
-    fail('nomad_cni::bridge::unicast::v4 requires nomad_cni')
+    fail('nomad_cni::vxlan::v4 requires nomad_cni')
   }
   if $cni_name == 'all' {
     fail('the name \'all\' is reserved and it cannot be used as a CNI name')
@@ -94,7 +94,7 @@ define nomad_cni::bridge::unicast::v4 (
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
   # allow traffic from the CNI network to the host
-  nomad_cni::bridge::unicast::firewall { "vxbr${vxlan_id}": }
+  nomad_cni::vxlan::firewall { "br${vxlan_id}": }
 
   # create the CNI systemd service
   service { "cni-id@${cni_name}.service":
@@ -142,7 +142,7 @@ define nomad_cni::bridge::unicast::v4 (
   # == create CNI config file, collect all the fragments for the script and add the footer
   #
   $cni_ranges_v4.each |$cni_item| {
-    $vxbr_mac_address = nomad_cni::generate_mac("${cni_item[1]}${facts['networking']['hostname']}")
+    $br_mac_address = nomad_cni::generate_mac("${cni_item[1]}${facts['networking']['hostname']}")
     $vxlan_mac_address = nomad_cni::generate_mac("${cni_item[1]}${cni_item[4]}${facts['networking']['hostname']}")
     if $cni_item[0] == $facts['networking']['hostname'] {
       file { "${vxlan_dir}/unicast.d/${cni_name}.sh":
@@ -160,7 +160,7 @@ define nomad_cni::bridge::unicast::v4 (
             vxlan_netmask     => $cni_item[4],
             nolearning        => $nolearning,
             cni_name          => $cni_name,
-            vxbr_mac_address  => $vxbr_mac_address,
+            br_mac_address  => $br_mac_address,
             vxlan_mac_address => $vxlan_mac_address,
           }
         );
@@ -182,8 +182,8 @@ define nomad_cni::bridge::unicast::v4 (
                 type => 'loopback'
               },
               {
-                type             => 'bridge',
-                bridge           => "vxbr${vxlan_id}",
+                type             => 'macvlan',
+                master           => "br${vxlan_id}",
                 isDefaultGateway => false,
                 forceAddress     => false,
                 ipMasq           => true,
