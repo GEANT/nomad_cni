@@ -160,7 +160,7 @@ define nomad_cni::vxlan::v4 (
             vxlan_netmask     => $cni_item[4],
             nolearning        => $nolearning,
             cni_name          => $cni_name,
-            br_mac_address  => $br_mac_address,
+            br_mac_address    => $br_mac_address,
             vxlan_mac_address => $vxlan_mac_address,
           }
         );
