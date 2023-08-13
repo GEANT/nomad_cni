@@ -93,7 +93,7 @@ Puppet::Functions.create_function(:'nomad_cni::host_network_v4') do
         ip_addr, subnet_addr = cni_hash[cni]['network'].split('/')
         network_addr = IPAddr.new(ip_addr).mask(subnet_addr).to_s + "/#{subnet_addr}"
         {
-          cni => { 'cidr' => network_addr, 'interface' => "vx#{cni_hash[cni]['id']}" }
+          cni => { 'cidr' => network_addr, 'interface' => "br#{cni_hash[cni]['id']}" }
         }
       end
     end
