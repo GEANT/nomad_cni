@@ -25,16 +25,16 @@ usage() {
 
 ifaces_down() {
     vxlan_id=$1
-    ip link delete vxbr$vxlan_id || true
-    ip link delete vxlan$vxlan_id || true
+    ip link delete br$vxlan_id || true
+    ip link delete vx$vxlan_id || true
 }
 
 purge_stale_ifaces() {
-    vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vxlan[0-9]+:/{sub("vxlan", ""); print $2}')
+    vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vx[0-9]+:/{sub("vx", ""); print $2}')
     for vxlan_iface in $vxlan_ifaces_up; do
         if ! grep -qrw $vxlan_iface $BASE_DIR/unicast.d; then
-            ip link delete vxbr$vxlan_iface &>/dev/null || true
-            ip link delete vxlan$vxlan_iface &>/dev/null || true
+            ip link delete br$vxlan_iface &>/dev/null || true
+            ip link delete vx$vxlan_iface &>/dev/null || true
         fi
     done
 }
@@ -53,9 +53,9 @@ purge_stale_services() {
 check_status() {
     vxlan_id=$1
     vxlan_ip=$2
-    if ip address show dev vxbr$vxlan_id &>/dev/null && ip address show dev vxlan$vxlan_id &>/dev/null && fping -c1 -t500 $vxlan_ip &>/dev/null; then
+    if ip address show dev br$vxlan_id &>/dev/null && ip address show dev vx$vxlan_id &>/dev/null && fping -c1 -t500 $vxlan_ip &>/dev/null; then
         return 0
-    elif ip address show dev vxbr$vxlan_id &>/dev/null && ip address show dev vxlan$vxlan_id &>/dev/null && ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
+    elif ip address show dev br$vxlan_id &>/dev/null && ip address show dev vx$vxlan_id &>/dev/null && ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
         return 1
     else
         return 2
@@ -170,7 +170,7 @@ for script in ${scriptArray[*]}; do
                 if [ $vxlan_status == "1" ]; then
                     # the interface is up but the IP is not reachable
                     $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name not reachable, bringing up vxlan IP $vxlan_ip"
-                    ip addr add $vxlan_network dev vxbr$vxlan_id &>/dev/null || true  # bring IP up and ignore errors
+                    ip addr add $vxlan_network dev br$vxlan_id &>/dev/null || true  # bring IP up and ignore errors
                     sleep .5  # is this really needed?
                     if ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
                         $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name still not working. Reloading vxlan"
