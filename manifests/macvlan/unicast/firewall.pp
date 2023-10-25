@@ -16,9 +16,10 @@ define nomad_cni::macvlan::unicast::firewall (String $vxlan_interface=$title) {
     $cni_unicast_rule_order = "${leading_zeroes}${_cni_unicast_rule_order}"
 
     firewall { "${cni_unicast_rule_order} allow traffic from ${vxlan_interface}":
-      action => accept,
-      proto  => ['tcp', 'udp'],
-      dport  => '1-65535',
+      action  => accept,
+      iniface => $vxlan_interface,
+      proto   => ['tcp', 'udp'],
+      dport   => '1-65535',
     }
   }
 }
