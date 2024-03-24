@@ -48,7 +48,7 @@ class nomad_cni (
   Boolean $manage_firewall_vxlan                           = false,
   Boolean $cni_cut_off                                     = false,
   Nomad_cni::Digits $firewall_rule_order                   = '050', # string made by digits, which can start with zero(es)
-  Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # be aware that ip6tables is NOT supported at the moment
+  Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # ip6tables is NOT supported at the moment
 ) {
   if $facts['nomad_cni_upgrade'] {
     fail("\nnomad_cni_upgrade fact is set.\nPlease remove all the files under /opt/cni/vxlan/, run puppet and finally REBOOT the server\n")

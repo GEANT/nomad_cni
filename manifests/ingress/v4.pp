@@ -1,4 +1,4 @@
-# == Define: nomad_cni::vxlan::v4
+# == Define: nomad_cni::ingress::v4
 #
 # configure CNI and Unicast VXLAN/Bridge for Nomad
 #
@@ -13,14 +13,17 @@
 # [*agent_regex*] String
 #   (requires PuppetDB) a string that match the hostnames of the Nomad agents (use either agent_list or agent_regex)
 #
+# [*ingress_regex*] String
+#   (requires PuppetDB) a string that match the hostnames of the Nomad ingress nodes (use either agent_list or agent_regex)
+#
 # [*agent_list*] Array
 #   a list of the Nomad agents (use either agent_list or agent_regex)
 #
+# [*ingress_list*] Array
+#   a list of the Nomad ingress nodes (use either agent_list or agent_regex)
+#
 # [*iface*] String
 #   network interface on the Nomad agents
-#
-# [*cni_proto_version*] String
-#   version of the CNI protocol
 #
 # [*nolearning*] Boolean
 #   disable learning of MAC addresses on the bridge interface
@@ -30,21 +33,20 @@
 #   minimum number of networks to be created. If the number of agents is less than this number, the module will fail
 #   check the README file for more details
 #
-define nomad_cni::vxlan::v4 (
+define nomad_cni::ingress::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
+  Stdlib::IP::Address::V4::CIDR $vip_network,
   String $cni_name                = $name,
   Optional[String] $agent_regex   = undef,
+  Optional[String] $ingress_regex = undef,
   Array $agent_list               = [],
+  Array $ingress_list             = [],
   String $iface                   = 'eth0',
-  String $cni_proto_version       = '1.0.0',
   Boolean $nolearning             = false,  # please read the docs carefully before enabling this option
   Optional[Integer] $min_networks = undef,
 ) {
   # == ensure that nomad_cni class was included and that the name is not reserved
   #
-  unless defined(Class['nomad_cni']) {
-    fail('nomad_cni::vxlan::v4 requires nomad_cni')
-  }
   if $cni_name == 'all' {
     fail('the name \'all\' is reserved and it cannot be used as a CNI name')
   }
@@ -87,10 +89,51 @@ define nomad_cni::vxlan::v4 (
     }
   }
 
+  # extract nomad ingress names from the PuppetDB or use the list
+  # set number of ingress nodes
+  # determine CNI ranges
+  # create random vxlan ID
+  #
+  if $ingress_list == [] and empty($ingress_regex) {
+    fail('Either ingress_list or ingress_regex must be set')
+  }
+  elsif $ingress_list != [] and !empty($ingress_regex) {
+    fail('Only one of ingress_list or ingress_regex can be set')
+  }
+  elsif $ingress_list != [] {
+    $ingress_names = $ingress_list
+    $ingress_inventory = $ingress_names.map |$item| {
+      $item_inventory = puppetdb_query(
+        "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
+          facts.networking.hostname = '${item}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
+        }"
+      )
+    }
+  }
+  else {
+    $ingress_inventory = puppetdb_query(
+      "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
+        facts.networking.hostname ~ '${ingress_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
+      }"
+    )
+  }
+  $ingress_pretty_inventory = $ingress_inventory.map |$item| {
+    {
+      'name' => $item['facts.networking.hostname'],
+      'ip' => $item["facts.networking.interfaces.${iface}.ip"],
+      'mac' => $item["facts.networking.interfaces.${iface}.mac"]
+    }
+  }
+
   $vxlan_dir = '/opt/cni/vxlan'
-  $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
-  $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
-  $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
+  $ingress_names = $ingress_pretty_inventory.map |$item| { $item['name'] }
+  $ingress_ips = $ingress_pretty_inventory.map |$item| { $item['ip'] }
+  $agents_names = $agents_pretty_inventory.map |$item| { $item['name'] }
+  $agents_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
+  $inventory = $agents_pretty_inventory + $ingress_pretty_inventory
+  $inventory_names = $inventory.map |$item| { $item['name'] }
+  $inventory_ips = $inventory.map |$item| { $item['ip'] }
+  $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $ingress_names, $min_networks)
   $vxlan_id = seeded_rand(16777215, $network) + 1
 
   # allow traffic from the CNI network to the host
@@ -119,18 +162,18 @@ define nomad_cni::vxlan::v4 (
     order  => '0001',
   }
 
-  $agents_pretty_inventory.each |$agent| {
-    concat::fragment { "vxlan_${vxlan_id}_${agent['name']}":
+  $agents_pretty_inventory.each |$ingress| {
+    concat::fragment { "vxlan_${vxlan_id}_${ingress['name']}":
       target  => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
       content => epp(
         "${module_name}/unicast-bridge-fdb.sh.epp", {
-          agent_mac  => $agent['mac'],
-          agent_ip   => $agent['ip'],
-          vxlan_id   => $vxlan_id,
-          nolearning => $nolearning,
+          ingress_mac => $ingress['mac'],
+          ingress_ip  => $ingress['ip'],
+          vxlan_id    => $vxlan_id,
+          nolearning  => $nolearning,
         }
       ),
-      order   => seeded_rand(20000, "vxlan_${vxlan_id}_${agent['ip']}"),
+      order   => seeded_rand(20000, "vxlan_${vxlan_id}_${ingress['ip']}"),
     }
   }
 
@@ -149,8 +192,7 @@ define nomad_cni::vxlan::v4 (
         owner   => 'root',
         group   => 'root',
         mode    => '0755',
-        require => File["${vxlan_dir}/unicast.d", "/opt/cni/config/${cni_name}.conflist"],
-        notify  => Service["cni-id@${cni_name}.service"],
+        require => File["${vxlan_dir}/unicast.d"],
         content => epp(
           "${module_name}/unicast-vxlan.sh.epp", {
             agent_ip          => $facts['networking']['interfaces'][$iface]['ip'],
@@ -164,65 +206,6 @@ define nomad_cni::vxlan::v4 (
             vxlan_mac_address => $vxlan_mac_address,
           }
         );
-      }
-      file { "/opt/cni/config/${cni_name}.conflist":
-        mode         => '0644',
-        validate_cmd => "/usr/local/bin/cni-validator.rb --cidr ${network} --conf-file /opt/cni/config/${cni_name}.conflist --tmp-file %",
-        require      => [
-          File['/opt/cni/config', '/usr/local/bin/cni-validator.rb', '/run/cni'],
-          Package['docopt']
-        ],
-        notify       => Service["cni-id@${cni_name}.service"],
-        content      => to_json_pretty(
-          {
-            cniVersion => $cni_proto_version,
-            name       => $cni_name,
-            plugins    => [
-              {
-                type => 'loopback'
-              },
-              {
-                type             => 'macvlan',
-                master           => "br${vxlan_id}",
-                isDefaultGateway => false,
-                forceAddress     => false,
-                ipMasq           => true,
-                ipam             => {
-                  type    => 'host-local',
-                  ranges  => [
-                    [
-                      {
-                        subnet     => $network,
-                        rangeStart => $cni_item[2],
-                        rangeEnd   => $cni_item[3],
-                        gateway    => $cni_item[1]
-                      },
-                    ]
-                  ],
-                  routes  => [
-                    {
-                      dst => '0.0.0.0/0',
-                      gw  => $cni_item[1]
-                    },
-                  ],
-                  dataDir => '/run/cni/ipam-state',
-                },
-              },
-              {
-                type                   => 'firewall',
-                backend                => 'iptables',
-                iptablesAdminChainName => 'NOMAD-ADMIN'
-              },
-              {
-                type         => 'portmap',
-                capabilities => {
-                  portMappings => true,
-                },
-                snat         => true
-              },
-            ],
-          }
-        ),
       }
     }
   }
