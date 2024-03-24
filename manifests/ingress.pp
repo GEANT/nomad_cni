@@ -149,7 +149,7 @@ class nomad_cni::ingress (
   $inventory_names = $inventory.map |$item| { $item['name'] }
   $inventory_ips = $inventory.map |$item| { $item['ip'] }
 
-  class { 'nomad_cni::config':
+  class { 'nomad_cni::ingress::config':
     keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
     keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
   }
