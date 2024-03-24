@@ -1,4 +1,4 @@
-# Class: nomad_cni::config
+# Class: nomad_cni::ingress::config
 #
 # This class installs the CNI plugins and python3-demjson
 #
@@ -10,7 +10,7 @@
 # [*keep_vxlan_up_timer_unit*] Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
 # timer unit for the time interval: default minutes
 #
-class nomad_cni::config (
+class nomad_cni::ingress::config (
   Integer $keep_vxlan_up_timer_interval,
   Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'] $keep_vxlan_up_timer_unit
 ) {
