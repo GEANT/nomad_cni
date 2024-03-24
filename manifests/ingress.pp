@@ -31,13 +31,13 @@
 #   (requires PuppetDB) a string that match the hostnames of the Nomad agents (use either agent_list or agent_regex)
 #
 # [*ingress_regex*] String
-#   (requires PuppetDB) a string that match the hostnames of the Nomad ingress nodes (use either agent_list or agent_regex)
+#   (requires PuppetDB) a string that match the hostnames of the Nomad ingress nodes (use either ingress_list or ingress_regex)
 #
 # [*agent_list*] Array
 #   a list of the Nomad agents (use either agent_list or agent_regex)
 #
 # [*ingress_list*] Array
-#   a list of the Nomad ingress nodes (use either agent_list or agent_regex)
+#   a list of the Nomad ingress nodes (use either ingress_list or ingress_regex)
 #
 # [*iface*] String
 #   network interface on the Nomad agents
