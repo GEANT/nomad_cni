@@ -43,6 +43,7 @@
 #   the name of the VIP (requires dnsquery module)
 #
 # [*vip_address*] Optional[Stdlib::IP::Address::V4]
+#   ToDo: it can be an array with multiple IPv4 or multiple IPv6 addresses and it won't work
 #   the IPv4 and or Ipv6 address of the VIP. It can be one of the following:
 #   - undef
 #   - an array with an IPv4 address and an IPv6 address
@@ -96,7 +97,7 @@ class nomad_cni::ingress (
     $agent_names = $agent_list
     $agents_inventory = $agent_names.map |$item| {
       $item_inventory = puppetdb_query(
-        "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.mac] {
+        "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.ip6] {
           facts.networking.hostname = '${item}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
         }"
       )
@@ -104,7 +105,7 @@ class nomad_cni::ingress (
   }
   else {
     $agents_inventory = puppetdb_query(
-      "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.mac] {
+      "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.ip6] {
         facts.networking.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
     )
@@ -113,7 +114,7 @@ class nomad_cni::ingress (
     {
       'name' => $item['facts.networking.hostname'],
       'ip' => $item["facts.networking.interfaces.${interface}.ip"],
-      'mac' => $item["facts.networking.interfaces.${interface}.mac"]
+      'mac' => $item["facts.networking.interfaces.${interface}.ip6"]
     }
   }
 
@@ -132,7 +133,7 @@ class nomad_cni::ingress (
     $ingress_names = $ingress_list
     $ingress_inventory = $ingress_names.map |$item| {
       $item_inventory = puppetdb_query(
-        "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.mac] {
+        "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.ip6] {
           facts.networking.hostname = '${item}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
         }"
       )
@@ -140,7 +141,7 @@ class nomad_cni::ingress (
   }
   else {
     $ingress_inventory = puppetdb_query(
-      "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.mac] {
+      "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.ip6] {
         facts.networking.hostname ~ '${ingress_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
     )
@@ -149,7 +150,7 @@ class nomad_cni::ingress (
     {
       'name' => $item['facts.networking.hostname'],
       'ip' => $item["facts.networking.interfaces.${interface}.ip"],
-      'mac' => $item["facts.networking.interfaces.${interface}.mac"]
+      'mac' => $item["facts.networking.interfaces.${interface}.ip6"]
     }
   }
 
