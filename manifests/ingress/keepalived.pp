@@ -21,6 +21,9 @@ class nomad_cni::ingress::keepalived (
 
   $this_host = $facts['networking']['hostname']
 
+  # pass is truncated to 8 chars from Keepalived
+  $auth_pass = seeded_rand_string(8, "${module_name}${facts['agent_specified_environment']}")
+
   # we remove IPv6 to get IPv4 only and vice versa
   $ipv4_only_vip = $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V6::CIDR }
   $ipv6_only_vip = $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V4::CIDR }
@@ -29,8 +32,6 @@ class nomad_cni::ingress::keepalived (
     fail('You cannot use IPv6 twice for the VIP address array')
   } elsif size($ipv4_only_vip) == 2 {
     fail('You cannot use IPv4 twice for the VIP address array')
-  } else {
-    $ipv4_vip = $ipv4_only_vip[0]
   }
 
   if empty($ipv6_only_vip) {
@@ -71,7 +72,7 @@ class nomad_cni::ingress::keepalived (
     unicast_peers              => [$peer_ip],
     priority                   => $priority + 0,
     auth_type                  => 'PASS',
-    auth_pass                  => seeded_rand_string(8, "${module_name}${facts['agent_specified_environment']}"),  # pass is truncated to 8 chars
+    auth_pass                  => $auth_pass,
     virtual_ipaddress          => $ipv4_only_vip,
     virtual_ipaddress_excluded => $virtual_ipaddress_excluded,
     track_interface            => [$interface];
