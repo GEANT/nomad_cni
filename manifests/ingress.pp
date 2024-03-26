@@ -39,18 +39,17 @@
 # [*ingress_list*] Array
 #   a list of the Nomad ingress nodes (use either ingress_list or ingress_regex)
 #
-# [*vip_name*] Optional[Stdlib::Fqdn]
-#   the name of the VIP (requires dnsquery module)
-#
-# [*vip_address*] Optional[Stdlib::IP::Address::V4]
+# [*vip_address*] Array
 #   ToDo: it can be an array with multiple IPv4 or multiple IPv6 addresses and it won't work
 #   the IPv4 and or Ipv6 address of the VIP. It can be one of the following:
-#   - undef
 #   - an array with an IPv4 address and an IPv6 address
 #   - an array with an IPv4 address
-#   - an IPv4 address
 #
 class nomad_cni::ingress (
+  Variant[
+    Array[Stdlib::IP::Address::V4::CIDR, 1],
+    Array[Variant[Stdlib::IP::Address::V4::CIDR, Stdlib::IP::Address::V6::CIDR], 2]
+  ] $vip_address,
   Integer $keep_vxlan_up_timer_interval                   = 1,
   Enum[
     'usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'
@@ -68,13 +67,6 @@ class nomad_cni::ingress (
   Optional[String] $ingress_regex                         = undef,
   Array $agent_list                                       = [],
   Array $ingress_list                                     = [],
-  Optional[Stdlib::Fqdn] $vip_name                        = undef,
-  Variant[
-    Undef,
-    Stdlib::IP::Address::V4,
-    Array[Stdlib::IP::Address::V4, 1],
-    Array[Variant[Stdlib::IP::Address::V4, Stdlib::IP::Address::V6], 2]
-  ] $vip_address = undef,
 ) {
   if 'ip6tables' in $firewall_provider {
     fail('ip6tables is not supported at the moment')
@@ -163,37 +155,13 @@ class nomad_cni::ingress (
   $inventory_names = $inventory.map |$item| { $item['name'] }
   $inventory_ips = $inventory.map |$item| { $item['ip'] }
 
-  # determine VIP information
-  if empty($vip_address) == [] and empty($vip_address) {
-    fail('Either vip_address or vip_address must be set')
-  } elsif $vip_name and $vip_address {
-    fail('Only one of vip_name or vip_address can be set')
-  }
-
-  if ($vip_name) {
-    $vip_ipv4 = unique(sort(dnsquery::a($vip_name)))[0]
-    $vip_ipv6 = unique(sort(dnsquery::aaaa($vip_name)))
-  } else {
-    if $vip_address =~ Stdlib::IP::Address::V4 {
-      $vip_ipv4 = $vip_address
-      $vip_ipv6 = undef
-    } elsif $vip_address =~ Array[Variant[Stdlib::IP::Address::V4, Stdlib::IP::Address::V6], 2] {
-      $vip_ipv4 = $vip_address[0]
-      $vip_ipv6 = $vip_address[1]
-    } elsif $vip_address =~ Array[Stdlib::IP::Address::V4, 1] {
-      $vip_ipv4 = $vip_address[0]
-      $vip_ipv6 = undef
-    }
-    $vip = undef
-  }
-
   class { 'nomad_cni::ingress::config':
     keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
     keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
   }
   class { 'nomad_cni::ingress::keepalived':
     ingress_inventory => $ingress_pretty_inventory,
-    ingress_vip       => [$vip_ipv4, $vip_ipv6],
+    ingress_vip       => $vip_address,
     interface         => $interface,
   }
 
