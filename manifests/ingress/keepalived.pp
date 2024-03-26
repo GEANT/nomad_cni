@@ -19,21 +19,28 @@ class nomad_cni::ingress::keepalived (
 ) {
   assert_private()
 
-  $ingress_names = sort($ingress_inventory.map |$item| { $item['name'] })
-  $ingress_ips = $ingress_inventory.map |$item| { $item['ip'] }
+  $this_host = $facts['networking']['hostname']
+
+  # we remove undef values from the vip array
   $def_only_vip = $ingress_vip.filter | $item | { $item !~ Undef }
 
-  case $facts['networking']['fqdn'] {
-    $ingress_names[0]: {
-      $state = 'MASTER'
-      $priority = 100
-      $peer_ip = $ingress_inventory[$ingress_names[1]]['ip']
-    }
-    default: {
-      $state = 'BACKUP'
-      $priority = 99
-      $peer_ip = $ingress_inventory[$ingress_names[0]]['ip']
-    }
+  # we sort the hostnames, and if the current hostname is the first one, we are the master
+  $ingress_names = sort($ingress_inventory.map |$item| { $item['name'] })
+  if $this_host == $ingress_names[0] { $is_master = true } else { $is_master = false }
+
+  # peer_ip is the ip of the other ingress node
+  if $this_host == $ingress_inventory[$ingress_inventory[0]]['name'] {
+    $peer_ip = $ingress_inventory[$ingress_inventory[1]]['ip']
+  } else {
+    $peer_ip = $ingress_inventory[$ingress_names[0]]['ip']
+  }
+
+  if ($is_master) {
+    $state = 'MASTER'
+    $priority = 100
+  } else {
+    $state = 'BACKUP'
+    $priority = 99
   }
 
   class { 'keepalived':

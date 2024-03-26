@@ -114,7 +114,7 @@ class nomad_cni::ingress (
     {
       'name' => $item['facts.networking.hostname'],
       'ip' => $item["facts.networking.interfaces.${interface}.ip"],
-      'mac' => $item["facts.networking.interfaces.${interface}.ip6"]
+      'ip6' => $item["facts.networking.interfaces.${interface}.ip6"]
     }
   }
 
@@ -150,7 +150,7 @@ class nomad_cni::ingress (
     {
       'name' => $item['facts.networking.hostname'],
       'ip' => $item["facts.networking.interfaces.${interface}.ip"],
-      'mac' => $item["facts.networking.interfaces.${interface}.ip6"]
+      'ip6' => $item["facts.networking.interfaces.${interface}.ip6"]
     }
   }
 
