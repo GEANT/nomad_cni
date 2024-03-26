@@ -39,8 +39,15 @@
 # [*ingress_list*] Array
 #   a list of the Nomad ingress nodes (use either ingress_list or ingress_regex)
 #
-# [*iface*] String
-#   network interface on the Nomad agents
+# [*vip_name*] Optional[Stdlib::Fqdn]
+#   the name of the VIP (requires dnsquery module)
+#
+# [*vip_address*] Optional[Stdlib::IP::Address::V4]
+#   the IPv4 and or Ipv6 address of the VIP. It can be one of the following:
+#   - undef
+#   - an array with an IPv4 address and an IPv6 address
+#   - an array with an IPv4 address
+#   - an IPv4 address
 #
 class nomad_cni::ingress (
   Integer $keep_vxlan_up_timer_interval                   = 1,
@@ -60,7 +67,12 @@ class nomad_cni::ingress (
   Optional[String] $ingress_regex                         = undef,
   Array $agent_list                                       = [],
   Array $ingress_list                                     = [],
-  String $iface                                           = 'eth0',
+  Optional[Stdlib::Fqdn] $vip_name                        = undef,
+  Variant[
+    Undef, Stdlib::IP::Address::V4, Array[
+      Stdlib::IP::Address::V4, Variant[Undef, Stdlib::IP::Address::V6]
+    ]
+  ] $vip_address = undef,
 ) {
   if 'ip6tables' in $firewall_provider {
     fail('ip6tables is not supported at the moment')
@@ -83,7 +95,7 @@ class nomad_cni::ingress (
     $agent_names = $agent_list
     $agents_inventory = $agent_names.map |$item| {
       $item_inventory = puppetdb_query(
-        "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
+        "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.mac] {
           facts.networking.hostname = '${item}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
         }"
       )
@@ -91,7 +103,7 @@ class nomad_cni::ingress (
   }
   else {
     $agents_inventory = puppetdb_query(
-      "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
+      "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.mac] {
         facts.networking.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
     )
@@ -99,8 +111,8 @@ class nomad_cni::ingress (
   $agents_pretty_inventory = $agents_inventory.map |$item| {
     {
       'name' => $item['facts.networking.hostname'],
-      'ip' => $item["facts.networking.interfaces.${iface}.ip"],
-      'mac' => $item["facts.networking.interfaces.${iface}.mac"]
+      'ip' => $item["facts.networking.interfaces.${interface}.ip"],
+      'mac' => $item["facts.networking.interfaces.${interface}.mac"]
     }
   }
 
@@ -119,7 +131,7 @@ class nomad_cni::ingress (
     $ingress_names = $ingress_list
     $ingress_inventory = $ingress_names.map |$item| {
       $item_inventory = puppetdb_query(
-        "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
+        "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.mac] {
           facts.networking.hostname = '${item}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
         }"
       )
@@ -127,7 +139,7 @@ class nomad_cni::ingress (
   }
   else {
     $ingress_inventory = puppetdb_query(
-      "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
+      "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.mac] {
         facts.networking.hostname ~ '${ingress_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
     )
@@ -135,8 +147,8 @@ class nomad_cni::ingress (
   $ingress_pretty_inventory = $ingress_inventory.map |$item| {
     {
       'name' => $item['facts.networking.hostname'],
-      'ip' => $item["facts.networking.interfaces.${iface}.ip"],
-      'mac' => $item["facts.networking.interfaces.${iface}.mac"]
+      'ip' => $item["facts.networking.interfaces.${interface}.ip"],
+      'mac' => $item["facts.networking.interfaces.${interface}.mac"]
     }
   }
 
@@ -149,9 +161,38 @@ class nomad_cni::ingress (
   $inventory_names = $inventory.map |$item| { $item['name'] }
   $inventory_ips = $inventory.map |$item| { $item['ip'] }
 
+  # determine VIP information
+  if empty($vip_address) == [] and empty($vip_address) {
+    fail('Either vip_address or vip_address must be set')
+  } elsif $vip_name and $vip_address {
+    fail('Only one of vip_name or vip_address can be set')
+  }
+
+  if ($vip_name) {
+    $vip_ipv4 = unique(sort(dnsquery::a($vip_name)))[0]
+    $vip_ipv6 = unique(sort(dnsquery::aaaa($vip_name)))
+  } else {
+    if $vip_address =~ Stdlib::IP::Address::V4 {
+      $vip_ipv4 = $vip_address
+      $vip_ipv6 = undef
+    } elsif $vip_address =~ Array[Stdlib::IP::Address::V4, Stdlib::IP::Address::V6] {
+      $vip_ipv4 = $vip_address[0]
+      $vip_ipv6 = $vip_address[1]
+    } elsif $vip_address =~ Array[Stdlib::IP::Address::V4] {
+      $vip_ipv4 = $vip_address[0]
+      $vip_ipv6 = undef
+    }
+    $vip = undef
+  }
+
   class { 'nomad_cni::ingress::config':
     keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
     keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
+  }
+  class { 'nomad_cni::ingress::keepalived':
+    ingress_inventory => $ingress_pretty_inventory,
+    ingress_vip       => [$vip_ipv4, $vip_ipv6],
+    interface         => $interface,
   }
 
   # == create custom fact directory and avoid conflicts with other modules
