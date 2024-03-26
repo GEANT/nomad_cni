@@ -30,9 +30,9 @@ class nomad_cni::ingress::keepalived (
 
   # peer_ip is the ip of the other ingress node
   if $this_host == $ingress_inventory[0]['name'] {
-    $peer_ip = $ingress_inventory[$ingress_inventory[1]]['ip']
+    $peer_ip = $ingress_inventory[0]['ip']
   } else {
-    $peer_ip = $ingress_inventory[$ingress_names[0]]['ip']
+    $peer_ip = $ingress_inventory[0]['ip']
   }
 
   if ($is_master) {
