@@ -69,9 +69,10 @@ class nomad_cni::ingress (
   Array $ingress_list                                     = [],
   Optional[Stdlib::Fqdn] $vip_name                        = undef,
   Variant[
-    Undef, Stdlib::IP::Address::V4, Array[
-      Stdlib::IP::Address::V4, Optional[Stdlib::IP::Address::V6]
-    ]
+    Undef, Stdlib::IP::Address::V4, Array[Stdlib::IP::Address::V4],
+    Array[
+      Stdlib::IP::Address::V4, Stdlib::IP::Address::V6
+    ],
   ] $vip_address = undef,
 ) {
   if 'ip6tables' in $firewall_provider {
