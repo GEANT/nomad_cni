@@ -48,11 +48,6 @@ class nomad_cni::ingress::keepalived (
     sysconf_options => '-D --snmp',
   }
 
-  class { 'keepalived::global_defs':
-    script_user            => 'root',
-    enable_script_security => true;
-  }
-
   keepalived::vrrp::instance { 'Nomad_Ingress':
     interface         => $interface,
     state             => $state,
