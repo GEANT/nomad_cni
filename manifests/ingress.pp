@@ -70,7 +70,7 @@ class nomad_cni::ingress (
   Optional[Stdlib::Fqdn] $vip_name                        = undef,
   Variant[
     Undef, Stdlib::IP::Address::V4, Array[
-      Stdlib::IP::Address::V4, Variant[Undef, Stdlib::IP::Address::V6]
+      Stdlib::IP::Address::V4, Optional[Stdlib::IP::Address::V6]
     ]
   ] $vip_address = undef,
 ) {
