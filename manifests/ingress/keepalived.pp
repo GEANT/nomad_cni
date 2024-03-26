@@ -22,7 +22,7 @@ class nomad_cni::ingress::keepalived (
   $this_host = $facts['networking']['hostname']
 
   # we remove undef values from the vip array
-  $def_only_vip = $ingress_vip.filter | $item | { $item !~ Undef }
+  $def_only_vip = $ingress_vip.filter |$item| { $item !~ Undef }
 
   # we sort the hostnames, and if the current hostname is the first one, we are the master
   $ingress_names = sort($ingress_inventory.map |$item| { $item['name'] })
