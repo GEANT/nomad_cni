@@ -176,10 +176,10 @@ class nomad_cni::ingress (
     if $vip_address =~ Stdlib::IP::Address::V4 {
       $vip_ipv4 = $vip_address
       $vip_ipv6 = undef
-    } elsif $vip_address =~ Array[Stdlib::IP::Address::V4, Stdlib::IP::Address::V6] {
+    } elsif $vip_address =~ Array[Variant[Stdlib::IP::Address::V4, Stdlib::IP::Address::V6], 2] {
       $vip_ipv4 = $vip_address[0]
       $vip_ipv6 = $vip_address[1]
-    } elsif $vip_address =~ Array[Stdlib::IP::Address::V4] {
+    } elsif $vip_address =~ Array[Stdlib::IP::Address::V4, 1] {
       $vip_ipv4 = $vip_address[0]
       $vip_ipv6 = undef
     }
