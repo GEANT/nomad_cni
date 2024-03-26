@@ -21,20 +21,23 @@ class nomad_cni::ingress::keepalived (
 
   $this_host = $facts['networking']['hostname']
 
-  # we remove undef values from the vip array
+  # we remove IPv6 to get IPv4 only and vice versa
   $ipv4_only_vip = $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V6::CIDR }
+  $ipv6_only_vip = $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V4::CIDR }
+
   if size($ipv4_only_vip) ==  0 {
-    fail('You cannot use IPv4 twice for the VIP IPs')
+    fail('You cannot use IPv6 twice for the VIP address array')
   } elsif size($ipv4_only_vip) == 2 {
-    fail('You cannot use IPv6 twice for the VIP IPs')
+    fail('You cannot use IPv4 twice for the VIP address array')
   } else {
     $ipv4_vip = $ipv4_only_vip[0]
   }
-  if size($ipv4_only_vip) == 2 {
+
+  if empty($ipv6_only_vip) {
+    $virtual_ipaddress_excluded = []
+  } else {
     $ipv6_only_vip = $ingress_vip.filter |$item| { $item =~ Stdlib::IP::Address::V6::CIDR }
     $virtual_ipaddress_excluded = $ipv6_only_vip.map |$item| { "${item} preferred_lft 0" }
-  } else {
-    $virtual_ipaddress_excluded = []
   }
 
   # we sort the hostnames, and if the current hostname is the first one, we are the master

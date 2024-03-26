@@ -40,10 +40,10 @@
 #   a list of the Nomad ingress nodes (use either ingress_list or ingress_regex)
 #
 # [*vip_address*] Array
-#   ToDo: it can be an array with multiple IPv4 or multiple IPv6 addresses and it won't work
 #   the IPv4 and or Ipv6 address of the VIP. It can be one of the following:
-#   - an array with an IPv4 address and an IPv6 address
-#   - an array with an IPv4 address
+#   - an array with an IPv4 CIDR and an IPv6 and CIDR
+#   - an array with an IPv4 CIDR
+#   CIDR means a subnet mask should be provided
 #
 class nomad_cni::ingress (
   Variant[
