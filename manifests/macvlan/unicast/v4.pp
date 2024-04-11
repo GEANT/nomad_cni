@@ -91,7 +91,7 @@ define nomad_cni::macvlan::unicast::v4 (
   $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
   $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
-  $vxlan_id = seeded_rand(16777215, $network) + 1
+  $vxlan_id = Integer(seeded_rand(16777215, $network)) + 1
 
   # allow traffic from the CNI network to the host
   nomad_cni::macvlan::unicast::firewall { "vxbr${vxlan_id}": }
