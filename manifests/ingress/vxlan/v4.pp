@@ -10,6 +10,9 @@
 # [*network*] Stdlib::IP::Address::V4::CIDR
 #   Network and Mask for the CNI
 #
+# [*vip_network*] Stdlib::IP::Address::V4::CIDR
+#   Network and Mask for the VIPs
+
 # [*agent_regex*] String
 #   (requires PuppetDB) a string that match the hostnames of the Nomad agents (use either agent_list or agent_regex)
 #

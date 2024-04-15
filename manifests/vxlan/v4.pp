@@ -4,8 +4,14 @@
 #
 # == Parameters
 #
-# [*vip*]
+# [*ingress_vip*]
 #   the VIP for the CNI
+#
+# [*ingress_regex*] String
+#   a string that match the hostnames of the Nomad Ingress servers (use either agent_list or agent_regex)
+#
+# [*ingress_list*] Array
+#   a list of the Nomad Ingress servers (use either agent_list or agent_regex)
 #
 # [*cni_name*] String
 #   the name of the CNI
@@ -14,7 +20,7 @@
 #   Network and Mask for the CNI
 #
 # [*agent_regex*] String
-#   (requires PuppetDB) a string that match the hostnames of the Nomad agents (use either agent_list or agent_regex)
+#   a string that match the hostnames of the Nomad agents (use either agent_list or agent_regex)
 #
 # [*agent_list*] Array
 #   a list of the Nomad agents (use either agent_list or agent_regex)
@@ -34,8 +40,10 @@
 #   check the README file for more details
 #
 define nomad_cni::vxlan::v4 (
-  Variant[Stdlib::IP::Address::V4::Nosubnet, Stdlib::Fqdn] $vip,
   Stdlib::IP::Address::V4::CIDR $network,
+  Variant[Stdlib::IP::Address::V4::Nosubnet, Stdlib::Fqdn] $ingress_vip,
+  Optional[String] $ingress_regex = undef,
+  Array $ingress_list             = [],
   String $cni_name                = $name,
   Optional[String] $agent_regex   = undef,
   Array $agent_list               = [],
@@ -43,8 +51,6 @@ define nomad_cni::vxlan::v4 (
   String $cni_proto_version       = '1.0.0',
   Boolean $nolearning             = false,  # please read the docs carefully before enabling this option
   Optional[Integer] $min_networks = undef,
-  Optional[String] $ingress_regex = undef,
-  Array $ingress_list             = [],
 ) {
   # == ensure that nomad_cni class was included and that the name is not reserved
   #
@@ -62,30 +68,27 @@ define nomad_cni::vxlan::v4 (
   # determine CNI ranges
   # create random vxlan ID
   #
-  if $agent_list == [] and empty($agent_regex) {
-    fail('Either agent_list or agent_regex must be set')
-  }
-  elsif $agent_list != [] and !empty($agent_regex) {
-    fail('Only one of agent_list or agent_regex can be set')
-  }
-  elsif $agent_list != [] {
-    $agent_names = $agent_list
-    $agents_inventory = $agent_names.map |$item| {
+  if $ingress_list == [] and empty($ingress_regex) {
+    fail('Either ingress_list or ingress_regex must be set')
+  } elsif $ingress_list != [] and !empty($ingress_regex) {
+    fail('Only one of ingress_list or ingress_regex can be set')
+  } elsif $ingress_list != [] {
+    $ingress_names = $ingress_list
+    $ingress_inventory = $ingress_names.map |$item| {
       $item_inventory = puppetdb_query(
         "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
           facts.networking.hostname = '${item}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
         }"
       )
     }
-  }
-  else {
-    $agents_inventory = puppetdb_query(
+  } else {
+    $ingress_inventory = puppetdb_query(
       "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
-        facts.networking.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
+        facts.networking.hostname ~ '${ingress_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
     )
   }
-  $agents_pretty_inventory = $agents_inventory.map |$item| {
+  $ingress_pretty_inventory = $ingress_inventory.map |$item| {
     {
       'name' => $item['facts.networking.hostname'],
       'ip' => $item["facts.networking.interfaces.${iface}.ip"],
@@ -93,20 +96,48 @@ define nomad_cni::vxlan::v4 (
     }
   }
 
-  if $vip =~ Stdlib::IP::Address::V4::Nosubnet {
-    $vip_address = $vip
+  if $agent_list == [] and empty($agent_regex) {
+    fail('Either agent_list or agent_regex must be set')
+  } elsif $agent_list != [] and !empty($agent_regex) {
+    fail('Only one of agent_list or agent_regex can be set')
+  } elsif $agent_list != [] {
+    $agent_names = $agent_list
+    $agent_inventory = $agent_names.map |$item| {
+      $item_inventory = puppetdb_query(
+        "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
+          facts.networking.hostname = '${item}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
+        }"
+      )
+    }
   } else {
-    $vip_address = dnsquery::a($vip)[0]
+    $agent_inventory = puppetdb_query(
+      "inventory[facts.networking.hostname, facts.networking.interfaces.${iface}.ip, facts.networking.interfaces.${iface}.mac] {
+        facts.networking.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
+      }"
+    )
+  }
+  $agent_pretty_inventory = $agent_inventory.map |$item| {
+    {
+      'name' => $item['facts.networking.hostname'],
+      'ip' => $item["facts.networking.interfaces.${iface}.ip"],
+      'mac' => $item["facts.networking.interfaces.${iface}.mac"]
+    }
+  }
+
+  if $ingress_vip =~ Stdlib::IP::Address::V4::Nosubnet {
+    $vip_address = $ingress_vip
+  } else {
+    $vip_address = dnsquery::a($ingress_vip)[0]
   }
 
   $vxlan_dir = '/opt/cni/vxlan'
-  $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
-  $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
+  $agent_names = $agent_pretty_inventory.map |$item| { $item['name'] }
+  $agent_ips = $agent_pretty_inventory.map |$item| { $item['ip'] }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
   $vxlan_id = seeded_rand(16777215, $network) + 1
   if ($nolearning) {
     # this is not yet covered by the module
-    $vip_bridge_fdb = "bridge fdb append ${vip_agent_mac} dev vx${vxlan_id} dst ${vip_address}\n"
+    $vip_bridge_fdb = "bridge fdb append ${facts['networking']['interfaces'][$iface]['mac']} dev vx${vxlan_id} dst ${vip_address}\n"
   } else {
     $vip_bridge_fdb = "bridge fdb append 00:00:00:00:00:00 dev vx${vxlan_id} dst ${vip_address}\n"
   }
@@ -142,7 +173,7 @@ define nomad_cni::vxlan::v4 (
       order   => '0002';
   }
 
-  $agents_pretty_inventory.each |$agent| {
+  $agent_pretty_inventory.each |$agent| {
     concat::fragment { "vxlan_${vxlan_id}_${agent['name']}":
       target  => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
       content => epp(
