@@ -52,7 +52,7 @@ define nomad_cni::vxlan::v4 (
     fail('nomad_cni::vxlan::v4 requires nomad_cni')
   }
   if $cni_name == 'all' {
-    fail('the name \'all\' is reserved and it cannot be used as a CNI name')
+    fail("the name 'all' is reserved and it cannot be used as a CNI name")
   }
 
   # == set the variables
@@ -98,18 +98,18 @@ define nomad_cni::vxlan::v4 (
   } else {
     $vip_address = dnsquery::a($vip)[0]
   }
-  if ($nolearning) {
-    # this is not yet covered by the module
-    $vip_bridge_fdb = "bridge fdb append ${vip_agent_mac} dev vx${vxlan_id} dst ${agent_ip}"
-  } else {
-    $vip_bridge_fdb = "bridge fdb append 00:00:00:00:00:00 dev vx${vxlan_id} %> dst ${agent_ip}"
-  }
 
   $vxlan_dir = '/opt/cni/vxlan'
   $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
   $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
   $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
   $vxlan_id = seeded_rand(16777215, $network) + 1
+  if ($nolearning) {
+    # this is not yet covered by the module
+    $vip_bridge_fdb = "bridge fdb append ${vip_agent_mac} dev vx${vxlan_id} dst ${vip}"
+  } else {
+    $vip_bridge_fdb = "bridge fdb append 00:00:00:00:00:00 dev vx${vxlan_id} %> dst ${vip}"
+  }
 
   # allow traffic from the CNI network to the host
   nomad_cni::vxlan::firewall { "br${vxlan_id}": }
