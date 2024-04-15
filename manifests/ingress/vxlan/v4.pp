@@ -4,15 +4,14 @@
 #
 # == Parameters
 #
+# [*ingress_vip*]
+#   the VIP for the CNI
 # [*cni_name*] String
 #   the name of the CNI
 #
 # [*network*] Stdlib::IP::Address::V4::CIDR
 #   Network and Mask for the CNI
 #
-# [*vip_network*] Stdlib::IP::Address::V4::CIDR
-#   Network and Mask for the VIPs
-
 # [*agent_regex*] String
 #   (requires PuppetDB) a string that match the hostnames of the Nomad agents (use either agent_list or agent_regex)
 #
@@ -38,10 +37,10 @@
 #
 define nomad_cni::ingress::vxlan::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
-  Stdlib::IP::Address::V4::CIDR $vip_network,
+  Variant[Stdlib::IP::Address::V4::Nosubnet, Stdlib::Fqdn] $ingress_vip,
+  Optional[String] $ingress_regex = undef,
   String $cni_name                = $name,
   Optional[String] $agent_regex   = undef,
-  Optional[String] $ingress_regex = undef,
   Array $agent_list               = [],
   Array $ingress_list             = [],
   String $iface                   = 'eth0',
