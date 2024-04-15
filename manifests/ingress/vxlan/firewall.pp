@@ -12,7 +12,7 @@ define nomad_cni::ingres::vxlan::firewall (String $vxlan_interface=$title) {
   if $facts['nomad_cni_rule_order'] {
     $nr_leading_zeroes = $facts['nomad_cni_rule_order'].match(/^0*/)[0].length
     $leading_zeroes = range(1, $nr_leading_zeroes).map |$item| { 0 }.join()
-    $_cni_unicast_rule_order = $facts['nomad_cni_rule_order'].regsubst('^0*', '') + 5
+    $_cni_unicast_rule_order = Integer($facts['nomad_cni_rule_order'].regsubst('^0*', '')) + 5
     $cni_unicast_rule_order = "${leading_zeroes}${_cni_unicast_rule_order}"
 
     firewall { "${cni_unicast_rule_order} allow traffic from ${vxlan_interface}":
