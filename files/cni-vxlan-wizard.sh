@@ -60,8 +60,8 @@ check_status() {
 }
 
 parameters=0
-OPTS=$(getopt -o "h,n:,s:,f,p" --longoptions "help,name:,status:,force,purge" -- "$@")
-eval set -- "$OPTS"
+opts=$(getopt -o "h,n:,s:,f,p" --longoptions "help,name:,status:,force,purge" -- "$@")
+eval set -- "$opts"
 
 while true; do
     case "$1" in
