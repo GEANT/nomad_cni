@@ -4,6 +4,9 @@
 #
 # == Parameters
 #
+# [*vip*]
+#   the VIP for the CNI
+#
 # [*cni_name*] String
 #   the name of the CNI
 #
@@ -31,10 +34,7 @@
 #   check the README file for more details
 #
 define nomad_cni::vxlan::v4 (
-  Variant[
-    Array[Stdlib::IP::Address::V4::CIDR, 1],
-    Array[Variant[Stdlib::IP::Address::V4::CIDR, Stdlib::IP::Address::V6::CIDR], 2]
-  ] $vip_address,
+  Variant[Stdlib::IP::Address::V4::Nosubnet, Stdlib::Fqdn] $vip,
   Stdlib::IP::Address::V4::CIDR $network,
   String $cni_name                = $name,
   Optional[String] $agent_regex   = undef,
@@ -93,6 +93,18 @@ define nomad_cni::vxlan::v4 (
     }
   }
 
+  if $vip =~ Stdlib::IP::Address::V4::Nosubnet {
+    $vip_address = $vip
+  } else {
+    $vip_address = dnsquery::a($vip)[0]
+  }
+  if ($nolearning) {
+    # this is not yet covered by the module
+    $vip_bridge_fdb = "bridge fdb append ${vip_agent_mac} dev vx${vxlan_id} dst ${agent_ip}"
+  } else {
+    $vip_bridge_fdb = "bridge fdb append 00:00:00:00:00:00 dev vx${vxlan_id} %> dst ${agent_ip}"
+  }
+
   $vxlan_dir = '/opt/cni/vxlan'
   $agent_names = $agents_pretty_inventory.map |$item| { $item['name'] }
   $agent_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
@@ -119,10 +131,15 @@ define nomad_cni::vxlan::v4 (
     notify  => Exec["populate bridge fdb for ${cni_name}"];
   }
 
-  concat::fragment { "vxlan_${vxlan_id}_header":
-    target => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
-    source => "puppet:///modules/${module_name}/unicast-bridge-fdb-header.sh",
-    order  => '0001',
+  concat::fragment {
+    "vxlan_${vxlan_id}_header":
+      target => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
+      source => "puppet:///modules/${module_name}/unicast-bridge-fdb-header.sh",
+      order  => '0001';
+    "vxlan_${vxlan_id}_vip":
+      target  => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
+      content => $vip_bridge_fdb,
+      order   => '0002';
   }
 
   $agents_pretty_inventory.each |$agent| {
