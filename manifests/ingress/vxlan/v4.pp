@@ -142,10 +142,10 @@ define nomad_cni::ingress::vxlan::v4 (
       target  => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
       content => epp(
         "${module_name}/unicast-bridge-fdb.sh.epp", {
-          ingress_mac => $item['mac'],
-          ingress_ip  => $item['ip'],
-          vxlan_id    => $vxlan_id,
-          nolearning  => $nolearning,
+          agent_mac  => $item['mac'],
+          agent_ip   => $item['ip'],
+          vxlan_id   => $vxlan_id,
+          nolearning => $nolearning,
         }
       ),
       order   => seeded_rand(20000, "vxlan_${vxlan_id}_${item['ip']}"),
