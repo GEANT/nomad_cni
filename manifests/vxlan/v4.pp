@@ -106,9 +106,9 @@ define nomad_cni::vxlan::v4 (
   $vxlan_id = seeded_rand(16777215, $network) + 1
   if ($nolearning) {
     # this is not yet covered by the module
-    $vip_bridge_fdb = "bridge fdb append ${vip_agent_mac} dev vx${vxlan_id} dst ${vip}"
+    $vip_bridge_fdb = "bridge fdb append ${vip_agent_mac} dev vx${vxlan_id} dst ${vip}\n"
   } else {
-    $vip_bridge_fdb = "bridge fdb append 00:00:00:00:00:00 dev vx${vxlan_id} %> dst ${vip}"
+    $vip_bridge_fdb = "bridge fdb append 00:00:00:00:00:00 dev vx${vxlan_id} %> dst ${vip}\n"
   }
 
   # allow traffic from the CNI network to the host
