@@ -113,8 +113,7 @@ define nomad_cni::ingress::vxlan::v4 (
   service { "cni-id@${cni_name}.service":
     ensure  => running,
     enable  => true,
-    require => Systemd::Unit_file['cni-id@.service'],
-    notify  => Exec["${module_name} reload nomad service"];
+    require => Systemd::Unit_file['cni-id@.service'];
   }
 
   # create and run Bridge FDB script
