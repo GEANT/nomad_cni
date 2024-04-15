@@ -97,7 +97,7 @@ define nomad_cni::ingress::vxlan::v4 (
   $vxlan_dir = '/opt/cni/vxlan'
   $agent_names = $agent_pretty_inventory.map |$item| { $item['name'] }
   $agent_ips = $agent_pretty_inventory.map |$item| { $item['ip'] }
-  $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $ingress_names, $min_networks)
+  $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
   $vxlan_id = seeded_rand(16777215, $network) + 1
   if ($nolearning) {
     # this is not yet covered by the module
