@@ -87,7 +87,7 @@ class nomad_cni::ingress (
   }
   elsif $agent_list != [] {
     $agent_names = $agent_list
-    $agents_inventory = $agent_names.map |$item| {
+    $agent_inventory = $agent_names.map |$item| {
       $item_inventory = puppetdb_query(
         "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.ip6] {
           facts.networking.hostname = '${item}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
@@ -96,13 +96,13 @@ class nomad_cni::ingress (
     }
   }
   else {
-    $agents_inventory = puppetdb_query(
+    $agent_inventory = puppetdb_query(
       "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.ip6] {
         facts.networking.hostname ~ '${agent_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
       }"
     )
   }
-  $agents_pretty_inventory = $agents_inventory.map |$item| {
+  $agent_pretty_inventory = $agent_inventory.map |$item| {
     {
       'name' => $item['facts.networking.hostname'],
       'ip' => $item["facts.networking.interfaces.${interface}.ip"],
@@ -117,11 +117,9 @@ class nomad_cni::ingress (
   #
   if $ingress_list == [] and empty($ingress_regex) {
     fail('Either ingress_list or ingress_regex must be set')
-  }
-  elsif $ingress_list != [] and !empty($ingress_regex) {
+  } elsif $ingress_list != [] and !empty($ingress_regex) {
     fail('Only one of ingress_list or ingress_regex can be set')
-  }
-  elsif $ingress_list != [] {
+  } elsif $ingress_list != [] {
     $ingress_names = $ingress_list
     $ingress_inventory = $ingress_names.map |$item| {
       $item_inventory = puppetdb_query(
@@ -130,8 +128,7 @@ class nomad_cni::ingress (
         }"
       )
     }
-  }
-  else {
+  } else {
     $ingress_inventory = puppetdb_query(
       "inventory[facts.networking.hostname, facts.networking.interfaces.${interface}.ip, facts.networking.interfaces.${interface}.ip6] {
         facts.networking.hostname ~ '${ingress_regex}' and facts.agent_specified_environment = '${facts['agent_specified_environment']}'
@@ -149,9 +146,9 @@ class nomad_cni::ingress (
   $vxlan_dir = '/opt/cni/vxlan'
   $ingress_names = $ingress_pretty_inventory.map |$item| { $item['name'] }
   $ingress_ips = $ingress_pretty_inventory.map |$item| { $item['ip'] }
-  $agents_names = $agents_pretty_inventory.map |$item| { $item['name'] }
-  $agents_ips = $agents_pretty_inventory.map |$item| { $item['ip'] }
-  $inventory = $agents_pretty_inventory + $ingress_pretty_inventory
+  $agent_names = $agent_pretty_inventory.map |$item| { $item['name'] }
+  $agent_ips = $agent_pretty_inventory.map |$item| { $item['ip'] }
+  $inventory = $agent_pretty_inventory + $ingress_pretty_inventory
   $inventory_names = $inventory.map |$item| { $item['name'] }
   $inventory_ips = $inventory.map |$item| { $item['ip'] }
 
