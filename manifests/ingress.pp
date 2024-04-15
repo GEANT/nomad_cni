@@ -178,13 +178,13 @@ class nomad_cni::ingress (
   $nr_leading_zeroes = $firewall_rule_order.match(/^0*/)[0].length
   $leading_zeroes = range(1, $nr_leading_zeroes).map |$item| { 0 }.join()
 
-  $_vxlan_rule_order = $firewall_rule_order.regsubst('^0*', '') + 1
+  $_vxlan_rule_order = Integer($firewall_rule_order.regsubst('^0*', '')) + 1
   $vxlan_rule_order = "${leading_zeroes}${_vxlan_rule_order}"
 
-  $_cni_connect_rule_order = $firewall_rule_order.regsubst('^0*', '') + 1
+  $_cni_connect_rule_order = Integer($firewall_rule_order.regsubst('^0*', '')) + 1
   $cni_connect_rule_order = "${leading_zeroes}${_cni_connect_rule_order}"
 
-  $_cni_cut_off_rule_order = $firewall_rule_order.regsubst('^0*', '') + 10
+  $_cni_cut_off_rule_order = Integer($firewall_rule_order.regsubst('^0*', '')) + 10
   $cni_cut_off_rule_order = "${leading_zeroes}${_cni_cut_off_rule_order}"
 
   $nat_rule_order   = $firewall_rule_order
