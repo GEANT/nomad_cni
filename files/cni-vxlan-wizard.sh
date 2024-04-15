@@ -130,7 +130,7 @@ exit_status=0
 
 # == MAIN ==
 #
-# we parse the scripts and bring up/down the vxlan and the bridge
+# we parse the scripts and bring up/down or check the vxlan and the bridge
 #
 for script in ${scriptArray[*]}; do
     vxlan_name=$(basename -s .sh $script)
