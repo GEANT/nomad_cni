@@ -1,4 +1,4 @@
-# variables used in the main script: /usr/local/bin/cni-vxlan-wizard.sh
+# variables source from the main script cni-vxlan-wizard.sh
 vxlan_id=<%= $vxlan_id %>
 vxlan_ip="<%= $vxlan_ip %>"
 vxlan_network="<%= $vxlan_ip %>/<%= $vxlan_netmask %>"

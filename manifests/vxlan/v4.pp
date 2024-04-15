@@ -32,8 +32,8 @@
 #   version of the CNI protocol
 #
 # [*nolearning*] Boolean
-#   disable learning of MAC addresses on the bridge interface
 #   DID NOT WORK AS EXPECTED. It may require testing and maybe an improved configuration
+#   disable learning of MAC addresses on the bridge interface
 #
 # [*min_networks*] Optional[Integer]
 #   minimum number of networks to be created. If the number of agents is less than this number, the module will fail

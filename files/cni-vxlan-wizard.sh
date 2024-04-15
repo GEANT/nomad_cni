@@ -3,22 +3,19 @@
 # Configure VXLAN and Bridge interfaces
 #
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-BASE_DIR='/opt/cni/vxlan'
-export PATH BASE_DIR
+base_dir='/opt/cni/vxlan'
+export PATH
 
-if [ "$(id -u)" != "0" ]; then
-    echo "ERROR: This script must be run as root"
-    exit 1
-fi
+[ `id -u` -ne 0 ] && { echo "ERROR: This script must be run as root"; exit 1; }
 
 usage() {
-    echo "Usage: $(basename $0) --force --status <up>/<down> --name <my_cni>"
+    echo "Usage: $(basename $0) [--force] [--purge] --status <up>/<down>/<check> --name <cni_name>"
     echo ""
-    echo "    -h|--help  Print this help and exit"
-    echo "    --name     [name/all] Configure the specific CNI, or all if all/ALL is specified"
-    echo "    --status   [up/down/check] Bring VXLAN and Bridge down"
-    echo "    --force    Force IP configuration"
-    echo "    --purge    Purge VXLANs and systemd service without a matching script"
+    echo "    -h|--help    Print this help and exit"
+    echo "    -n|--name    [name/all] Configure the named CNI, or all if all/ALL is specified"
+    echo "    -s|--status  [up/down/check] Bring VXLAN and Bridge down"
+    echo "    -f|--force   Force IP configuration"
+    echo "    -p|--purge   Purge VXLANs and systemd service without a matching script"
     echo ""
     exit 3
 }
@@ -32,7 +29,7 @@ ifaces_down() {
 purge_stale_ifaces() {
     vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vx[0-9]+:/{sub("vx", ""); print $2}')
     for vxlan_iface in $vxlan_ifaces_up; do
-        if ! grep -qrw $vxlan_iface $BASE_DIR/unicast.d; then
+        if ! grep -qrw $vxlan_iface $base_dir/unicast.d; then
             ip link delete br$vxlan_iface &>/dev/null || true
             ip link delete vx$vxlan_iface &>/dev/null || true
         fi
@@ -42,7 +39,7 @@ purge_stale_ifaces() {
 purge_stale_services() {
     configured_services=$(systemctl list-units cni-id@* --all --full --no-pager --no-legend | awk '{print $NF}')
     for srv in $configured_services; do
-        if ! test -f "${BASE_DIR}/unicast.d/${srv}.sh"; then
+        if ! test -f "${base_dir}/unicast.d/${srv}.sh"; then
             systemctl disable cni-id@${srv}.service
             systemctl stop cni-id@${srv}.service
             rm -f /etc/systemd/system/cni-id@${srv}.service
@@ -63,7 +60,7 @@ check_status() {
 }
 
 parameters=0
-OPTS=$(getopt -o "h" --longoptions "help,name:,status:,force,purge" -- "$@")
+OPTS=$(getopt -o "h,n:,s:,f,p" --longoptions "help,name:,status:,force,purge" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -71,21 +68,21 @@ while true; do
     -h | --help)
         usage
         ;;
-    --force)
-        FORCE="bofh"
+    -f | --force)
+        force="bofh"
         ;;
-    --name)
+    -n | --name)
         shift
-        NAME="$1"
+        name="$1"
         ((parameters++))
         ;;
-    --status)
+    -s | --status)
         shift
-        STATUS="$1"
+        status="$1"
         ((parameters++))
         ;;
-    --purge)
-        PURGE="bofh"
+    -p | --purge)
+        purge="bofh"
         ;;
     --)
         shift
@@ -95,7 +92,7 @@ while true; do
     shift
 done
 
-if [ -n "$PURGE" ]; then
+if [ -n "$purge" ]; then
     if [ $parameters -gt 0 ]; then
         echo -e "\nERROR: --purge cannot be used with other options\n"
         usage
@@ -108,8 +105,8 @@ elif [ $parameters -lt 2 ]; then
     usage
 fi
 
-lower_status=$(echo $STATUS | tr '[:upper:]' '[:lower:]')
-lower_name=$(echo $NAME | tr '[:upper:]' '[:lower:]')
+lower_status=$(echo $status | tr '[:upper:]' '[:lower:]')
+lower_name=$(echo $name | tr '[:upper:]' '[:lower:]')
 
 if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ] && [ "$lower_status" != "check" ]; then
     echo -e "ERROR: You must use --status up or --status down\n"
@@ -117,45 +114,45 @@ if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ] && [ "$lower_sta
 fi
 
 if [ -n "$STARTED_BY_SYSTEMD" ] || [ -z "$STARTED_BY_CRON" ]; then
-    ECHO_CMD='echo'
+    echo_cmd='echo'
 else
-    ECHO_CMD='logger -t CNI-VXLAN-wizard'
+    echo_cmd='logger -t CNI-VXLAN-wizard'
 fi
 
 shopt -s nullglob
 if [ "$lower_name" == 'all' ]; then
-    scriptArray=($BASE_DIR/*icast.d/*.sh)
+    scriptArray=($base_dir/*icast.d/*.sh)
 else
-    scriptArray=($BASE_DIR/*icast.d/$NAME.sh)
+    scriptArray=($base_dir/*icast.d/$name.sh)
 fi
 
-EXIT_STATUS=0
+exit_status=0
 
 # == MAIN ==
 #
 # we parse the scripts and bring up/down the vxlan and the bridge
 #
 for script in ${scriptArray[*]}; do
-    vxlan_name=$(basename $script | cut -d'.' -f1)
-    source <(grep -E "vxlan_[i|n].*=" $script) # set vxlan_id, vxlan_ip and vxlan_network
+    vxlan_name=$(basename -s .sh $script)
+    source <(grep -E "^vxlan_[i|n].*=" $script) # set vxlan_id, vxlan_ip and vxlan_network
     if [ "$lower_status" == "check" ]; then
         check_status $vxlan_id $vxlan_ip
         vxlan_status="$?"
         if [ $vxlan_status == "0" ]; then
-            $ECHO_CMD "VXLAN $vxlan_id is up"
+            $echo_cmd "VXLAN $vxlan_id is up"
         elif [ $vxlan_status == "1" ]; then
-            $ECHO_CMD "VXLAN $vxlan_id is up but $vxlan_ip not reachable"
-            EXIT_STATUS=1
+            $echo_cmd "VXLAN $vxlan_id is up but $vxlan_ip not reachable"
+            exit_status=1
         else
-            $ECHO_CMD "VXLAN $vxlan_id is down"
-            EXIT_STATUS=2
+            $echo_cmd "VXLAN $vxlan_id is down"
+            exit_status=2
         fi
-    elif [ -n "$FORCE" ]; then
+    elif [ -n "$force" ]; then
         if [ "$lower_status" == "up" ]; then
-            $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name not configured, bringing up vxlan"
+            $echo_cmd "VXLAN $vxlan_id - CNI $vxlan_name not configured, bringing up vxlan"
             $script
         else
-            $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name bringing down vxlan and bridge"
+            $echo_cmd "VXLAN $vxlan_id - CNI $vxlan_name bringing down vxlan and bridge"
             ifaces_down $vxlan_id
         fi
     else
@@ -163,32 +160,32 @@ for script in ${scriptArray[*]}; do
         vxlan_status="$?"
         if [ $vxlan_status == "0" ]; then
             if [ -z "$STARTED_BY_SYSTEMD" ] || [ -n "$STARTED_BY_CRON" ]; then # we dont want to pollute the logs
-                $ECHO_CMD "VXLAN $vxlan_id is already configured"
+                $echo_cmd "VXLAN $vxlan_id is already configured"
             fi
         else
             if [ "$lower_status" == "up" ]; then
                 if [ $vxlan_status == "1" ]; then
                     # the interface is up but the IP is not reachable
-                    $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name not reachable, bringing up vxlan IP $vxlan_ip"
-                    ip addr add $vxlan_network dev br$vxlan_id &>/dev/null || true  # bring IP up and ignore errors
-                    sleep .5  # is this really needed?
+                    $echo_cmd "VXLAN $vxlan_id - CNI $vxlan_name not reachable, bringing up vxlan IP $vxlan_ip"
+                    ip addr add $vxlan_network dev br$vxlan_id &>/dev/null || true # bring IP up and ignore errors
+                    sleep .5                                                       # is this really needed?
                     if ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
-                        $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name still not working. Reloading vxlan"
-                        $script  # reload vxlan
+                        $echo_cmd "VXLAN $vxlan_id - CNI $vxlan_name still not working. Reloading vxlan"
+                        $script # reload vxlan
                     else
-                        $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name is now working"
+                        $echo_cmd "VXLAN $vxlan_id - CNI $vxlan_name is now working"
                     fi
                 else
                     # the interface is down
-                    $ECHO_CMD "VXLAN $vxlan_id - CNI $vxlan_name not configured, bringing up vxlan"
+                    $echo_cmd "VXLAN $vxlan_id - CNI $vxlan_name not configured, bringing up vxlan"
                     $script # reload vxlan
                 fi
             else
-                $ECHO_CMD echo "VXLAN $vxlan_id - CNI $vxlan_name bringing down vxlan and bridge"
+                $echo_cmd echo "VXLAN $vxlan_id - CNI $vxlan_name bringing down vxlan and bridge"
                 ifaces_down $vxlan_id
             fi
         fi
     fi
 done
 
-exit $EXIT_STATUS
+exit $exit_status
