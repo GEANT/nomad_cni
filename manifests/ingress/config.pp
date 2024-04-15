@@ -49,6 +49,10 @@ class nomad_cni::ingress::config (
 
   # == create systemd unit file
   #
+  systemd::unit_file { 'cni-id@.service':
+    source => "puppet:///modules/${module_name}/cni-id.service";
+  }
+
   systemd::timer { 'cni-purge.timer':  # get rid of unused VXLANs
     service_source => "puppet:///modules/${module_name}/cni-purge.service",
     timer_source   => "puppet:///modules/${module_name}/cni-purge.timer";
