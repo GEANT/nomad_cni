@@ -1,4 +1,4 @@
-# == Define: nomad_cni::ingress::v4
+# == Define: nomad_cni::ingress::vxlan::v4
 #
 # configure CNI and Unicast VXLAN/Bridge for Nomad
 #
@@ -33,7 +33,7 @@
 #   minimum number of networks to be created. If the number of agents is less than this number, the module will fail
 #   check the README file for more details
 #
-define nomad_cni::ingress::v4 (
+define nomad_cni::ingress::vxlan::v4 (
   Stdlib::IP::Address::V4::CIDR $network,
   Stdlib::IP::Address::V4::CIDR $vip_network,
   String $cni_name                = $name,
@@ -60,11 +60,9 @@ define nomad_cni::ingress::v4 (
   #
   if $agent_list == [] and empty($agent_regex) {
     fail('Either agent_list or agent_regex must be set')
-  }
-  elsif $agent_list != [] and !empty($agent_regex) {
+  } elsif $agent_list != [] and !empty($agent_regex) {
     fail('Only one of agent_list or agent_regex can be set')
-  }
-  elsif $agent_list != [] {
+  } elsif $agent_list != [] {
     $agent_names = $agent_list
     $agents_inventory = $agent_names.map |$item| {
       $item_inventory = puppetdb_query(
@@ -96,11 +94,9 @@ define nomad_cni::ingress::v4 (
   #
   if $ingress_list == [] and empty($ingress_regex) {
     fail('Either ingress_list or ingress_regex must be set')
-  }
-  elsif $ingress_list != [] and !empty($ingress_regex) {
+  } elsif $ingress_list != [] and !empty($ingress_regex) {
     fail('Only one of ingress_list or ingress_regex can be set')
-  }
-  elsif $ingress_list != [] {
+  } elsif $ingress_list != [] {
     $ingress_names = $ingress_list
     $ingress_inventory = $ingress_names.map |$item| {
       $item_inventory = puppetdb_query(

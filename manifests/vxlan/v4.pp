@@ -31,6 +31,10 @@
 #   check the README file for more details
 #
 define nomad_cni::vxlan::v4 (
+  Variant[
+    Array[Stdlib::IP::Address::V4::CIDR, 1],
+    Array[Variant[Stdlib::IP::Address::V4::CIDR, Stdlib::IP::Address::V6::CIDR], 2]
+  ] $vip_address,
   Stdlib::IP::Address::V4::CIDR $network,
   String $cni_name                = $name,
   Optional[String] $agent_regex   = undef,
@@ -39,6 +43,8 @@ define nomad_cni::vxlan::v4 (
   String $cni_proto_version       = '1.0.0',
   Boolean $nolearning             = false,  # please read the docs carefully before enabling this option
   Optional[Integer] $min_networks = undef,
+  Optional[String] $ingress_regex = undef,
+  Array $ingress_list             = [],
 ) {
   # == ensure that nomad_cni class was included and that the name is not reserved
   #

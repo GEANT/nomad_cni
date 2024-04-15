@@ -43,7 +43,7 @@ parallel_spec-Ruby 2.5.7-Puppet ~> 6:
 
 validate lint check rubocop-Ruby 2.7.2-Puppet ~> 7:
   stage: syntax
-  image: ruby:2.7.2
+  image: ruby:3.2.0
   script:
     - bundle exec rake validate lint check rubocop
   variables:
