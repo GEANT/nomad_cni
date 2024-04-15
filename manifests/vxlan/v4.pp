@@ -163,12 +163,12 @@ define nomad_cni::vxlan::v4 (
   }
 
   concat::fragment {
+    default:
+      target => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh";
     "vxlan_${vxlan_id}_header":
-      target => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
       source => "puppet:///modules/${module_name}/unicast-bridge-fdb-header.sh",
       order  => '0001';
     "vxlan_${vxlan_id}_vip":
-      target  => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
       content => $vip_bridge_fdb,
       order   => '0002';
   }
