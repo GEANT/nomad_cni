@@ -55,9 +55,18 @@ class nomad_cni::ingress::config (
     source => "puppet:///modules/${module_name}/cni-id.service";
   }
 
-  systemd::timer { 'cni-purge.timer':  # get rid of unused VXLANs
-    service_source => "puppet:///modules/${module_name}/cni-purge.service",
-    timer_source   => "puppet:///modules/${module_name}/cni-purge.timer";
+  systemd::timer {
+    'cni-purge.timer':  # get rid of unused VXLANs
+      service_source => "puppet:///modules/${module_name}/cni-purge.service",
+      timer_source   => "puppet:///modules/${module_name}/cni-purge.timer";
+    'cni-up.timer':  # ensure that the VXLANs are up and running
+      service_source => "puppet:///modules/${module_name}/cni-up.service",
+      timer_content  => epp(
+        "${module_name}/cni-up.timer.epp", {
+          keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
+          keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
+        }
+      );
   }
 
   service { 'cni-purge.timer':
