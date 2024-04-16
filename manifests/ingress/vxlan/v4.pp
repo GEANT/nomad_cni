@@ -158,30 +158,28 @@ define nomad_cni::ingress::vxlan::v4 (
 
   # == create CNI config file, collect all the fragments for the script and add the footer
   #
-  $cni_ranges_v4.each |$cni_item| {
-    $br_mac_address = nomad_cni::generate_mac("${cni_item[1]}${facts['networking']['hostname']}")
-    $vxlan_mac_address = nomad_cni::generate_mac("${cni_item[1]}${cni_item[4]}${facts['networking']['hostname']}")
-    if $cni_item[0] == $facts['networking']['hostname'] {
-      file { "${vxlan_dir}/unicast.d/${cni_name}.sh":
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0755',
-        require => File["${vxlan_dir}/unicast.d"],
-        content => epp(
-          "${module_name}/unicast-vxlan.sh.epp", {
-            agent_ip          => $facts['networking']['interfaces'][$iface]['ip'],
-            vxlan_id          => $vxlan_id,
-            vxlan_ip          => $cni_item[1],
-            iface             => $iface,
-            vxlan_netmask     => $cni_item[4],
-            nolearning        => $nolearning,
-            cni_name          => $cni_name,
-            br_mac_address    => $br_mac_address,
-            vxlan_mac_address => $vxlan_mac_address,
-          }
-        );
+  $vxlan_ip = nomad_cni::cni_gateway_v4($network)
+  $vxlan_netmask = $network.split('/')[1]
+  $br_mac_address = nomad_cni::generate_mac("${vxlan_ip}${facts['networking']['hostname']}")
+  $vxlan_mac_address = nomad_cni::generate_mac("${vxlan_ip}${vxlan_netmask}${facts['networking']['hostname']}")
+  file { "${vxlan_dir}/unicast.d/${cni_name}.sh":
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0755',
+    require => File["${vxlan_dir}/unicast.d"],
+    content => epp(
+      "${module_name}/unicast-vxlan.sh.epp", {
+        agent_ip          => $facts['networking']['interfaces'][$iface]['ip'],
+        vxlan_id          => $vxlan_id,
+        vxlan_ip          => $vxlan_ip,
+        iface             => $iface,
+        vxlan_netmask     => $vxlan_netmask,
+        nolearning        => $nolearning,
+        cni_name          => $cni_name,
+        br_mac_address    => $br_mac_address,
+        vxlan_mac_address => $vxlan_mac_address,
       }
-    }
+    );
   }
 }
 # vim: set ts=2 sw=2 et :
