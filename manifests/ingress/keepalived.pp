@@ -69,11 +69,12 @@ class nomad_cni::ingress::keepalived (
     virtual_router_id          => seeded_rand(255, "${module_name}${facts['agent_specified_environment']}") + 0,
     unicast_source_ip          => $facts['networking']['ip'],
     unicast_peers              => [$peer_ip],
-    priority                   => $priority + 0,
+    priority                   => $priority,
     auth_type                  => 'PASS',
     auth_pass                  => $auth_pass,
     virtual_ipaddress          => $ipv4_only_vip,
     virtual_ipaddress_excluded => $virtual_ipaddress_excluded,
+    notify_script_master       => '/usr/local/bin/cni-vxlan-wizard.sh --name all --status up --force',
     track_interface            => [$interface];
   }
 }

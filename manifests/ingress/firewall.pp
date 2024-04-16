@@ -29,9 +29,9 @@ class nomad_cni::ingress::firewall (
       proto  => 'all',
       chain  => 'FORWARD',
       action => 'accept';
-    '200 allow inbound forward':
+    "200 allow forward on iniface ${interface}":
       iniface  => $interface;
-    '200 allow outbound forward':
+    "200 allow forward on outiface ${interface}":
       outiface  => $interface;
   }
 }
