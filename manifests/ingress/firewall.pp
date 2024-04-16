@@ -11,7 +11,7 @@
 #
 class nomad_cni::ingress::firewall (
   Stdlib::Ip::Address::Nosubnet $peer_ip,
-  String $interface = 'eth0',
+  String $interface,
 ) {
   firewall { "200 Allow VRRP inbound from ${peer_ip}":
     action => accept,
