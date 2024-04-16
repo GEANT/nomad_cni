@@ -75,6 +75,7 @@ class nomad_cni::ingress::keepalived (
     virtual_ipaddress          => $ipv4_only_vip,
     virtual_ipaddress_excluded => $virtual_ipaddress_excluded,
     notify_script_master       => '/usr/local/bin/cni-vxlan-wizard.sh --name all --status up --force',
+    notify_script_backup       => '/usr/local/bin/cni-vxlan-wizard.sh --name all --status down --force',
     track_interface            => [$interface];
   }
 }
