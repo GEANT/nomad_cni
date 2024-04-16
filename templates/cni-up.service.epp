@@ -10,7 +10,7 @@ Environment="STARTED_BY_SYSTEMD=yes"
 User=root
 Group=root
 TimeoutStartSec=0
-ExecStart=/usr/local/bin/cni-vxlan-wizard.sh --status up --name all
+ExecStart=/usr/local/bin/cni-vxlan-wizard.sh --status up --name all<% if $ingress !~ Undef { %> --vip<% } %>
 SyslogIdentifier=CNI-VXLAN-wizard
 
 [Install]

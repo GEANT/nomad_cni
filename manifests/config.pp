@@ -114,9 +114,9 @@ class nomad_cni::config (
       service_source => "puppet:///modules/${module_name}/cni-purge.service",
       timer_source   => "puppet:///modules/${module_name}/cni-purge.timer";
     'cni-up.timer':  # ensure that the VXLANs are up and running
-      service_source => "puppet:///modules/${module_name}/cni-up.service",
-      timer_content  => epp(
-        "${module_name}/cni-up.timer.epp", {
+      service_content => epp("${module_name}/cni-up.service.epp", { ingress => undef }),
+      timer_content   => epp("${module_name}/cni-up.timer.epp",
+        {
           keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
           keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
         }

@@ -16,6 +16,7 @@ usage() {
     echo "    -s|--status  [up/down/check] Bring VXLAN and Bridge down"
     echo "    -f|--force   Force IP configuration"
     echo "    -p|--purge   Purge VXLANs and systemd service without a matching script"
+    echo "    -v|--vip     Run only on Keeplive MASTER node"
     echo ""
     exit 3
 }
@@ -84,6 +85,9 @@ while true; do
     -p | --purge)
         purge="bofh"
         ;;
+    -v | --vip)
+        purge="bofh"
+        ;;
     --)
         shift
         break
@@ -91,6 +95,18 @@ while true; do
     esac
     shift
 done
+
+if [ -n "$vip" ]; then
+    if [ -f /etc/keepalived/keepalived.conf ]; then
+        # https://stackoverflow.com/a/55250202/3151187
+        vip=$(expr "$(cat /etc/keepalived/keepalived.conf)" : '.*\bvirtual_ipaddress\s*{\s*\(.*\)/*}')
+        vip=$(expr "$vip" : '\([^ ]*\)' | sed 's/\./\\\\./g')
+        if ! ip addr | grep -q "$vip"; then
+            # we are not the master. Let's revert status to down :)
+            status="down"
+        fi
+    fi
+fi
 
 if [ -n "$purge" ]; then
     if [ $parameters -gt 0 ]; then
