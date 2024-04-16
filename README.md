@@ -183,7 +183,8 @@ as a result, you'll get something like the following in the agent configuration
       "interface": "vxbr5199537"
     }
   },
-... and so on....
+  ... and so on ...
+]
 ```
 
 If you have dual stack IP configuration, the network that it's not defined will be the default network for your jobs.
