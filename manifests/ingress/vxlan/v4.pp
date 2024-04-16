@@ -158,20 +158,21 @@ define nomad_cni::ingress::vxlan::v4 (
 
   # == create CNI config file, collect all the fragments for the script and add the footer
   #
-  $vxlan_ip = nomad_cni::cni_gateway_v4($network)
+  $vxlan_ingress = nomad_cni::cni_ingress_v4($network)
   $vxlan_netmask = $network.split('/')[1]
-  $br_mac_address = nomad_cni::generate_mac("${vxlan_ip}${facts['networking']['hostname']}")
-  $vxlan_mac_address = nomad_cni::generate_mac("${vxlan_ip}${vxlan_netmask}${facts['networking']['hostname']}")
+  $br_mac_address = nomad_cni::generate_mac("${vxlan_ingress[1]}${facts['networking']['hostname']}")
+  $vxlan_mac_address = nomad_cni::generate_mac("${vxlan_ingress[1]}${vxlan_netmask}${facts['networking']['hostname']}")
   file { "${vxlan_dir}/unicast.d/${cni_name}.sh":
     owner   => 'root',
     group   => 'root',
     mode    => '0755',
     require => File["${vxlan_dir}/unicast.d"],
-    content => epp(
-      "${module_name}/unicast-vxlan.sh.epp", {
+    content => epp("${module_name}/unicast-vxlan-ingress.sh.epp",
+      {
         agent_ip          => $facts['networking']['interfaces'][$iface]['ip'],
         vxlan_id          => $vxlan_id,
-        vxlan_ip          => $vxlan_ip,
+        vxlan_ip          => $vxlan_ingress[1],
+        vxlan_net         => $vxlan_ingress[0],
         iface             => $iface,
         vxlan_netmask     => $vxlan_netmask,
         nolearning        => $nolearning,

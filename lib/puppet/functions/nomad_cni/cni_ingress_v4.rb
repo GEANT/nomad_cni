@@ -8,13 +8,17 @@ require 'ipaddr'
 # Example: nomad_cni::cni_gateway("192.168.0.0/24")
 #          returns "192.168.0.1"
 #
-Puppet::Functions.create_function(:'nomad_cni::cni_gateway_v4') do
-  dispatch :calculate_cni_gateway_v4 do
+Puppet::Functions.create_function(:'nomad_cni::cni_ingress_v4') do
+  dispatch :calculate_cni_ingress_v4 do
     param 'Stdlib::IP::Address::V4::CIDR', :network_address
-    return_type 'Stdlib::IP::Address::V4::Nosubnet'
+    return_type 'Array[Stdlib::IP::Address::V4::Nosubnet]'
   end
 
-  def calculate_cni_gateway_v4(network_address)
-    IPAddr.new(network_address).to_range.first.to_s
+  def calculate_cni_ingress_v4(network_address)
+    network_and_gateway = [
+      IPAddr.new(network_address).to_range.first.to_s,
+      IPAddr.new(network_address).to_range.first.to_s + 1,
+    ]
+    network_and_gateway
   end
 end
