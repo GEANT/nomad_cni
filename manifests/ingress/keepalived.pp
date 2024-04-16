@@ -53,7 +53,10 @@ class nomad_cni::ingress::keepalived (
     $peer_ip = $master[0]['ip']
   }
 
-  class { 'nomad_cni::ingress::firewall': peer_ip => $peer_ip, }
+  class { 'nomad_cni::ingress::firewall':
+    peer_ip   => $peer_ip,
+    interface => $interface,
+  }
 
   class { 'keepalived':
     pkg_ensure      => 'latest',
