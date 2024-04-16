@@ -64,7 +64,7 @@ define nomad_cni::ingress::vxlan::v4 (
     fail('Either agent_list or agent_regex must be set')
   } elsif $agent_list != [] and !empty($agent_regex) {
     fail('Only one of agent_list or agent_regex can be set')
-  } elsif $agent_list != [] {
+  } elsif $agent_list != [] and empty($agent_regex) {
     $agent_names = $agent_list
     $agent_inventory = $agent_names.map |$item| {
       $item_inventory = puppetdb_query(
@@ -95,9 +95,6 @@ define nomad_cni::ingress::vxlan::v4 (
   }
 
   $vxlan_dir = '/opt/cni/vxlan'
-  $agent_names = $agent_pretty_inventory.map |$item| { $item['name'] }
-  $agent_ips = $agent_pretty_inventory.map |$item| { $item['ip'] }
-  $cni_ranges_v4 = nomad_cni::cni_ranges_v4($network, $agent_names, $min_networks)
   $vxlan_id = seeded_rand(16777215, $network) + 1
   if ($nolearning) {
     # this is not yet covered by the module
@@ -139,8 +136,8 @@ define nomad_cni::ingress::vxlan::v4 (
   $agent_pretty_inventory.each |$item| {
     concat::fragment { "vxlan_${vxlan_id}_${item['name']}":
       target  => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
-      content => epp(
-        "${module_name}/unicast-bridge-fdb.sh.epp", {
+      content => epp("${module_name}/unicast-bridge-fdb.sh.epp",
+        {
           agent_mac  => $item['mac'],
           agent_ip   => $item['ip'],
           vxlan_id   => $vxlan_id,

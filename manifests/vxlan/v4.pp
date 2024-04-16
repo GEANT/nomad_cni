@@ -198,6 +198,7 @@ define nomad_cni::vxlan::v4 (
   $cni_ranges_v4.each |$cni_item| {
     $br_mac_address = nomad_cni::generate_mac("${cni_item[1]}${facts['networking']['hostname']}")
     $vxlan_mac_address = nomad_cni::generate_mac("${cni_item[1]}${cni_item[4]}${facts['networking']['hostname']}")
+    $gateway = nomad_cni::cni_ingress_v4($network)[1]
     if $cni_item[0] == $facts['networking']['hostname'] {
       file { "${vxlan_dir}/unicast.d/${cni_name}.sh":
         owner   => 'root',
@@ -249,7 +250,7 @@ define nomad_cni::vxlan::v4 (
                         subnet     => $network,
                         rangeStart => $cni_item[2],
                         rangeEnd   => $cni_item[3],
-                        gateway    => $cni_item[1]
+                        gateway    => $gateway
                       },
                     ]
                   ],
