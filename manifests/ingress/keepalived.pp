@@ -19,8 +19,6 @@ class nomad_cni::ingress::keepalived (
 ) {
   assert_private()
 
-  echo { "ingress_inventory ${ingress_inventory}":; }
-
   # pass is truncated to 8 chars from Keepalived
   $auth_pass = seeded_rand_string(8, "${module_name}${facts['agent_specified_environment']}")
 
@@ -41,25 +39,21 @@ class nomad_cni::ingress::keepalived (
   }
 
   # we sort the hostnames, and if the current hostname is the first one, we are the master
+  # this allows to elect the node with the lowest hostname as the master
   $ingress_names = sort($ingress_inventory.map |$item| { $item['name'] })
-  if $facts['networking']['hostname'] == $ingress_names[0] { $is_master = true } else { $is_master = false }
-
-  # peer_ip is the ip of the other ingress node
-  if $facts['networking']['hostname'] == $ingress_inventory[0]['name'] {
-    $peer_ip = $ingress_inventory[1]['ip']
-  } else {
-    $peer_ip = $ingress_inventory[0]['ip']
-  }
-
-  class { 'nomad_cni::ingress::firewall': peer_ip => $peer_ip, }
-
-  if ($is_master) {
+  $master = $ingress_inventory.filter |$item| { $item['name'] == $ingress_names[0] }
+  $backup = $ingress_inventory.filter |$item| { $item['name'] == $ingress_names[1] }
+  if $facts['networking']['hostname'] == $ingress_names[0] {
     $state = 'MASTER'
     $priority = 100
+    $peer_ip = $backup[0]['ip']
   } else {
     $state = 'BACKUP'
     $priority = 99
+    $peer_ip = $master[0]['ip']
   }
+
+  class { 'nomad_cni::ingress::firewall': peer_ip => $peer_ip, }
 
   class { 'keepalived':
     pkg_ensure      => 'latest',
