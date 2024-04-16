@@ -257,7 +257,7 @@ define nomad_cni::vxlan::v4 (
                   routes  => [
                     {
                       dst => '0.0.0.0/0',
-                      gw  => $cni_item[1]
+                      gw  => $gateway
                     },
                   ],
                   dataDir => '/run/cni/ipam-state',
