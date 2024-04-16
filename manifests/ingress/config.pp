@@ -17,6 +17,8 @@ class nomad_cni::ingress::config (
   # this is a private class
   assert_private()
 
+  unless defined(Package['bridge-utils']) { package { 'bridge-utils': ensure => present } }
+
   # == create necessary files
   #
   file {
