@@ -24,12 +24,15 @@ class nomad_cni::ingress::firewall (
     chain       => 'INPUT',
     destination => '224.0.0.0/8';
   }
-  firewall { '200 allow forward':
-    proto    => 'all',
-    chain    => 'FORWARD',
-    iniface  => $interface,
-    outiface => $interface,
-    action   => 'accept';
+  firewall {
+    default:
+      proto  => 'all',
+      chain  => 'INPUT',
+      action => 'accept';
+    '200 allow inbound forward':
+      iniface  => $interface;
+    '200 allow inbound forward':
+      outiface  => $interface;
   }
 }
 # vim:ts=2:sw=2
