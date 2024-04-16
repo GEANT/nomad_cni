@@ -139,7 +139,7 @@ define nomad_cni::ingress::vxlan::v4 (
       content => epp("${module_name}/unicast-bridge-fdb.sh.epp",
         {
           agent_mac  => $item['mac'],
-          agent_ip   => $vip_address,
+          agent_ip   => $item['ip'],
           vxlan_id   => $vxlan_id,
           nolearning => $nolearning,
         }
