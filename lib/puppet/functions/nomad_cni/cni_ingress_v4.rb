@@ -15,10 +15,12 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ingress_v4') do
   end
 
   def calculate_cni_ingress_v4(network_address)
-    network_and_gateway = [
-      IPAddr.new(network_address).to_range.first.to_s,
-      IPAddr.new(network_address).to_range.first.to_s + 1,
+    first_ip = IPAddr.new(network_address).to_range.first.to_s
+    second_ip_int = IPAddr.new(network_address).to_range.first.to_i + 1
+    second_ip = IPAddr.new(second_ip_int, Socket::AF_INET).to_s
+    [
+      first_ip,
+      second_ip,
     ]
-    network_and_gateway
   end
 end
