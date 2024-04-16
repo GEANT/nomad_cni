@@ -22,15 +22,25 @@
 
 ## Overview
 
-This module configures CNI networks on the Nomad agents, and it aims to replace a more complex software-defined network solution (like as Calico, Weave, Cilium...).
+This module leverages the configuration of the CNI networks, using VXLAN technology and macvlan network driver on the Nomad agents.
 
-Whilst Calico uses `etcd` and `nerdctl` to leverage and centralize the configuration of the CNI within the cluster, this module splits a network range by the number of Nomad agents (or by `min_networks` parameter), and assigns each range to a different agent.
+Whilst other CNI operators uses key pair databases to store/retrieve the configurations, this module does two things:
 
-The module will also create a Bridge interface and a VXLAN on each Agent and the VXLANs will be interconnected and bridged with the host network.
+1. use your Puppet hieradata backend (whatever it is)
+2. splits the network in multiple segment, and assigns one segment for each agent. There is a function which can determine the size of the networks based on the number of agents, otherwise the `min_networks` parameter can be used to create more networks (this comes to hand if you want to increase the size of your cluster, without disruptions).
+
+The module will also create a Bridge interface and a VXLAN interface on each Agent and for each CNI network, and the VXLANs will be interconnected and bridged with the host network.
 
 ## Requirements and notes
 
 In addition to the requirements listed in `metadata.json`, **this module requires PuppetDB**.
+
+You need to enable IP forward:
+
+```bash
+# cat /proc/sys/net/ipv4/ip_forward
+1
+```
 
 The CNI configuration has a stanza for the [DNS settings](https://www.cni.dev/plugins/current/main/vlan/), but these settings won't work with Nomad. If necessary you can specify the settings for the [DNS in Nomad](https://developer.hashicorp.com/nomad/docs/job-specification/network#dns-1).
 
@@ -224,6 +234,6 @@ service {
 
 ## Limitations
 
-* only IPv4 is currently supported (I started working on IPv6 but it's not in a usable state at the moment)
+* only IPv4 is currently supported. 
 * changelog is not yet handled
-* CI is currently using an internal Gitlab runner. GitHub action will come soon.
+* CI is currently using an internal Gitlab runner. GitHub action will come soon, but the Test won't extensive, because of PuppetDB.
