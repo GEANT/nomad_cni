@@ -31,7 +31,7 @@ class nomad_cni::ingress::firewall (
       action => 'accept';
     '200 allow inbound forward':
       iniface  => $interface;
-    '200 allow inbound forward':
+    '200 allow outbound forward':
       outiface  => $interface;
   }
 }
