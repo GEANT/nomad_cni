@@ -31,15 +31,15 @@ validate lint check rubocop-Ruby 2.7.2-Puppet ~> 7:
   tags:
     - shared-docker-runner
 
-#parallel_spec-Ruby 2.7.2-Puppet ~> 7:
-#  stage: unit
-#  image: ruby:2.7.2
-#  script:
-#    - bundle exec rake parallel_spec
-#  variables:
-#    PUPPET_GEM_VERSION: '~> 7'
-#  tags:
-#    - shared-docker-runner
+parallel_spec-Ruby 2.7.2-Puppet ~> 7:
+  stage: unit
+  image: ruby:2.7.2
+  script:
+    - bundle exec rake parallel_spec
+  variables:
+    PUPPET_GEM_VERSION: '~> 7'
+  tags:
+    - shared-docker-runner
 
 validate lint check rubocop-Ruby 3.2.0-Puppet ~> 8:
   stage: syntax
@@ -51,15 +51,15 @@ validate lint check rubocop-Ruby 3.2.0-Puppet ~> 8:
   tags:
     - shared-docker-runner
 
-#parallel_spec-Ruby 2.7.2-Puppet ~> 8:
-#  stage: unit
-#  image: ruby:3.2.0
-#  script:
-#    - bundle exec rake parallel_spec
-#  variables:
-#    PUPPET_GEM_VERSION: '~> 8'
-#  tags:
-#    - shared-docker-runner
+parallel_spec-Ruby 2.7.2-Puppet ~> 8:
+  stage: unit
+  image: ruby:3.2.0
+  script:
+    - bundle exec rake parallel_spec
+  variables:
+    PUPPET_GEM_VERSION: '~> 8'
+  tags:
+    - shared-docker-runner
 
 # custom internal jobs
 job_deploy:
