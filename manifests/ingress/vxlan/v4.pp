@@ -157,8 +157,8 @@ define nomad_cni::ingress::vxlan::v4 (
   #
   $vxlan_ingress = nomad_cni::cni_ingress_v4($network)
   $vxlan_netmask = $network.split('/')[1]
-  $br_mac_address = nomad_cni::generate_mac("${vxlan_ingress[1]}${facts['networking']['hostname']}")
-  $vxlan_mac_address = nomad_cni::generate_mac("${vxlan_ingress[1]}${vxlan_netmask}${facts['networking']['hostname']}")
+  $br_mac_address = nomad_cni::generate_mac("${vxlan_ingress[1]}${vip_address}")
+  $vxlan_mac_address = nomad_cni::generate_mac("${vxlan_ingress[1]}${vxlan_netmask}${vip_address}")
   file { "${vxlan_dir}/unicast.d/${cni_name}.sh":
     owner   => 'root',
     group   => 'root',
