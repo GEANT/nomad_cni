@@ -184,10 +184,8 @@ for script in ${scriptArray[*]}; do
                 if [ $vxlan_status == "1" ]; then
                     # the interface is up but the IP is not reachable
                     $echo_cmd "VXLAN $vxlan_id - CNI $vxlan_name not reachable, bringing up vxlan IP $vxlan_ip"
-                    ip addr add $vxlan_ip/$vxlan_netmask dev br$vxlan_id &>/dev/null || true # bring IP up and ignore errors
-                    sleep .5                                                                 # is this really needed?
-                    [ -n "$(ip route list $vxlan_ip/$vxlan_netmask)" ] && ip route del $vxlan_ip/$vxlan_netmask
-                    ip route add $vxlan_ip/$vxlan_netmask via $vip_address
+                    ip addr add $vxlan_ip/$vxlan_netmask dev br$vxlan_id noprefixroute &>/dev/null || true # bring IP up and ignore errors
+                    [ -z "$(ip route list $vxlan_ip/$vxlan_netmask)" ] && ip route add $vxlan_ip/$vxlan_netmask via $vip_address
                     if ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
                         $echo_cmd "VXLAN $vxlan_id - CNI $vxlan_name still not working. Reloading vxlan"
                         $script # reload vxlan
