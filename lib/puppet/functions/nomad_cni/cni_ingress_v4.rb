@@ -1,12 +1,12 @@
 require 'ipaddr'
-# Function to return the first IP of a network to be used as the gateway
+# Function to return the first and the second IP of a network to be used by the Ingress server
 #
 # network_address: String in CIDR notation (e.g. "192.168.0.0/24")
 #
-# Returns: Gateway IP address for the CNI (namely the first IP of the netowrk):
+# Returns: Network address and Gateway IP address for the CNI :
 #
 # Example: nomad_cni::cni_gateway("192.168.0.0/24")
-#          returns "192.168.0.1"
+#          returns ["192.168.0.0", "192.168.0.1"]
 #
 Puppet::Functions.create_function(:'nomad_cni::cni_ingress_v4') do
   dispatch :calculate_cni_ingress_v4 do

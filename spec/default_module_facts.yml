@@ -15,7 +15,7 @@ nomad_cni_hash:
 networking:
   interfaces:
     eth0:
-      ip: '172.16.254.254'
+      ip: "172.16.254.254"
       netmask: "255.255.0.0"
 os:
   hardware: "x86_64"
