@@ -5,20 +5,21 @@
 1. [Overview](#overview)
 2. [Requirements and notes](#requirements-and-notes)
 3. [What this module affects](#what-this-module-affects)
-4. [Usage and examples](#usage-and-examples)
+4. [Architecture diagram](#architecture-diagram)
+5. [Usage and examples](#usage-and-examples)
     1. [Install the CNI components](#install-the-cni-components)
     2. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
     3. [Minimum networks](#minimum-networks)
-5. [Firewall](#firewall)
+6. [Firewall](#firewall)
     1. [NAT](#nat)
     2. [VXLAN traffic](#vxlan-traffic)
     3. [CNIs segregation](#cnis-segregation)
     4. [CNIs interconnection](#cnis-interconnection)
-6. [Add CNIs to Nomad](#add-cnis-to-nomad)
+7. [Add CNIs to Nomad](#add-cnis-to-nomad)
     1. [add host_network using VoxPupuli Nomad module](#add-host_network-using-voxpupuli-nomad-module)
     1. [Nomad job example](#nomad-job-example)
-7. [Register your services to Consul](#register-your-services-to-consul)
-8. [Limitations](#limitations)
+8. [Register your services to Consul](#register-your-services-to-consul)
+9. [Limitations](#limitations)
 
 ## Overview
 
@@ -50,6 +51,10 @@ The CNI configuration has a stanza for the [DNS settings](https://www.cni.dev/pl
 * Installs configuration/scripts for every CNI network (`/opt/cni/vxlan/.d/{un,mult}icast.d/*.sh`)
 * Creates a Bridge and a VXLAN for every CNI network (managed via custom script)
 * Optionally, segregates and interconnects CNIs (by default they're open and interconnected)
+
+## Architecture diagram
+
+![Could not fetch Nomad diagram!](https://cds.geant.org/pub/Nomad_cluster_small.jpg)
 
 ## Usage and examples <a name="usage-and-examples"></a>
 
@@ -235,6 +240,7 @@ service {
 
 ## Limitations
 
-* only IPv4 is currently supported. 
-* changelog is not yet handled
-* CI is currently using an internal Gitlab runner. GitHub action will come soon, but the Test won't extensive, because of PuppetDB.
+* only IPv4 is currently supported
+* changelog not yet handled
+* temporarily suspended the spec test. Only the linting check is running
+* feel free to test it on RedHat, to contribute and raise issues
