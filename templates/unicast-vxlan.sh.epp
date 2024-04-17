@@ -25,4 +25,4 @@ ip link set dev br<%= $vxlan_id %> address <%= $br_mac_address %>
 ip link set dev br<%= $vxlan_id %> up
 
 # add default route to Ingress VIP
-ip route add <%= $vxlan_ip %>/<%= $vxlan_netmask %> via <%= $vip_address %>
+ip route add <%= $network %> via <%= $vip_address %>
