@@ -217,6 +217,7 @@ define nomad_cni::vxlan::v4 (
             cni_name          => $cni_name,
             br_mac_address    => $br_mac_address,
             vxlan_mac_address => $vxlan_mac_address,
+            vip_address       => $vip_address,
           }
         );
       }

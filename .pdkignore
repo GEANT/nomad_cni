@@ -1,3 +1,4 @@
+/.ruby-lsp/
 .git/
 .*.sw[op]
 .metadata
