@@ -24,5 +24,6 @@ ip link set dev br<%= $vxlan_id %> address <%= $br_mac_address %>
 # ip addr add <%= $vxlan_ip %>/<%= $vxlan_netmask %> dev br<%= $vxlan_id %> # we could use this one, but we have to delete the default route
 ip link set dev br<%= $vxlan_id %> up
 
-# add default route to Ingress VIP
+# delete and add default route to Ingress VIP
+[ -n "$(ip route list <%= $network %>)" ] && ip route del <%= $network %>
 ip route add <%= $network %> via <%= $vip_address %>
