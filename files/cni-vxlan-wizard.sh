@@ -2,21 +2,24 @@
 #
 # Configure VXLAN and Bridge interfaces
 #
+source /opt/cni/params.conf
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-base_dir='/opt/cni/vxlan'
 export PATH
 
-[ `id -u` -ne 0 ] && { echo "ERROR: This script must be run as root"; exit 1; }
+[ $(id -u) -ne 0 ] && {
+    echo "ERROR: This script must be run as root"
+    exit 1
+}
 
 usage() {
     echo "Usage: $(basename $0) [--force] [--purge] --status <up>/<down>/<check> --name <cni_name>"
     echo ""
     echo "    -h|--help    Print this help and exit"
-    echo "    -n|--name    [name/all] Configure the named CNI, or all if all/ALL is specified"
-    echo "    -s|--status  [up/down/check] Bring VXLAN and Bridge down"
-    echo "    -f|--force   Force IP configuration"
+    echo "    -n|--name    (name/all) Configure the named CNI, or all CNIs if all/ALL is specified"
+    echo "    -s|--status  (up/down/check) Bring VXLAN and Bridge down"
+    echo "    -f|--force   Force IP re-configuration"
     echo "    -p|--purge   Purge VXLANs and systemd service without a matching script"
-    echo "    -v|--vip     Run only on Keeplive MASTER node"
+    echo "    -v|--vip     Bring ifaces down on BACKUP Keeplived node"
     echo ""
     exit 3
 }
@@ -44,6 +47,7 @@ purge_stale_services() {
             systemctl disable cni-id@${srv}.service
             systemctl stop cni-id@${srv}.service
             rm -f /etc/systemd/system/cni-id@${srv}.service
+            systemctl daemon-reload
         fi
     done
 }
@@ -70,7 +74,7 @@ while true; do
         usage
         ;;
     -f | --force)
-        force="bofh"
+        force="BOFH"
         ;;
     -n | --name)
         shift
@@ -83,10 +87,10 @@ while true; do
         ((parameters++))
         ;;
     -p | --purge)
-        purge="bofh"
+        purge="BOFH"
         ;;
     -v | --vip)
-        purge="bofh"
+        purge="BOFH"
         ;;
     --)
         shift
@@ -96,15 +100,10 @@ while true; do
     shift
 done
 
-if [ -n "$vip" ]; then
-    if [ -f /etc/keepalived/keepalived.conf ]; then
-        # https://stackoverflow.com/a/55250202/3151187
-        vip=$(expr "$(cat /etc/keepalived/keepalived.conf)" : '.*\bvirtual_ipaddress\s*{\s*\(.*\)/*}')
-        vip=$(expr "$vip" : '\([^ ]*\)' | sed 's/\./\\\\./g')
-        if ! ip addr | grep -q "$vip"; then
-            # we are not the master. Let's revert status to down :)
-            status="down"
-        fi
+if [ -n "$vip" ] && [ -f /etc/keepalived/keepalived.conf ]; then
+    if ! ip addr | grep -q " ${vip_address}/${vip_netmask}"; then
+        # we are not the master. Let's revert status to down :)
+        status="down"
     fi
 fi
 
@@ -137,9 +136,9 @@ fi
 
 shopt -s nullglob
 if [ "$lower_name" == 'all' ]; then
-    scriptArray=($base_dir/*icast.d/*.sh)
+    confArray=($base_dir/*icast.d/*.conf)
 else
-    scriptArray=($base_dir/*icast.d/$name.sh)
+    confArray=($base_dir/*icast.d/$name.conf)
 fi
 
 exit_status=0
@@ -148,10 +147,11 @@ exit_status=0
 #
 # we parse the scripts and bring up/down or check the vxlan and the bridge
 #
-for script in ${scriptArray[*]}; do
-    vxlan_name=$(basename -s .sh $script)
-    source <(grep -E "^vxlan_[i|n].*=" $script) # set vxlan_id, vxlan_ip, vxlan_network and vxlan_netmask
-    source <(grep -E "^vip_address=" $script) # set vip_address
+for conf in ${confArray[*]}; do
+    vxlan_name=$(basename -s .conf $conf)
+    script=$(echo $conf | sed 's/\.conf$/.sh/')
+    [ -f $script ] &&
+        source $conf # set vxlan_id, vxlan_ip, vxlan_network and vxlan_netmask
     if [ "$lower_status" == "check" ]; then
         check_status $vxlan_id $vxlan_ip
         vxlan_status="$?"
@@ -184,7 +184,8 @@ for script in ${scriptArray[*]}; do
                 if [ $vxlan_status == "1" ]; then
                     # the interface is up but the IP is not reachable
                     $echo_cmd "VXLAN $vxlan_id - CNI $vxlan_name not reachable, bringing up vxlan IP $vxlan_ip"
-                    ip addr add $vxlan_ip/$vxlan_netmask dev br$vxlan_id noprefixroute &>/dev/null || true # bring IP up and ignore errors
+                    which nomad &>/dev/null && noprefixroute=noprefixroute                                  # this is a Nomad Agent and GW is remote
+                    ip addr add $vxlan_ip/$vxlan_netmask dev br$vxlan_id $noprefixroute &>/dev/null || true # bring IP up and ignore errors
                     [ -z "$(ip route list $vxlan_ip/$vxlan_netmask)" ] && ip route add $vxlan_ip/$vxlan_netmask via $vip_address
                     if ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
                         $echo_cmd "VXLAN $vxlan_id - CNI $vxlan_name still not working. Reloading vxlan"

@@ -1,10 +1,3 @@
-# variables source from the main script cni-vxlan-wizard.sh
-vxlan_id=<%= $vxlan_id %>
-vxlan_ip="<%= $vxlan_ip %>"
-vxlan_network="<%= $network %>"
-vxlan_netmask="<%= $vxlan_netmask %>"
-vip_address="<%= $vip_address %>"
-
 # delete vxlan and bridge interface if they exist
 ip address show dev vx<%= $vxlan_id %> &>/dev/null && ip link delete vx<%= $vxlan_id %>
 ip address show dev br<%= $vxlan_id %> &>/dev/null && ip link delete br<%= $vxlan_id %>
@@ -23,8 +16,10 @@ ip link set up dev vx<%= $vxlan_id %>
 brctl addbr br<%= $vxlan_id %>
 brctl addif br<%= $vxlan_id %> vx<%= $vxlan_id %>
 ip link set dev br<%= $vxlan_id %> address <%= $br_mac_address %>
-ip addr add <%= $vxlan_ip %>/<%= $vxlan_netmask %> dev br<%= $vxlan_id %> noprefixroute
+ip addr add <%= $vxlan_ip %>/<%= $vxlan_netmask %> dev br<%= $vxlan_id %><% unless ($is_keepalived) { %> noprefixroute<% } %>
 ip link set dev br<%= $vxlan_id %> up
 
+<% if ($is_keepalived) { %>
 # delete and add default route to Ingress VIP
 [ -z "$(ip route list <%= $network %>)" ] && ip route add <%= $network %> via <%= $vip_address %>
+<% } %>

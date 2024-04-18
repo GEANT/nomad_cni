@@ -176,8 +176,8 @@ define nomad_cni::vxlan::v4 (
   $agent_pretty_inventory.each |$agent| {
     concat::fragment { "vxlan_${vxlan_id}_${agent['name']}":
       target  => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
-      content => epp(
-        "${module_name}/unicast-bridge-fdb.sh.epp", {
+      content => epp("${module_name}/unicast-bridge-fdb.sh.epp",
+        {
           agent_mac  => $agent['mac'],
           agent_ip   => $agent['ip'],
           vxlan_id   => $vxlan_id,
@@ -200,86 +200,97 @@ define nomad_cni::vxlan::v4 (
     $vxlan_mac_address = nomad_cni::generate_mac("${cni_item[1]}${cni_item[4]}${facts['networking']['hostname']}")
     $gateway = nomad_cni::cni_ingress_v4($network)[1]
     if $cni_item[0] == $facts['networking']['hostname'] {
-      file { "${vxlan_dir}/unicast.d/${cni_name}.sh":
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0755',
-        require => File["${vxlan_dir}/unicast.d", "/opt/cni/config/${cni_name}.conflist"],
-        notify  => Service["cni-id@${cni_name}.service"],
-        content => epp(
-          "${module_name}/unicast-vxlan.sh.epp", {
-            agent_ip          => $facts['networking']['interfaces'][$iface]['ip'],
-            vxlan_id          => $vxlan_id,
-            vxlan_ip          => $cni_item[1],
-            iface             => $iface,
-            vxlan_netmask     => $cni_item[4],
-            nolearning        => $nolearning,
-            cni_name          => $cni_name,
-            br_mac_address    => $br_mac_address,
-            vxlan_mac_address => $vxlan_mac_address,
-            vip_address       => $vip_address,
-            network           => $network,
-          }
-        );
-      }
-      file { "/opt/cni/config/${cni_name}.conflist":
-        mode         => '0644',
-        validate_cmd => "/usr/local/bin/cni-validator.rb --cidr ${network} --conf-file /opt/cni/config/${cni_name}.conflist --tmp-file %",
-        require      => [
-          File['/opt/cni/config', '/usr/local/bin/cni-validator.rb', '/run/cni'],
-          Package['docopt']
-        ],
-        notify       => Service["cni-id@${cni_name}.service"],
-        content      => to_json_pretty(
-          {
-            cniVersion => $cni_proto_version,
-            name       => $cni_name,
-            plugins    => [
-              {
-                type => 'loopback'
-              },
-              {
-                type             => 'macvlan',
-                master           => "br${vxlan_id}",
-                isDefaultGateway => false,
-                forceAddress     => false,
-                ipMasq           => true,
-                ipam             => {
-                  type    => 'host-local',
-                  ranges  => [
-                    [
+      file {
+        default:
+          owner   => 'root',
+          group   => 'root',
+          notify  => Service["cni-id@${cni_name}.service"],
+          require => File["${vxlan_dir}/unicast.d", "/opt/cni/config/${cni_name}.conflist"];
+        "${vxlan_dir}/unicast.d/${cni_name}.conf":
+          mode    => '0644',
+          content => epp("${module_name}/unicast-vxlan.conf.epp",
+            {
+              vxlan_id          => $vxlan_id,
+              vxlan_ip          => $cni_item[1],
+              network           => $network,
+              vxlan_netmask     => $cni_item[4],
+            }
+          );
+        "${vxlan_dir}/unicast.d/${cni_name}.sh":
+          mode    => '0755',
+          content => epp("${module_name}/unicast-vxlan.sh.epp",
+            {
+              is_keepalived     => undef,
+              agent_ip          => $facts['networking']['interfaces'][$iface]['ip'],
+              vxlan_id          => $vxlan_id,
+              vxlan_ip          => $cni_item[1],
+              iface             => $iface,
+              vxlan_netmask     => $cni_item[4],
+              nolearning        => $nolearning,
+              cni_name          => $cni_name,
+              br_mac_address    => $br_mac_address,
+              vxlan_mac_address => $vxlan_mac_address,
+              vip_address       => $vip_address,
+              network           => $network,
+            }
+          );
+        "/opt/cni/config/${cni_name}.conflist":
+          mode         => '0644',
+          validate_cmd => "/usr/local/bin/cni-validator.rb --cidr ${network} --conf-file /opt/cni/config/${cni_name}.conflist --tmp-file %",
+          require      => [
+            File['/opt/cni/config', '/usr/local/bin/cni-validator.rb', '/run/cni'],
+            Package['docopt']
+          ],
+          content      => to_json_pretty(
+            {
+              cniVersion => $cni_proto_version,
+              name       => $cni_name,
+              plugins    => [
+                {
+                  type => 'loopback'
+                },
+                {
+                  type             => 'macvlan',
+                  master           => "br${vxlan_id}",
+                  isDefaultGateway => false,
+                  forceAddress     => false,
+                  ipMasq           => true,
+                  ipam             => {
+                    type    => 'host-local',
+                    ranges  => [
+                      [
+                        {
+                          subnet     => $network,
+                          rangeStart => $cni_item[2],
+                          rangeEnd   => $cni_item[3],
+                          gateway    => $gateway
+                        },
+                      ]
+                    ],
+                    routes  => [
                       {
-                        subnet     => $network,
-                        rangeStart => $cni_item[2],
-                        rangeEnd   => $cni_item[3],
-                        gateway    => $gateway
+                        dst => '0.0.0.0/0',
+                        gw  => $gateway
                       },
-                    ]
-                  ],
-                  routes  => [
-                    {
-                      dst => '0.0.0.0/0',
-                      gw  => $gateway
-                    },
-                  ],
-                  dataDir => '/run/cni/ipam-state',
+                    ],
+                    dataDir => '/run/cni/ipam-state',
+                  },
                 },
-              },
-              {
-                type                   => 'firewall',
-                backend                => 'iptables',
-                iptablesAdminChainName => 'NOMAD-ADMIN'
-              },
-              {
-                type         => 'portmap',
-                capabilities => {
-                  portMappings => true,
+                {
+                  type                   => 'firewall',
+                  backend                => 'iptables',
+                  iptablesAdminChainName => 'NOMAD-ADMIN'
                 },
-                snat         => true
-              },
-            ],
-          }
-        ),
+                {
+                  type         => 'portmap',
+                  capabilities => {
+                    portMappings => true,
+                  },
+                  snat         => true
+                },
+              ],
+            }
+          );
       }
     }
   }

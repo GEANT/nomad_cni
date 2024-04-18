@@ -4,6 +4,9 @@
 #
 # == Parameters
 #
+# [*ingress_vip*]
+#   Array of proxy vip
+#
 # [*keep_vxlan_up_timer_interval*] Integer
 # interval in minutes to run systemdd timer job to keep VXLANs up
 #
@@ -11,11 +14,16 @@
 # timer unit for the time interval: default minutes
 #
 class nomad_cni::ingress::config (
+  Array $ingress_vip,
   Integer $keep_vxlan_up_timer_interval,
   Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'] $keep_vxlan_up_timer_unit
 ) {
   # this is a private class
   assert_private()
+
+  $ipv4_only_vip = $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V6::CIDR }
+  $ipv4_only_vip_address = $ipv4_only_vip.split('/')[0]
+  $ipv4_only_vip_netmask = $ipv4_only_vip.split('/')[1]
 
   unless defined(Package['bridge-utils']) { package { 'bridge-utils': ensure => present } }
 
@@ -35,6 +43,14 @@ class nomad_cni::ingress::config (
       force   => true;
     '/usr/local/bin/cni-vxlan-wizard.sh':
       source => "puppet:///modules/${module_name}/cni-vxlan-wizard.sh";
+    '/opt/cni/params.conf':
+      mode    => '0644',
+      content => epp("${module_name}/params.conf.epp",
+        {
+          ipv4_only_vip_address => $ipv4_only_vip_address,
+          ipv4_only_vip_netmask => $ipv4_only_vip_netmask,
+        }
+      );
   }
 
   # == purge unused VXLANs (triggered by directory changes)
@@ -61,8 +77,8 @@ class nomad_cni::ingress::config (
       timer_source   => "puppet:///modules/${module_name}/cni-purge.timer";
     'cni-up.timer':  # ensure that the VXLANs are up and running
       service_content => epp("${module_name}/cni-up.service.epp", { ingress => 'bofh' }),
-      timer_content   => epp(
-        "${module_name}/cni-up.timer.epp", {
+      timer_content   => epp("${module_name}/cni-up.timer.epp",
+        {
           keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
           keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
         }

@@ -70,6 +70,11 @@ class nomad_cni::ingress (
 ) {
   if 'ip6tables' in $firewall_provider {
     fail('ip6tables is not supported at the moment')
+  } elsif ($facts['is_nomad_cni_agent']) {
+    notify { 'Nomad CNI Ingress':
+      message => 'Ingress server and Nomad Agents must be configured on different servers',
+    }
+    fail('Please uninstall Nomad from the Ingress server')
   }
 
   # == set the variables
@@ -155,6 +160,7 @@ class nomad_cni::ingress (
   class { 'nomad_cni::ingress::config':
     keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
     keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
+    ingress_vip                  => $vip_address,
   }
   class { 'nomad_cni::ingress::keepalived':
     ingress_inventory => $ingress_pretty_inventory,

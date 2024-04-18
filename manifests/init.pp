@@ -33,7 +33,17 @@
 # [*cni_cut_off*] Boolean
 # Segregate vxlans with iptables
 #
+# [*vip_address*] Array
+#   the IPv4 and or Ipv6 address of the VIP. It can be one of the following:
+#   - an array with an IPv4 CIDR and an IPv6 and CIDR
+#   - an array with an IPv4 CIDR
+#   CIDR means a subnet mask should be provided
+#
 class nomad_cni (
+  Variant[
+    Array[Stdlib::IP::Address::V4::CIDR, 1],
+    Array[Variant[Stdlib::IP::Address::V4::CIDR, Stdlib::IP::Address::V6::CIDR], 2]
+  ] $vip_address,
   String $cni_version = '1.2.0',
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
   Integer $keep_vxlan_up_timer_interval                    = 1,
@@ -62,6 +72,7 @@ class nomad_cni (
     cni_base_url                 => $cni_base_url,
     keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
     keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
+    vip_address                  => $vip_address,
   }
 
   # == create custom fact directory and avoid conflicts with other modules

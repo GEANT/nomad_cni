@@ -4,6 +4,9 @@
 #
 # == Parameters
 #
+# [*ingress_vip*]
+#   Array of proxy vip
+#
 # [*cni_version*] String
 # version of CNI to install
 #
@@ -17,6 +20,7 @@
 # timer unit for the time interval: default minutes
 #
 class nomad_cni::config (
+  Array $ingress_vip,
   String $cni_version,
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url,
   Integer $keep_vxlan_up_timer_interval,
@@ -26,6 +30,9 @@ class nomad_cni::config (
   #
   assert_private()
 
+  $ipv4_only_vip = $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V6::CIDR }
+  $ipv4_only_vip_address = $ipv4_only_vip.split('/')[0]
+  $ipv4_only_vip_netmask = $ipv4_only_vip.split('/')[1]
   $cni_directories = [
     '/opt/cni/config', '/opt/cni/vxlan',
     '/opt/cni/vxlan/unicast-bridge-fdb.d',
@@ -52,8 +59,14 @@ class nomad_cni::config (
       source => "puppet:///modules/${module_name}/cni-validator.rb";
     '/usr/local/bin/cni-vxlan-wizard.sh':
       source => "puppet:///modules/${module_name}/cni-vxlan-wizard.sh";
-    '/usr/local/bin/vxlan-wizard.sh':
-      ensure => absent;
+    '/opt/cni/params.conf':
+      mode    => '0644',
+      content => epp("${module_name}/params.conf.epp",
+        {
+          ipv4_only_vip_address => $ipv4_only_vip_address,
+          ipv4_only_vip_netmask => $ipv4_only_vip_netmask,
+        }
+      );
   }
 
   # == define Nomad service reload

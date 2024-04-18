@@ -7,7 +7,7 @@
 #   Array of Hashes containing hosts and ips
 #
 # [*ingress_vip*]
-#   Hash of proxy vip
+#   Array of proxy vip
 #
 # [*interface*]
 #   interface to bind to
