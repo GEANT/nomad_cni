@@ -26,8 +26,6 @@ class nomad_cni::config (
   Integer $keep_vxlan_up_timer_interval,
   Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'] $keep_vxlan_up_timer_unit
 ) {
-  # == this is a private class
-  #
   assert_private()
 
   $ipv4_only_vip_cidr = $ingress_vip ? {

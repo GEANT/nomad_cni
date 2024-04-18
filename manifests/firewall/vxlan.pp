@@ -17,8 +17,6 @@ class nomad_cni::firewall::vxlan (
   Array[Enum['iptables', 'ip6tables']] $provider,
   String $interface,
 ) {
-  # == this is a private class
-  #
   assert_private()
 
   $provider.each |$iptables_provider| {
