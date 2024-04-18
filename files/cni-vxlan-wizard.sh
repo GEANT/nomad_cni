@@ -6,6 +6,12 @@ source /opt/cni/params.conf
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
 
+if [ -n "$STARTED_BY_SYSTEMD" ] || [ -z "$STARTED_BY_CRON" ]; then
+    echo_cmd='echo'
+else
+    echo_cmd='logger -t CNI-VXLAN-wizard'
+fi
+
 [ $(id -u) -ne 0 ] && {
     echo "ERROR: This script must be run as root"
     exit 1
@@ -18,7 +24,7 @@ usage() {
     echo "    -n|--name    (name/all) Configure the named CNI, or all CNIs if all/ALL is specified"
     echo "    -s|--status  (up/down/check) Bring VXLAN and Bridge down"
     echo "    -f|--force   Force IP re-configuration"
-    echo "    -p|--purge   Purge VXLANs and systemd service without a matching script"
+    echo "    -p|--purge   Purge VXLANs and systemd services without a matching script"
     echo "    -v|--vip     Bring interfaces down on BACKUP Keepalived node"
     echo ""
     exit 3
@@ -26,8 +32,13 @@ usage() {
 
 ifaces_down() {
     vxlan_id=$1
-    ip link delete br$vxlan_id || true
-    ip link delete vx$vxlan_id || true
+    for iface in br vx; do
+        if ip link show $iface$vxlan_id &>/dev/null; then
+            ip link delete $iface$vxlan_id || true
+        else
+            $echo_cmd "Interface $iface$vxlan_id does not exist"
+        fi
+    done
 }
 
 purge_stale_ifaces() {
@@ -126,12 +137,6 @@ lower_name=$(echo $name | tr '[:upper:]' '[:lower:]')
 if [ "$lower_status" != "up" ] && [ "$lower_status" != "down" ] && [ "$lower_status" != "check" ]; then
     echo -e "ERROR: You must use --status up or --status down\n"
     usage
-fi
-
-if [ -n "$STARTED_BY_SYSTEMD" ] || [ -z "$STARTED_BY_CRON" ]; then
-    echo_cmd='echo'
-else
-    echo_cmd='logger -t CNI-VXLAN-wizard'
 fi
 
 shopt -s nullglob
