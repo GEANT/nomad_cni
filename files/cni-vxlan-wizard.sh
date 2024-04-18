@@ -156,8 +156,7 @@ exit_status=0
 for conf in ${confArray[*]}; do
     vxlan_name=$(basename -s .conf $conf)
     script=$(echo $conf | sed 's/\.conf$/.sh/')
-    [ -f $script ] &&
-        source $conf # set vxlan_id, vxlan_ip, vxlan_network and vxlan_netmask
+    source $conf
     if [ "$lower_status" == "check" ]; then
         check_status $vxlan_id $vxlan_ip
         vxlan_status="$?"
