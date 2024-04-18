@@ -19,7 +19,7 @@ usage() {
     echo "    -s|--status  (up/down/check) Bring VXLAN and Bridge down"
     echo "    -f|--force   Force IP re-configuration"
     echo "    -p|--purge   Purge VXLANs and systemd service without a matching script"
-    echo "    -v|--vip     Bring ifaces down on BACKUP Keeplived node"
+    echo "    -v|--vip     Bring interfaces down on BACKUP Keepalived node"
     echo ""
     exit 3
 }
@@ -65,7 +65,7 @@ check_status() {
 }
 
 parameters=0
-opts=$(getopt -o "h,n:,s:,f,p" --longoptions "help,name:,status:,force,purge" -- "$@")
+opts=$(getopt -o "h,n:,s:,f,p,v" --longoptions "help,name:,status:,force,purge,vip" -- "$@")
 eval set -- "$opts"
 
 while true; do
@@ -90,7 +90,7 @@ while true; do
         purge="BOFH"
         ;;
     -v | --vip)
-        purge="BOFH"
+        vip="BOFH"
         ;;
     --)
         shift
