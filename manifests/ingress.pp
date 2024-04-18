@@ -71,9 +71,6 @@ class nomad_cni::ingress (
   if 'ip6tables' in $firewall_provider {
     fail('ip6tables is not supported at the moment')
   } elsif ($facts['is_nomad_cni_agent']) {
-    notify { 'Nomad CNI Ingress':
-      message => 'Ingress server and Nomad Agents must be configured on different servers',
-    }
     fail('Please uninstall Nomad from the Ingress server')
   }
 
