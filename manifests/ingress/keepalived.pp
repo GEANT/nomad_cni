@@ -39,7 +39,7 @@ class nomad_cni::ingress::keepalived (
   }
 
   if empty($ipv6_only_vip_cidr) {
-    $virtual_ipaddress_excluded = []
+    $virtual_ipaddress_excluded = undef
   } else {
     $virtual_ipaddress_excluded = $ipv6_only_vip_cidr.map |$item| { "${item} preferred_lft 0" }
   }
