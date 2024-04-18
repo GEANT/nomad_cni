@@ -85,7 +85,7 @@ while true; do
         usage
         ;;
     -f | --force)
-        force="BOFH"
+        force="bofh"
         ;;
     -n | --name)
         shift
@@ -98,10 +98,10 @@ while true; do
         ((parameters++))
         ;;
     -p | --purge)
-        purge="BOFH"
+        purge="bofh"
         ;;
     -v | --vip)
-        vip="BOFH"
+        vip="bofh"
         ;;
     --)
         shift
@@ -115,6 +115,7 @@ if [ -n "$vip" ] && [ -f /etc/keepalived/keepalived.conf ]; then
     if ! ip addr | grep -q " ${vip_address}/${vip_netmask}"; then
         # we are not the master. Let's revert status to down :)
         status="down"
+        force="bofh"
     fi
 fi
 
