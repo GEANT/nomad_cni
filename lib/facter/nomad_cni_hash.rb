@@ -13,10 +13,9 @@ Facter.add(:nomad_cni_hash) do
   confine kernel: 'Linux'
   setcode do
     cni_hash = {}
-    cni_scripts = Dir.glob('/opt/cni/vxlan/unicast.d/*.sh')
-    cni_scripts.reject! { |cni| cni.end_with?('-bridge-fdb.sh') }
+    cni_scripts = Dir.glob('/opt/cni/vxlan/unicast.d/*.conf')
     cni_scripts.each do |cni_script|
-      cni_name = File.basename(cni_script, '.sh')
+      cni_name = File.basename(cni_script, '.conf')
       vxlan_network = File.read(cni_script).match(%r{^vxlan_network="(.*)"})[1]
       vxlan_id = File.read(cni_script).match(%r{^vxlan_id=(\d+)})[1]
       cni_hash.merge!({
