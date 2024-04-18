@@ -1,3 +1,4 @@
-vip_address=<%= $ipv4_only_vip_address %>
-vip_netmask=<%= $ipv4_only_vip_netmask %>
+# This file is managed by Puppet and it is sourced by cni-vxlan-wizard.sh
+vip_address='<%= $ipv4_only_vip_address %>'
+vip_netmask='<%= $ipv4_only_vip_netmask %>'
 base_dir='/opt/cni/vxlan'

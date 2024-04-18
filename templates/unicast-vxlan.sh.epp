@@ -19,7 +19,7 @@ ip link set dev br<%= $vxlan_id %> address <%= $br_mac_address %>
 ip addr add <%= $vxlan_ip %>/<%= $vxlan_netmask %> dev br<%= $vxlan_id %><% unless ($is_keepalived) { %> noprefixroute<% } %>
 ip link set dev br<%= $vxlan_id %> up
 
-<% if ($is_keepalived) { %>
-# delete and add default route to Ingress VIP
-[ -z "$(ip route list <%= $network %>)" ] && ip route add <%= $network %> via <%= $vip_address %>
-<% } %>
+<% unless ($is_keepalived) { -%>
+# add route to Ingress VIP if it does not exist
+[ -z "$(ip route list <%= $network %> | grep -w <%= $network %>)" ] && ip route add <%= $network %> via <%= $vip_address %>
+<% } -%>

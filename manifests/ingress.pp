@@ -47,7 +47,7 @@
 #
 class nomad_cni::ingress (
   Variant[
-    Array[Stdlib::IP::Address::V4::CIDR, 1],
+    Stdlib::IP::Address::V4::CIDR,
     Array[Variant[Stdlib::IP::Address::V4::CIDR, Stdlib::IP::Address::V6::CIDR], 2]
   ] $vip_address,
   Integer $keep_vxlan_up_timer_interval                   = 1,

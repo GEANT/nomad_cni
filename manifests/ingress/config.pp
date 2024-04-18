@@ -14,16 +14,19 @@
 # timer unit for the time interval: default minutes
 #
 class nomad_cni::ingress::config (
-  Array $ingress_vip,
+  Variant[String, Array] $ingress_vip,
   Integer $keep_vxlan_up_timer_interval,
   Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'] $keep_vxlan_up_timer_unit
 ) {
   # this is a private class
   assert_private()
 
-  $ipv4_only_vip = $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V6::CIDR }
-  $ipv4_only_vip_address = $ipv4_only_vip.split('/')[0]
-  $ipv4_only_vip_netmask = $ipv4_only_vip.split('/')[1]
+  $ipv4_only_vip_cidr = $ingress_vip ? {
+    String => $ingress_vip,
+    default => $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V6::CIDR }[0]
+  }
+  $ipv4_only_vip_address = $ipv4_only_vip_cidr.split('/')[0]
+  $ipv4_only_vip_netmask = $ipv4_only_vip_cidr.split('/')[1]
 
   unless defined(Package['bridge-utils']) { package { 'bridge-utils': ensure => present } }
 

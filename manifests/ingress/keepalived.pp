@@ -14,7 +14,7 @@
 #
 class nomad_cni::ingress::keepalived (
   Array[Hash] $ingress_inventory,
-  Array $ingress_vip,
+  Variant[String, Array] $ingress_vip,
   String $interface,
 ) {
   assert_private()
@@ -23,19 +23,25 @@ class nomad_cni::ingress::keepalived (
   $auth_pass = seeded_rand_string(8, "${module_name}${facts['agent_specified_environment']}")
 
   # we remove IPv6 to get IPv4 only and vice versa
-  $ipv4_only_vip = $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V6::CIDR }
-  $ipv6_only_vip = $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V4::CIDR }
+  $ipv4_only_vip_cidr = $ingress_vip ? {
+    String => $ingress_vip,
+    default => $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V6::CIDR }
+  }
+  $ipv6_only_vip_cidr = $ingress_vip ? {
+    String => [],
+    default => $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V4::CIDR }
+  }
 
-  if size($ipv4_only_vip) ==  0 {
+  if empty($ipv4_only_vip_cidr) {
     fail('You cannot use IPv6 twice for the VIP address array')
-  } elsif size($ipv4_only_vip) == 2 {
+  } elsif size($ipv4_only_vip_cidr) == 2 {
     fail('You cannot use IPv4 twice for the VIP address array')
   }
 
-  if empty($ipv6_only_vip) {
+  if empty($ipv6_only_vip_cidr) {
     $virtual_ipaddress_excluded = []
   } else {
-    $virtual_ipaddress_excluded = $ipv6_only_vip.map |$item| { "${item} preferred_lft 0" }
+    $virtual_ipaddress_excluded = $ipv6_only_vip_cidr.map |$item| { "${item} preferred_lft 0" }
   }
 
   # we sort the hostnames, and if the current hostname is the first one, we are the master
@@ -72,7 +78,7 @@ class nomad_cni::ingress::keepalived (
     priority                   => $priority,
     auth_type                  => 'PASS',
     auth_pass                  => $auth_pass,
-    virtual_ipaddress          => $ipv4_only_vip,
+    virtual_ipaddress          => $ipv4_only_vip_cidr,
     virtual_ipaddress_excluded => $virtual_ipaddress_excluded,
     notify_script_master       => '/usr/local/bin/cni-vxlan-wizard.sh --name all --status up --force',
     notify_script_backup       => '/usr/local/bin/cni-vxlan-wizard.sh --name all --status down --force',

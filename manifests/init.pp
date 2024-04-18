@@ -41,7 +41,7 @@
 #
 class nomad_cni (
   Variant[
-    Array[Stdlib::IP::Address::V4::CIDR, 1],
+    Stdlib::IP::Address::V4::CIDR,
     Array[Variant[Stdlib::IP::Address::V4::CIDR, Stdlib::IP::Address::V6::CIDR], 2]
   ] $vip_address,
   String $cni_version = '1.2.0',
@@ -72,7 +72,7 @@ class nomad_cni (
     cni_base_url                 => $cni_base_url,
     keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
     keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
-    vip_address                  => $vip_address,
+    ingress_vip                  => $vip_address,
   }
 
   # == create custom fact directory and avoid conflicts with other modules

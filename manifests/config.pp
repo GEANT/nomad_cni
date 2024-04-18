@@ -20,7 +20,7 @@
 # timer unit for the time interval: default minutes
 #
 class nomad_cni::config (
-  Array $ingress_vip,
+  Variant[String, Array] $ingress_vip,
   String $cni_version,
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url,
   Integer $keep_vxlan_up_timer_interval,
@@ -30,9 +30,12 @@ class nomad_cni::config (
   #
   assert_private()
 
-  $ipv4_only_vip = $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V6::CIDR }
-  $ipv4_only_vip_address = $ipv4_only_vip.split('/')[0]
-  $ipv4_only_vip_netmask = $ipv4_only_vip.split('/')[1]
+  $ipv4_only_vip_cidr = $ingress_vip ? {
+    String => $ingress_vip,
+    default => $ingress_vip.filter |$item| { $item !~ Stdlib::IP::Address::V6::CIDR }[0]
+  }
+  $ipv4_only_vip_address = $ipv4_only_vip_cidr.split('/')[0]
+  $ipv4_only_vip_netmask = $ipv4_only_vip_cidr.split('/')[1]
   $cni_directories = [
     '/opt/cni/config', '/opt/cni/vxlan',
     '/opt/cni/vxlan/unicast-bridge-fdb.d',
