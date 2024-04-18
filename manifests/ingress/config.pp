@@ -88,10 +88,14 @@ class nomad_cni::ingress::config (
       );
   }
 
-  service { 'cni-purge.timer':
-    ensure    => running,
-    subscribe => Systemd::Timer['cni-purge.timer'],
-    enable    => true;
+  service {
+    default:
+      ensure => running,
+      enable => true;
+    'cni-purge.timer':
+      subscribe => Systemd::Timer['cni-purge.timer'];
+    'cni-up.timer':
+      subscribe => Systemd::Timer['cni-up.timer'];
   }
 }
 # vim: set ts=2 sw=2 et :
