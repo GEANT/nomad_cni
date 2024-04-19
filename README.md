@@ -242,5 +242,5 @@ service {
 
 * only IPv4 is currently supported
 * changelog not yet handled
-* temporarily suspended the spec test. Only the linting check is running
+* spec test has limitations, due to reliance on PuppetDB
 * feel free to test it on RedHat, to contribute and raise issues
