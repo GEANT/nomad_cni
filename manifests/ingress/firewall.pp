@@ -18,10 +18,12 @@ class nomad_cni::ingress::firewall (
       proto  => 'all',
       chain  => 'FORWARD',
       action => 'accept';
-    "200 allow forward on iniface ${interface}":
-      iniface  => $interface;
-    "200 allow forward on outiface ${interface}":
-      outiface  => $interface;
+    "200 allow forward on VXLAN iniface ${interface}":
+      iniface  => 'vx+',
+      outiface => $interface;
+    "200 allow forward on Bridge iniface ${interface}":
+      iniface  => 'br+',
+      outiface => $interface;
     "200 Allow VRRP inbound from ${peer_ip}":
       proto  => ['vrrp', 'igmp'],
       chain  => 'INPUT',
