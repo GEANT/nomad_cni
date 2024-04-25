@@ -18,10 +18,10 @@ class nomad_cni::ingress::firewall (
       proto  => 'all',
       chain  => 'FORWARD',
       action => 'accept';
-    "200 allow forward on Bridge iniface ${interface}":
+    "200 allow forward from Bridge to host network ${interface}":
       iniface  => 'br+',
       outiface => $interface;
-    "200 allow forward on Bridge iniface ${interface}":
+    "200 allow forward from host network ${interface} to Bridge":
       outiface => 'br+',
       iniface  => $interface;
       #source   => 'ipset nomade-nodes';
