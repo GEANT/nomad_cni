@@ -9,10 +9,25 @@
 # [*interface*]
 #   the network interface to apply the firewall rules to.
 #
+# [*agent_ips*]
+#   the IP addresses of the Nomad agents.
+#
 class nomad_cni::ingress::firewall (
   Stdlib::Ip::Address::Nosubnet $peer_ip,
   String $interface,
+  Array[Stdlib::Ip::Address::Nosubnet] $agent_ips,
 ) {
+  $agent_ips.each |$agent_ip| {
+    if $agent_ip =~ Stdlib::IP::Address::V6 { $provider = 'ip6tables' } else { $provider = 'iptables' }
+    firewall { "200 allow forward through host network ${interface} from Nomad agent ${agent_ip}":
+      proto    => 'all',
+      chain    => 'FORWARD',
+      action   => 'accept',
+      provider => $provider,
+      outiface => 'br+',
+      source   => $agent_ip;
+    }
+  }
   firewall {
     default:
       proto  => 'all',
@@ -21,19 +36,9 @@ class nomad_cni::ingress::firewall (
     "200 allow forward from Bridge to host network ${interface}":
       iniface  => 'br+',
       outiface => $interface;
-    "200 allow forward from host network ${interface} to Bridge":
-      outiface => 'br+',
-      iniface  => $interface;
-      #source   => 'ipset nomade-nodes';
     '200 allow forward on Bridge':
       iniface  => 'br+',
       outiface => 'br+';
-    #'200 allow forward from Bridge to VXLAN':
-    #  iniface  => 'br+',
-    #  outiface => 'vx+';
-    #'200 allow forward from VXLAN to Bridge':
-    #  iniface  => 'vx+',
-    #  outiface => 'br+';
     "200 Allow VRRP inbound from ${peer_ip}":
       proto  => ['vrrp', 'igmp'],
       chain  => 'INPUT',

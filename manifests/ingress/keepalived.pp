@@ -6,6 +6,9 @@
 # [*ingress_inventory*]
 #   Array of Hashes containing hosts and ips
 #
+# [*agent_inventory*]
+#   Array of Hashes containing hosts and ips
+#
 # [*ingress_vip*]
 #   Array of proxy vip
 #
@@ -14,6 +17,7 @@
 #
 class nomad_cni::ingress::keepalived (
   Array[Hash] $ingress_inventory,
+  Array[Hash] $agent_inventory,
   Variant[String, Array] $ingress_vip,
   String $interface,
 ) {
@@ -62,6 +66,7 @@ class nomad_cni::ingress::keepalived (
   class { 'nomad_cni::ingress::firewall':
     peer_ip   => $peer_ip,
     interface => $interface,
+    agent_ips => $agent_inventory.map |$item| { $item['ip'] },
   }
 
   class { 'keepalived':

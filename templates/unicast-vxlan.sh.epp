@@ -21,5 +21,5 @@ ip link set dev br<%= $vxlan_id %> up
 
 <% unless ($is_keepalived) { -%>
 # add route to Ingress VIP if it does not exist
-#[ -z "$(ip route list <%= $network %> | grep -w <%= $network %>)" ] && ip route add <%= $network %> via <%= $vip_address %>
+[ -z "$(ip route list <%= $network %> | grep -w <%= $network %>)" ] && ip route add <%= $network %> via <%= $vip_address %>
 <% } -%>

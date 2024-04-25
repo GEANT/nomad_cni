@@ -161,6 +161,7 @@ class nomad_cni::ingress (
   }
   class { 'nomad_cni::ingress::keepalived':
     ingress_inventory => $ingress_pretty_inventory,
+    agent_inventory   => $agent_pretty_inventory,
     ingress_vip       => $vip_address,
     interface         => $interface,
   }
