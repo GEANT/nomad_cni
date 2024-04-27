@@ -143,7 +143,7 @@ define nomad_cni::vxlan::v4 (
   }
 
   # allow traffic from the CNI network to the host
-  nomad_cni::vxlan::firewall { "br${vxlan_id}": }
+  # nomad_cni::vxlan::firewall { "br${vxlan_id}": }
 
   # create the CNI systemd service
   service { "cni-id@${cni_name}.service":
