@@ -45,6 +45,9 @@
 #   - an array with an IPv4 CIDR
 #   CIDR means a subnet mask should be provided
 #
+# [*install_dependencies*] Boolean
+#   whether to install the dependencies or not: 'bridge-utils', 'ethtool', 'fping'
+#
 class nomad_cni::ingress (
   Variant[
     Stdlib::IP::Address::V4::CIDR,
@@ -67,6 +70,7 @@ class nomad_cni::ingress (
   Optional[String] $ingress_regex                         = undef,
   Array $agent_list                                       = [],
   Array $ingress_list                                     = [],
+  Boolean $install_dependencies                           = true,
 ) {
   if 'ip6tables' in $firewall_provider {
     fail('ip6tables is not supported at the moment')
@@ -158,6 +162,7 @@ class nomad_cni::ingress (
     keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
     keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
     ingress_vip                  => $vip_address,
+    install_dependencies         => $install_dependencies,
   }
   class { 'nomad_cni::ingress::keepalived':
     ingress_inventory => $ingress_pretty_inventory,

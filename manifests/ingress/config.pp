@@ -13,10 +13,14 @@
 # [*keep_vxlan_up_timer_unit*] Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
 # timer unit for the time interval: default minutes
 #
+# [*install_dependencies*] Boolean
+#   whether to install the dependencies or not: 'bridge-utils', 'ethtool', 'fping'
+#
 class nomad_cni::ingress::config (
   Variant[String, Array] $ingress_vip,
   Integer $keep_vxlan_up_timer_interval,
-  Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'] $keep_vxlan_up_timer_unit
+  Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'] $keep_vxlan_up_timer_unit,
+  Boolean $install_dependencies,
 ) {
   assert_private()
 
@@ -27,7 +31,20 @@ class nomad_cni::ingress::config (
   $ipv4_only_vip_address = $ipv4_only_vip_cidr.split('/')[0]
   $ipv4_only_vip_netmask = $ipv4_only_vip_cidr.split('/')[1]
 
-  unless defined(Package['bridge-utils']) { package { 'bridge-utils': ensure => present } }
+  # == install dependencies
+  #
+  if $install_dependencies {
+    $pkgs = ['bridge-utils', 'ethtool', 'fping']
+    $pkgs.each |$pkg| {
+      unless defined(Package[$pkg]) { package { $pkg: ensure => present } }
+    }
+    unless defined(Package['docopt']) {
+      package { 'docopt':
+        ensure   => present,
+        provider => 'gem',
+      }
+    }
+  }
 
   # == create necessary files
   #
@@ -64,8 +81,6 @@ class nomad_cni::ingress::config (
     refreshonly => true,
     subscribe   => File['/opt/cni/vxlan/unicast.d'];
   }
-
-  unless defined(Package['fping']) { package { 'fping': ensure => present } }
 
   # == create systemd unit file
   #

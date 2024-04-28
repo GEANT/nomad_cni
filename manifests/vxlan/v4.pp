@@ -52,8 +52,6 @@ define nomad_cni::vxlan::v4 (
   Boolean $nolearning             = false,  # please read the docs carefully before enabling this option
   Optional[Integer] $min_networks = undef,
 ) {
-  # == ensure that nomad_cni class was included and that the name is not reserved
-  #
   unless defined(Class['nomad_cni']) {
     fail('nomad_cni::vxlan::v4 requires nomad_cni')
   }

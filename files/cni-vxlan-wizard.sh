@@ -66,10 +66,16 @@ purge_stale_services() {
 check_status() {
     vxlan_id=$1
     vxlan_ip=$2
-    if ip address show dev br$vxlan_id &>/dev/null && ip address show dev vx$vxlan_id &>/dev/null && fping -c1 -t500 $vxlan_ip &>/dev/null; then
-        return 0
-    elif ip address show dev br$vxlan_id &>/dev/null && ip address show dev vx$vxlan_id &>/dev/null && ! fping -c1 -t500 $vxlan_ip &>/dev/null; then
-        return 1
+    vx_file="/sys/class/net/vx$vxlan_id/operstate"
+    br_file="/sys/class/net/br$vxlan_id/operstate"
+    str_match="Link detected: yes"
+    if ethtool vx$vxlan_id 2>/dev/null | grep -q "$str_match" && ethtool br$vxlan_id 2>/dev/null | grep -q "$str_match"; then
+    if grep -qw unknown $vx_file 2>/dev/null && grep -qw up $br_file 2>/dev/null; then
+        if fping -c1 -t500 $vxlan_ip &>/dev/null; then
+            return 0
+        else
+            return 1
+        fi
     else
         return 2
     fi
