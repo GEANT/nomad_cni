@@ -30,7 +30,7 @@ describe 'nomad_cni' do
     it {
       is_expected.to contain_class('nomad_cni').with(manage_firewall_vxlan: true, cni_cut_off: true, vip_address: '192.168.100.10/24')
       is_expected.to contain_class('nomad_cni::config').with(
-        cni_version: '1.2.0',
+        cni_version: '1.4.1',
         cni_base_url: 'https://github.com/containernetworking/plugins/releases/download',
         keep_vxlan_up_timer_interval: 1,
         keep_vxlan_up_timer_unit: 'minutes',
@@ -87,7 +87,7 @@ describe 'nomad_cni' do
     it {
       is_expected.to contain_class('nomad_cni').with(manage_firewall_vxlan: true, cni_cut_off: true, vip_address: '192.168.100.10/24')
       is_expected.to contain_class('nomad_cni::config').with(
-        cni_version: '1.2.0',
+        cni_version: '1.4.1',
         cni_base_url: 'https://github.com/containernetworking/plugins/releases/download',
         keep_vxlan_up_timer_interval: 1,
         keep_vxlan_up_timer_unit: 'minutes',
@@ -144,7 +144,7 @@ describe 'nomad_cni' do
     it {
       is_expected.to contain_class('nomad_cni').with(manage_firewall_vxlan: true, cni_cut_off: true, vip_address: '192.168.100.10/24')
       is_expected.to contain_class('nomad_cni::config').with(
-        cni_version: '1.2.0',
+        cni_version: '1.4.1',
         cni_base_url: 'https://github.com/containernetworking/plugins/releases/download',
         keep_vxlan_up_timer_interval: 1,
         keep_vxlan_up_timer_unit: 'minutes',

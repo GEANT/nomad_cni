@@ -19,12 +19,16 @@
 # [*keep_vxlan_up_timer_unit*] Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
 # timer unit for the time interval: default minutes
 #
+# [*install_dependencies*] Boolean
+#   whether to install the dependencies or not: 'bridge-utils', 'ethtool', 'fping'
+#
 class nomad_cni::config (
   Variant[String, Array] $ingress_vip,
   String $cni_version,
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url,
   Integer $keep_vxlan_up_timer_interval,
-  Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'] $keep_vxlan_up_timer_unit
+  Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'] $keep_vxlan_up_timer_unit,
+  Boolean $install_dependencies,
 ) {
   assert_private()
 
@@ -88,22 +92,32 @@ class nomad_cni::config (
     subscribe   => File['/opt/cni/vxlan/unicast.d'];
   }
 
-  # == install docopt gem and fping package
+  # == install dependencies
   #
-  unless defined(Package['docopt']) {
-    package { 'docopt':
-      ensure   => present,
-      provider => 'gem',
+  if $install_dependencies {
+    $pkgs = ['bridge-utils', 'ethtool', 'fping']
+    $pkgs.each |$pkg| {
+      unless defined(Package[$pkg]) { package { $pkg: ensure => present } }
+    }
+    unless defined(Package['docopt']) {
+      package { 'docopt':
+        ensure   => present,
+        provider => 'gem',
+      }
     }
   }
-  unless defined(Package['fping']) { package { 'fping': ensure => present } }
 
   # == install CNI plugins
   #
-  exec { 'remove_old_cni':
-    command => 'rm -f /opt/cni/bin/*',
-    unless  => "test -f /opt/cni/bin/bridge && /opt/cni/bin/bridge 2>&1 | awk -F' v' '/plugin/{print \$NF}' | grep -w \"${cni_version}\"",
-    path    => '/usr/bin';
+  unless $facts['nomad_cni_version'] == $cni_version {
+    tidy { 'clean old CNI plugins':
+      path    => '/opt/cni/bin',
+      rmdirs  => true,
+      recurse => true,
+      age     => '0m',
+      require => File['/opt/cni/bin'],
+      before  => Archive["/tmp/cni-plugins-linux-amd64-v${cni_version}.tgz"];
+    }
   }
   archive { "/tmp/cni-plugins-linux-amd64-v${cni_version}.tgz":
     ensure        => present,
@@ -114,7 +128,6 @@ class nomad_cni::config (
     creates       => '/opt/cni/bin/bridge',
     checksum_url  => "${cni_base_url}/v${cni_version}/cni-plugins-linux-amd64-v${cni_version}.tgz.sha256",
     checksum_type => 'sha256',
-    require       => [File['/opt/cni/bin'], Exec['remove_old_cni']];
   }
 
   # == create systemd unit file

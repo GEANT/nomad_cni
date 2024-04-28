@@ -47,10 +47,8 @@ define nomad_cni::ingress::vxlan::v4 (
   Boolean $nolearning             = false,  # please read the docs carefully before enabling this option
   Optional[Integer] $min_networks = undef,
 ) {
-  # == ensure that nomad_cni class was included and that the name is not reserved
-  #
   if $cni_name == 'all' {
-    fail('the name \'all\' is reserved and it cannot be used as a CNI name')
+    fail("the name 'all' is reserved and it cannot be used as a CNI name")
   }
 
   # == set the variables

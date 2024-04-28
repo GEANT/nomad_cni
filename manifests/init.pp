@@ -39,12 +39,15 @@
 #   - an array with an IPv4 CIDR
 #   CIDR means a subnet mask should be provided
 #
+# [*install_dependencies*] Boolean
+#   whether to install the dependencies or not: 'bridge-utils', 'ethtool', 'fping'
+#
 class nomad_cni (
   Variant[
     Stdlib::IP::Address::V4::CIDR,
     Array[Variant[Stdlib::IP::Address::V4::CIDR, Stdlib::IP::Address::V6::CIDR], 2]
   ] $vip_address,
-  String $cni_version = '1.2.0',
+  String $cni_version                                      = '1.4.0',
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
   Integer $keep_vxlan_up_timer_interval                    = 1,
   Enum[
@@ -59,6 +62,7 @@ class nomad_cni (
   Boolean $cni_cut_off                                     = false,
   Nomad_cni::Digits $firewall_rule_order                   = '050', # string made by digits, which can start with zero(es)
   Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # ip6tables is NOT supported at the moment
+  Boolean $install_dependencies                            = true,
 ) {
   if $facts['nomad_cni_upgrade'] {
     fail("\nnomad_cni_upgrade fact is set.\nPlease remove all the files under /opt/cni/vxlan/, run puppet and finally REBOOT the server\n")
@@ -73,6 +77,7 @@ class nomad_cni (
     keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
     keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
     ingress_vip                  => $vip_address,
+    install_dependencies         => $install_dependencies,
   }
 
   # == create custom fact directory and avoid conflicts with other modules
