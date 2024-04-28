@@ -47,7 +47,7 @@ class nomad_cni (
     Stdlib::IP::Address::V4::CIDR,
     Array[Variant[Stdlib::IP::Address::V4::CIDR, Stdlib::IP::Address::V6::CIDR], 2]
   ] $vip_address,
-  String $cni_version                                      = '1.4.1',
+  String $cni_version                                      = '1.4.0',
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
   Integer $keep_vxlan_up_timer_interval                    = 1,
   Enum[

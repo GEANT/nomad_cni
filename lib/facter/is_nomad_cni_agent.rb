@@ -2,7 +2,7 @@
 
 require 'facter'
 
-# This facter checks if Nomad is installed and return the version number or false
+# This facter checks if Nomad is installed and returns the version number or false
 #
 Facter.add(:is_nomad_cni_agent) do
   confine kernel: 'Linux'
