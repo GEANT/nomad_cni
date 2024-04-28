@@ -68,9 +68,8 @@ check_status() {
     vxlan_ip=$2
     vx_file="/sys/class/net/vx$vxlan_id/operstate"
     br_file="/sys/class/net/br$vxlan_id/operstate"
-    str_match="Link detected: yes"
-    if ethtool vx$vxlan_id 2>/dev/null | grep -q "$str_match" && ethtool br$vxlan_id 2>/dev/null | grep -q "$str_match"; then
-    if grep -qw unknown $vx_file 2>/dev/null && grep -qw up $br_file 2>/dev/null; then
+    str_ok="Link detected: yes"
+    if ethtool vx$vxlan_id 2>/dev/null | grep -q "$str_ok" && ethtool br$vxlan_id 2>/dev/null | grep -q "$str_ok"; then
         if fping -c1 -t500 $vxlan_ip &>/dev/null; then
             return 0
         else
