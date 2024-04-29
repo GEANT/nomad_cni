@@ -5,19 +5,19 @@ fixtures:
   forge_modules:
     archive:
       repo: "puppet/archive"
-      ref: "6.1.1"
+      ref: "7.0.0"
     concat:
       repo: "puppetlabs/concat"
-      ref: "8.0.0"
+      ref: "9.0.1"
     firewall:
       repo: "puppetlabs/firewall"
-      ref: "3.3.0"
+      ref: "6.0.0"
     systemd:
       repo: "puppet/systemd"
-      ref: "3.5.1"
+      ref: "6.0.0"
     stdlib:
       repo: "puppetlabs/stdlib"
-      ref: "8.1.0"
+      ref: "9.4.1"
   repositories:
     facts: 'https://github.com/puppetlabs/puppetlabs-facts.git'
     puppet_agent: 'https://github.com/puppetlabs/puppetlabs-puppet_agent.git'

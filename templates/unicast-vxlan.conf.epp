@@ -1,0 +1,5 @@
+# variables source from the main script cni-vxlan-wizard.sh
+vxlan_id=<%= $vxlan_id %>
+vxlan_ip="<%= $vxlan_ip %>"
+vxlan_network="<%= $network %>"
+vxlan_netmask="<%= $vxlan_netmask %>"

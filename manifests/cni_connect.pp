@@ -27,7 +27,7 @@ define nomad_cni::cni_connect (
   $cni_names = $facts['nomad_cni_hash'].keys()
   $networks = $cni_names.map |$item| { $facts['nomad_cni_hash'][$item]['network'] }
   $cni_array.each |$cni| {
-    if ! defined(Nomad_cni::Macvlan::Unicast::V4[$cni]) and ! defined(Nomad_cni::Macvlan::Multicast::V4[$cni]) {
+    if ! defined(Nomad_cni::Bridge::Unicast::V4[$cni]) {
       fail("CNI ${cni} does not exist")
     }
   }

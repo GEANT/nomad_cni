@@ -17,12 +17,18 @@ class nomad_cni::firewall::nat (
   Array[Enum['iptables', 'ip6tables']] $provider,
   String $interface,
 ) {
-  # == this is a private class
-  #
   assert_private()
 
   # NAT will work on IPv6, but we need to investigate the implications of doing so
   $provider.each |$iptables_provider| {
+    firewall { "003 accept forward related established rules for ${iptables_provider} module ${module_name}":
+      chain    => 'FORWARD',
+      action   => accept,
+      provider => $iptables_provider,
+      proto    => all,
+      state    => ['RELATED', 'ESTABLISHED'];
+    }
+
     firewall { "${rule_order} NAT CNI through ${interface} using provider ${iptables_provider}":
       chain    => 'CNI-ISOLATION-POSTROUTING',
       jump     => 'MASQUERADE',

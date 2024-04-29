@@ -33,8 +33,21 @@
 # [*cni_cut_off*] Boolean
 # Segregate vxlans with iptables
 #
+# [*vip_address*] Array
+#   the IPv4 and or Ipv6 address of the VIP. It can be one of the following:
+#   - an array with an IPv4 CIDR and an IPv6 and CIDR
+#   - an array with an IPv4 CIDR
+#   CIDR means a subnet mask should be provided
+#
+# [*install_dependencies*] Boolean
+#   whether to install the dependencies or not: 'bridge-utils', 'ethtool', 'fping'
+#
 class nomad_cni (
-  String $cni_version = '1.2.0',
+  Variant[
+    Stdlib::IP::Address::V4::CIDR,
+    Array[Variant[Stdlib::IP::Address::V4::CIDR, Stdlib::IP::Address::V6::CIDR], 2]
+  ] $vip_address,
+  String $cni_version                                      = '1.4.0',
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
   Integer $keep_vxlan_up_timer_interval                    = 1,
   Enum[
@@ -48,8 +61,12 @@ class nomad_cni (
   Boolean $manage_firewall_vxlan                           = false,
   Boolean $cni_cut_off                                     = false,
   Nomad_cni::Digits $firewall_rule_order                   = '050', # string made by digits, which can start with zero(es)
-  Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # be aware that ip6tables is NOT supported at the moment
+  Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # ip6tables is NOT supported at the moment
+  Boolean $install_dependencies                            = true,
 ) {
+  if $facts['nomad_cni_upgrade'] {
+    fail("\nnomad_cni_upgrade fact is set.\nPlease remove all the files under /opt/cni/vxlan/, run puppet and finally REBOOT the server\n")
+  }
   if 'ip6tables' in $firewall_provider {
     fail('ip6tables is not supported at the moment')
   }
@@ -59,6 +76,8 @@ class nomad_cni (
     cni_base_url                 => $cni_base_url,
     keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
     keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
+    ingress_vip                  => $vip_address,
+    install_dependencies         => $install_dependencies,
   }
 
   # == create custom fact directory and avoid conflicts with other modules

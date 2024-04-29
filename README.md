@@ -5,32 +5,44 @@
 1. [Overview](#overview)
 2. [Requirements and notes](#requirements-and-notes)
 3. [What this module affects](#what-this-module-affects)
-4. [Usage and examples](#usage-and-examples)
+4. [Architecture diagram](#architecture-diagram)
+5. [Usage and examples](#usage-and-examples)
     1. [Install the CNI components](#install-the-cni-components)
     2. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
     3. [Minimum networks](#minimum-networks)
-5. [Firewall](#firewall)
+6. [NICs management](#nics-management)
+7. [Firewall](#firewall)
     1. [NAT](#nat)
     2. [VXLAN traffic](#vxlan-traffic)
     3. [CNIs segregation](#cnis-segregation)
     4. [CNIs interconnection](#cnis-interconnection)
-6. [Add CNIs to Nomad](#add-cnis-to-nomad)
+8. [Add CNIs to Nomad](#add-cnis-to-nomad)
     1. [add host_network using VoxPupuli Nomad module](#add-host_network-using-voxpupuli-nomad-module)
     1. [Nomad job example](#nomad-job-example)
-7. [Register your services to Consul](#register-your-services-to-consul)
-8. [Limitations](#limitations)
+9. [Register your services to Consul](#register-your-services-to-consul)
+10. [Limitations](#limitations)
 
 ## Overview
 
-This module configures CNI networks on the Nomad agents, and it aims to replace a more complex software-defined network solution (like as Calico, Weave, Cilium...).
+This module leverages the configuration of the CNI networks, using VXLAN technology and macvlan network driver on the Nomad agents.
 
-Whilst Calico uses `etcd` and `nerdctl` to leverage and centralize the configuration of the CNI within the cluster, this module splits a network range by the number of Nomad agents (or by `min_networks` parameter), and assigns each range to a different agent.
+Whilst other CNI operators uses key pair databases to store/retrieve the configurations, this module does two things:
 
-The module will also create a Bridge interface and a VXLAN on each Agent and the VXLANs will be interconnected and bridged with the host network.
+1. use your Puppet hieradata backend (whatever it is)
+2. splits the network in multiple segment, and assigns one segment for each agent. There is a function which can determine the size of the networks based on the number of agents, otherwise the `min_networks` parameter can be used to create more networks (this comes to hand if you want to increase the size of your cluster, without disruptions).
+
+The module will also create a Bridge interface and a VXLAN interface on each Agent and for each CNI network, and the VXLANs will be interconnected and bridged with the host network.
 
 ## Requirements and notes
 
 In addition to the requirements listed in `metadata.json`, **this module requires PuppetDB**.
+
+You need to enable IP forward:
+
+```bash
+# cat /proc/sys/net/ipv4/ip_forward
+1
+```
 
 The CNI configuration has a stanza for the [DNS settings](https://www.cni.dev/plugins/current/main/vlan/), but these settings won't work with Nomad. If necessary you can specify the settings for the [DNS in Nomad](https://developer.hashicorp.com/nomad/docs/job-specification/network#dns-1).
 
@@ -40,6 +52,10 @@ The CNI configuration has a stanza for the [DNS settings](https://www.cni.dev/pl
 * Installs configuration/scripts for every CNI network (`/opt/cni/vxlan/.d/{un,mult}icast.d/*.sh`)
 * Creates a Bridge and a VXLAN for every CNI network (managed via custom script)
 * Optionally, segregates and interconnects CNIs (by default they're open and interconnected)
+
+## Architecture diagram
+
+![Could not fetch Nomad diagram!](https://cds.geant.org/pub/Nomad_cluster_small.jpg)
 
 ## Usage and examples <a name="usage-and-examples"></a>
 
@@ -67,7 +83,7 @@ class { 'nomad_cni':
 Using the following resource declaration you can setup two CNI networks, using the unicast vxlan technology:
 
 ```puppet
-nomad_cni::macvlan::unicast::v4 {
+nomad_cni::bridge::unicast::v4 {
   default:
     agent_regex => 'nomad0';
   'cni1':
@@ -88,7 +104,7 @@ You may decide to overcommit the number of networks, to foresee and allow a seam
 In the example below the 24 bit network will be split by 10, and it will assign 24 IPs for each network, regardless of the number of agents:
 
 ```puppet
-nomad_cni::macvlan::unicast::v4 {
+nomad_cni::bridge::unicast::v4 {
   default:
     min_networks => 10,
     agent_regex  => 'nomad0';
@@ -98,6 +114,14 @@ nomad_cni::macvlan::unicast::v4 {
     network => '172.16.4.0/22';
 }
 ```
+
+## NICs Management
+
+The interfaces are managed using custom scripts, triggered by systemd.
+
+* Why not using systemd-networkd? In Ubuntu the main interface is already declared in netplan, and it's being ignored by systemd.
+
+* Why not using netplan? Netplan does not support vxlan with unicast and bridge FDB entries.
 
 ## Firewall
 
@@ -173,7 +197,8 @@ as a result, you'll get something like the following in the agent configuration
       "interface": "vxbr5199537"
     }
   },
-... and so on....
+  ... and so on ...
+]
 ```
 
 If you have dual stack IP configuration, the network that it's not defined will be the default network for your jobs.
@@ -224,8 +249,7 @@ service {
 
 ## Limitations
 
-* only IPv4 is currently supported (I started working on IPv6 but it's not in a usable state at the moment)
-* only `macvlan` plugin is supported (are there reasons to support different plugins?)
-* `multicast` is not properly tested
-* changelog is not yet handled
-* CI is currently using an internal Gitlab runner. GitHub action will come soon.
+* only IPv4 is currently supported
+* changelog not yet handled
+* spec test has limitations, due to reliance on PuppetDB
+* feel free to test it on RedHat, to contribute and raise issues

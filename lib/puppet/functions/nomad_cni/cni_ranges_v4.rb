@@ -42,7 +42,7 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
 
     sorted_agent_names = agent_names.sort
     last_ip_int = IPAddr.new(network_address).to_range.last.to_i
-    first_ip_int = IPAddr.new(network_address).to_range.first.to_i
+    first_ip_int = IPAddr.new(network_address).to_range.first.to_i + 1
     free_hosts = last_ip_int - first_ip_int - 1
     agent_number = agent_names.length
 
@@ -62,8 +62,8 @@ Puppet::Functions.create_function(:'nomad_cni::cni_ranges_v4') do
     agents_array.map do |item|
       [
         sorted_agent_names[item], # agent name
-        IPAddr.new((first_ip_int + (chunk_size * item) + 1).to_i, Socket::AF_INET).to_s, # gateway, and VXLAN IP on the host
-        IPAddr.new((first_ip_int + (chunk_size * item) + 2).to_i, Socket::AF_INET).to_s, # first usable IP in the range
+        IPAddr.new((first_ip_int + (chunk_size * item) + 1).to_i, Socket::AF_INET).to_s, # gateway, and VXLAN IP on the host: NOW THIS IS THE FIRST IP IN THE RANGE
+        IPAddr.new((first_ip_int + (chunk_size * item) + 2).to_i, Socket::AF_INET).to_s, # first usable IP in the range: THIS IS NO LONGER NEEDED
         IPAddr.new((first_ip_int + (chunk_size * item) + chunk_size).to_i, Socket::AF_INET).to_s, # last usable IP in the range
         netmask, # netmask
       ]

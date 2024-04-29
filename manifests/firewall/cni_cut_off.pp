@@ -13,8 +13,6 @@ class nomad_cni::firewall::cni_cut_off (
   Nomad_cni::Digits $rule_order,
   Array[Enum['iptables', 'ip6tables']] $provider,
 ) {
-  # == this is a private class
-  #
   assert_private()
 
   $cni_names = $facts['nomad_cni_hash'].keys()
