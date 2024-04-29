@@ -186,7 +186,7 @@ define nomad_cni::vxlan::v4 (
   exec { "populate bridge fdb for ${cni_name}":
     command     => "${vxlan_dir}/unicast-bridge-fdb.d/${cni_name}-bridge-fdb.sh",
     refreshonly => true,
-    returns     => [0, 255],
+    returns     => [0, 255], # 255 is returned when the NIC has not yet been setup but it works when adding new entries
   }
 
   # == create CNI config file, collect all the fragments for the script and add the footer
