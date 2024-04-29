@@ -64,6 +64,8 @@ describe 'nomad_cni' do
       is_expected.to contain_file('/usr/local/bin/cni-vxlan-wizard.sh').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/cni-vxlan-wizard.sh')
       is_expected.to contain_package('docopt').with(ensure: 'present', provider: 'gem')
       is_expected.to contain_package('fping').with(ensure: 'present')
+      is_expected.to contain_package('bridge-utils').with(ensure: 'present')
+      is_expected.to contain_package('ethtool').with(ensure: 'present')
     }
   end
 
@@ -121,6 +123,8 @@ describe 'nomad_cni' do
       is_expected.to contain_file('/usr/local/bin/cni-vxlan-wizard.sh').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/cni-vxlan-wizard.sh')
       is_expected.to contain_package('docopt').with(ensure: 'present', provider: 'gem')
       is_expected.to contain_package('fping').with(ensure: 'present')
+      is_expected.to contain_package('bridge-utils').with(ensure: 'present')
+      is_expected.to contain_package('ethtool').with(ensure: 'present')
     }
   end
 
@@ -178,6 +182,8 @@ describe 'nomad_cni' do
       is_expected.to contain_file('/usr/local/bin/cni-vxlan-wizard.sh').with(owner: 'root', group: 'root', mode: '0755', source: 'puppet:///modules/nomad_cni/cni-vxlan-wizard.sh')
       is_expected.to contain_package('docopt').with(ensure: 'present', provider: 'gem')
       is_expected.to contain_package('fping').with(ensure: 'present')
+      is_expected.to contain_package('iproute').with(ensure: 'present')
+      is_expected.to contain_package('ethtool').with(ensure: 'present')
     }
   end
 end

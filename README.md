@@ -10,16 +10,17 @@
     1. [Install the CNI components](#install-the-cni-components)
     2. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
     3. [Minimum networks](#minimum-networks)
-6. [Firewall](#firewall)
+6. [NICs management](#nics-management)
+7. [Firewall](#firewall)
     1. [NAT](#nat)
     2. [VXLAN traffic](#vxlan-traffic)
     3. [CNIs segregation](#cnis-segregation)
     4. [CNIs interconnection](#cnis-interconnection)
-7. [Add CNIs to Nomad](#add-cnis-to-nomad)
+8. [Add CNIs to Nomad](#add-cnis-to-nomad)
     1. [add host_network using VoxPupuli Nomad module](#add-host_network-using-voxpupuli-nomad-module)
     1. [Nomad job example](#nomad-job-example)
-8. [Register your services to Consul](#register-your-services-to-consul)
-9. [Limitations](#limitations)
+9. [Register your services to Consul](#register-your-services-to-consul)
+10. [Limitations](#limitations)
 
 ## Overview
 
@@ -113,6 +114,14 @@ nomad_cni::bridge::unicast::v4 {
     network => '172.16.4.0/22';
 }
 ```
+
+## NICs Management
+
+The interfaces are managed using custom scripts, triggered by systemd.
+
+* Why not using systemd-networkd? In Ubuntu the main interface is already declared in netplan, and it's being ignored by systemd.
+
+* Why not using netplan? Netplan does not support vxlan with unicast and bridge FDB entries.
 
 ## Firewall
 

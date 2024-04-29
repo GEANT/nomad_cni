@@ -42,7 +42,7 @@ ifaces_down() {
 }
 
 purge_stale_ifaces() {
-    vxlan_ifaces_up=$(ip -o link show | awk -F': ' '/vx[0-9]+:/{sub("vx", ""); print $2}')
+    vxlan_ifaces_up=$(ip -o link show | awk '/vx[0-9]+:/{gsub(":", ""); sub("vx", ""); print $2}')
     for vxlan_iface in $vxlan_ifaces_up; do
         if ! grep -qrw $vxlan_iface $base_dir/unicast.d; then
             ip link delete br$vxlan_iface &>/dev/null || true
@@ -66,10 +66,8 @@ purge_stale_services() {
 check_status() {
     vxlan_id=$1
     vxlan_ip=$2
-    vx_file="/sys/class/net/vx$vxlan_id/operstate"
-    br_file="/sys/class/net/br$vxlan_id/operstate"
-    str_ok="Link detected: yes"
-    if ethtool vx$vxlan_id 2>/dev/null | grep -q "$str_ok" && ethtool br$vxlan_id 2>/dev/null | grep -q "$str_ok"; then
+    ok_string="Link detected: yes"
+    if ethtool vx$vxlan_id 2>/dev/null | grep -q "$ok_string" && ethtool br$vxlan_id 2>/dev/null | grep -q "$ok_string"; then
         if fping -c1 -t500 $vxlan_ip &>/dev/null; then
             return 0
         else

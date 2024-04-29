@@ -34,8 +34,11 @@ class nomad_cni::ingress::config (
   # == install dependencies
   #
   if $install_dependencies {
-    $pkgs = ['bridge-utils', 'ethtool', 'fping']
-    $pkgs.each |$pkg| {
+    $bridge_pkg = $facts['os']['family'] ? {
+      'Debian' => 'bridge-utils',
+      'RedHat' => 'iproute',
+    }
+    [$bridge_pkg, 'ethtool', 'fping'].each |$pkg| {
       unless defined(Package[$pkg]) { package { $pkg: ensure => present } }
     }
     unless defined(Package['docopt']) {

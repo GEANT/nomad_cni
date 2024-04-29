@@ -95,8 +95,11 @@ class nomad_cni::config (
   # == install dependencies
   #
   if $install_dependencies {
-    $pkgs = ['bridge-utils', 'ethtool', 'fping']
-    $pkgs.each |$pkg| {
+    $bridge_pkg = $facts['os']['family'] ? {
+      'Debian' => 'bridge-utils',
+      'RedHat' => 'iproute',
+    }
+    [$bridge_pkg, 'ethtool', 'fping'].each |$pkg| {
       unless defined(Package[$pkg]) { package { $pkg: ensure => present } }
     }
     unless defined(Package['docopt']) {
@@ -128,6 +131,7 @@ class nomad_cni::config (
     creates       => '/opt/cni/bin/bridge',
     checksum_url  => "${cni_base_url}/v${cni_version}/cni-plugins-linux-amd64-v${cni_version}.tgz.sha256",
     checksum_type => 'sha256',
+    notify        => Exec["${module_name} reload nomad service"],
   }
 
   # == create systemd unit file
