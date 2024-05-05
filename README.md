@@ -21,15 +21,16 @@
     1. [Nomad job example](#nomad-job-example)
 9. [Register your services to Consul](#register-your-services-to-consul)
 10. [Limitations](#limitations)
+11. [Notes](#notes)
 
 ## Overview
 
-This module leverages the configuration of the CNI networks, using VXLAN technology and macvlan network driver on the Nomad agents.
+This module leverages the configuration of the CNI networks, using VXLAN and macvlan network driver on the Nomad agents.
 
 Whilst other CNI operators uses key pair databases to store/retrieve the configurations, this module does two things:
 
 1. use your Puppet hieradata backend (whatever it is)
-2. splits the network in multiple segment, and assigns one segment for each agent. There is a function which can determine the size of the networks based on the number of agents, otherwise the `min_networks` parameter can be used to create more networks (this comes to hand if you want to increase the size of your cluster, without disruptions).
+2. splits the network in multiple segment, and assigns one segment for each agent. There is a function which can determine the size of the networks based on the number of agents, otherwise the `min_networks` parameter can be used to create more networks than necessary (to create room for future cluster expansion, avoiding disruptions).
 
 The module will also create a Bridge interface and a VXLAN interface on each Agent and for each CNI network, and the VXLANs will be interconnected and bridged with the host network.
 
@@ -37,14 +38,14 @@ The module will also create a Bridge interface and a VXLAN interface on each Age
 
 In addition to the requirements listed in `metadata.json`, **this module requires PuppetDB**.
 
-You need to enable IP forward:
+You also need to enable IP forward:
 
 ```bash
 # cat /proc/sys/net/ipv4/ip_forward
 1
 ```
 
-The CNI configuration has a stanza for the [DNS settings](https://www.cni.dev/plugins/current/main/vlan/), but these settings won't work with Nomad. If necessary you can specify the settings for the [DNS in Nomad](https://developer.hashicorp.com/nomad/docs/job-specification/network#dns-1).
+The CNI configuration has a stanza for the [DNS settings](https://www.cni.dev/plugins/current/main/vlan/), but these settings are not working for me with Nomad. If needed you can specify the settings for the [DNS in Nomad](https://developer.hashicorp.com/nomad/docs/job-specification/network#dns-1).
 
 ## What this module affects <a name="what-this-module-affects"></a>
 
@@ -93,7 +94,7 @@ nomad_cni::bridge::unicast::v4 {
 }
 ```
 
-Multicast shuold be better, but in my environment it wasn't reliable. Feel free to experiment at your own risk.
+Multicast would work much better, but in my environment it wasn't reliable. Feel free to experiment and contribute to this module.
 
 ### Minimum networks
 
@@ -121,7 +122,7 @@ The interfaces are managed using custom scripts, triggered by systemd.
 
 * Why not using systemd-networkd? In Ubuntu the main interface is already declared in netplan, and it's being ignored by systemd.
 
-* Why not using netplan? Netplan does not support vxlan with unicast and bridge FDB entries.
+* Why not using netplan? Netplan does not support yet unicast mode for VXLAN and bridge FDB entries.
 
 ## Firewall
 
@@ -249,7 +250,11 @@ service {
 
 ## Limitations
 
-* only IPv4 is currently supported
+* there is an attempt to use IPv6 in this module, although only IPv4 is currently supported
+* maximum supported version of `puppetlabs/firewall` is 6.0.0
 * changelog not yet handled
-* spec test has limitations, due to reliance on PuppetDB
-* feel free to test it on RedHat, to contribute and raise issues
+* spec test isn't bad but it has limitations, due to reliance on PuppetDB
+
+## Notes
+
+* feel free to test, [contribute](https://github.com/GEANT/nomad_cni) and raise [issues](https://github.com/GEANT/nomad_cni/issues)
