@@ -15,11 +15,19 @@
 # [*interface*]
 #   interface to bind to
 #
+# [*keepalived_custom_options*]
+#   custom options for keepalived
+#
+# [*keepalived_pkg_ensure*]
+#   version of keepalived to install
+#
 class nomad_cni::ingress::keepalived (
   Array[Hash] $ingress_inventory,
   Array[Hash] $agent_inventory,
   Variant[String, Array] $ingress_vip,
   String $interface,
+  Optional[String] $keepalived_custom_options,
+  String $keepalived_pkg_ensure,
 ) {
   assert_private()
 
@@ -70,8 +78,8 @@ class nomad_cni::ingress::keepalived (
   }
 
   class { 'keepalived':
-    pkg_ensure      => 'latest',
-    sysconf_options => '-D --snmp',
+    pkg_ensure      => $keepalived_pkg_ensure,
+    sysconf_options => $keepalived_custom_options,
   }
 
   keepalived::vrrp::instance { 'Nomad_Ingress':

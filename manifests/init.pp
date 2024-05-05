@@ -33,20 +33,17 @@
 # [*cni_cut_off*] Boolean
 # Segregate vxlans with iptables
 #
-# [*vip_address*] Array
-#   the IPv4 and or Ipv6 address of the VIP. It can be one of the following:
-#   - an array with an IPv4 CIDR and an IPv6 and CIDR
-#   - an array with an IPv4 CIDR
-#   CIDR means a subnet mask should be provided
+# [*vip_cidr*] Array
+#   the IPv4 and or Ipv6 address of the VIP. It can be one of:
+#   - String or Array with an IPv4 CIDR
+#   - Array with an IPv4 CIDR and an IPv6 CIDR
+#   CIDR examples: '192.168.10.15/24' or ['192.168.10.15/24', '2001:db8::1/64']
 #
 # [*install_dependencies*] Boolean
 #   whether to install the dependencies or not: 'bridge-utils', 'ethtool', 'fping'
 #
 class nomad_cni (
-  Variant[
-    Stdlib::IP::Address::V4::CIDR,
-    Array[Variant[Stdlib::IP::Address::V4::CIDR, Stdlib::IP::Address::V6::CIDR], 2]
-  ] $vip_address,
+  Nomad_cni::Vip::Cidr $vip_cidr, # see above for the format
   String $cni_version                                      = '1.4.0',
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
   Integer $keep_vxlan_up_timer_interval                    = 1,
@@ -76,7 +73,7 @@ class nomad_cni (
     cni_base_url                 => $cni_base_url,
     keep_vxlan_up_timer_interval => $keep_vxlan_up_timer_interval,
     keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
-    ingress_vip                  => $vip_address,
+    ingress_vip                  => $vip_cidr,
     install_dependencies         => $install_dependencies,
   }
 
