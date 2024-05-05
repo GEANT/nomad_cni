@@ -5,7 +5,7 @@ describe 'nomad_cni' do
     {
       manage_firewall_vxlan: true,
       cni_cut_off: true,
-      vip_address: '192.168.100.10/24',
+      vip_cidr: '192.168.100.10/24',
       cni_version: '1.4.0',
     }
   end
@@ -29,7 +29,7 @@ describe 'nomad_cni' do
     end
 
     it {
-      is_expected.to contain_class('nomad_cni').with(cni_version: '1.4.0', manage_firewall_vxlan: true, cni_cut_off: true, vip_address: '192.168.100.10/24')
+      is_expected.to contain_class('nomad_cni').with(cni_version: '1.4.0', manage_firewall_vxlan: true, cni_cut_off: true, vip_cidr: '192.168.100.10/24')
       is_expected.to contain_class('nomad_cni::config').with(
         cni_version: '1.4.0',
         cni_base_url: 'https://github.com/containernetworking/plugins/releases/download',
@@ -88,7 +88,7 @@ describe 'nomad_cni' do
     end
 
     it {
-      is_expected.to contain_class('nomad_cni').with(cni_version: '1.4.0', manage_firewall_vxlan: true, cni_cut_off: true, vip_address: '192.168.100.10/24')
+      is_expected.to contain_class('nomad_cni').with(cni_version: '1.4.0', manage_firewall_vxlan: true, cni_cut_off: true, vip_cidr: '192.168.100.10/24')
       is_expected.to contain_class('nomad_cni::config').with(
         cni_version: '1.4.0',
         cni_base_url: 'https://github.com/containernetworking/plugins/releases/download',
@@ -147,7 +147,7 @@ describe 'nomad_cni' do
     end
 
     it {
-      is_expected.to contain_class('nomad_cni').with(cni_version: '1.4.0', manage_firewall_vxlan: true, cni_cut_off: true, vip_address: '192.168.100.10/24')
+      is_expected.to contain_class('nomad_cni').with(cni_version: '1.4.0', manage_firewall_vxlan: true, cni_cut_off: true, vip_cidr: '192.168.100.10/24')
       is_expected.to contain_class('nomad_cni::config').with(
         cni_version: '1.4.0',
         cni_base_url: 'https://github.com/containernetworking/plugins/releases/download',

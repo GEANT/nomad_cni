@@ -123,9 +123,9 @@ define nomad_cni::vxlan::v4 (
   }
 
   if $ingress_vip =~ Stdlib::IP::Address::V4::Nosubnet {
-    $vip_address = $ingress_vip
+    $vip_cidr = $ingress_vip
   } else {
-    $vip_address = dnsquery::a($ingress_vip)[0]
+    $vip_cidr = dnsquery::a($ingress_vip)[0]
   }
 
   $vxlan_dir = '/opt/cni/vxlan'
@@ -135,9 +135,9 @@ define nomad_cni::vxlan::v4 (
   $vxlan_id = seeded_rand(16777215, $network) + 1
   if ($nolearning) {
     # this is not yet covered by the module
-    $vip_bridge_fdb = "bridge fdb append ${facts['networking']['interfaces'][$iface]['mac']} dev vx${vxlan_id} dst ${vip_address}\n"
+    $vip_bridge_fdb = "bridge fdb append ${facts['networking']['interfaces'][$iface]['mac']} dev vx${vxlan_id} dst ${vip_cidr}\n"
   } else {
-    $vip_bridge_fdb = "bridge fdb append 00:00:00:00:00:00 dev vx${vxlan_id} dst ${vip_address}\n"
+    $vip_bridge_fdb = "bridge fdb append 00:00:00:00:00:00 dev vx${vxlan_id} dst ${vip_cidr}\n"
   }
 
   # create the CNI systemd service
@@ -226,7 +226,7 @@ define nomad_cni::vxlan::v4 (
               cni_name          => $cni_name,
               br_mac_address    => $br_mac_address,
               vxlan_mac_address => $vxlan_mac_address,
-              vip_address       => $vip_address,
+              vip_cidr          => $vip_cidr,
               network           => $network,
             }
           );

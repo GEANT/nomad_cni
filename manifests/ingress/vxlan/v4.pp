@@ -87,18 +87,18 @@ define nomad_cni::ingress::vxlan::v4 (
   }
 
   if $ingress_vip =~ Stdlib::IP::Address::V4::Nosubnet {
-    $vip_address = $ingress_vip
+    $vip_cidr = $ingress_vip
   } else {
-    $vip_address = dnsquery::a($ingress_vip)[0]
+    $vip_cidr = dnsquery::a($ingress_vip)[0]
   }
 
   $vxlan_dir = '/opt/cni/vxlan'
   $vxlan_id = seeded_rand(16777215, $network) + 1
   if ($nolearning) {
     # this is not yet covered by the module
-    $vip_bridge_fdb = "bridge fdb append ${facts['networking']['interfaces'][$iface]['mac']} dev vx${vxlan_id} dst ${vip_address}\n"
+    $vip_bridge_fdb = "bridge fdb append ${facts['networking']['interfaces'][$iface]['mac']} dev vx${vxlan_id} dst ${vip_cidr}\n"
   } else {
-    $vip_bridge_fdb = "bridge fdb append 00:00:00:00:00:00 dev vx${vxlan_id} dst ${vip_address}\n"
+    $vip_bridge_fdb = "bridge fdb append 00:00:00:00:00:00 dev vx${vxlan_id} dst ${vip_cidr}\n"
   }
 
   # create the CNI systemd service
@@ -152,8 +152,8 @@ define nomad_cni::ingress::vxlan::v4 (
   #
   $vxlan_ingress = nomad_cni::cni_ingress_v4($network)
   $vxlan_netmask = $network.split('/')[1]
-  $br_mac_address = nomad_cni::generate_mac("${vxlan_ingress[1]}${vip_address}")
-  $vxlan_mac_address = nomad_cni::generate_mac("${vxlan_ingress[1]}${vxlan_netmask}${vip_address}")
+  $br_mac_address = nomad_cni::generate_mac("${vxlan_ingress[1]}${vip_cidr}")
+  $vxlan_mac_address = nomad_cni::generate_mac("${vxlan_ingress[1]}${vxlan_netmask}${vip_cidr}")
   file {
     default:
       owner   => 'root',
@@ -175,7 +175,7 @@ define nomad_cni::ingress::vxlan::v4 (
       content => epp("${module_name}/unicast-vxlan.sh.epp",
         {
           is_keepalived     => 'BOFH',
-          agent_ip          => $vip_address,
+          agent_ip          => $vip_cidr,
           vxlan_id          => $vxlan_id,
           vxlan_ip          => $vxlan_ingress[1],
           vxlan_net         => $vxlan_ingress[0],
