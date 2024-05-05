@@ -41,9 +41,9 @@
 #
 # [*vip_cidr*] Array
 #   the IPv4 and or Ipv6 address of the VIP. It can be one of the following:
-#   - an array with an IPv4 CIDR and an IPv6 and CIDR
-#   - an array with an IPv4 CIDR
-#   CIDR means a subnet mask should be provided
+#   - a String or Array with an IPv4 CIDR
+#   - an Array with an IPv4 CIDR and an IPv6 CIDR
+#   CIDR examples: '192.168.10.15/24' or ['192.168.10.15/24', '2001:db8::1/64']
 #
 # [*install_dependencies*] Boolean
 #   whether to install the dependencies or not: 'bridge-utils', 'ethtool', 'fping'
@@ -55,7 +55,7 @@
 #   package version to install, default is 'present'
 #
 class nomad_cni::ingress (
-  Nomad_cni::Vip::Cidr $vip_cidr,
+  Nomad_cni::Vip::Cidr $vip_cidr, # see above for the format
   Integer $keep_vxlan_up_timer_interval                   = 1,
   Enum[
     'usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'
