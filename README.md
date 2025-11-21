@@ -73,7 +73,7 @@ if you want to change the download URL and you want to specify the version to in
 ```puppet
 class { 'nomad_cni':
   cni_version  => '1.5.0',
-  cni_base_url => https://server.example.org/cni/,
+  cni_base_url => 'https://server.example.org/cni/',
 }
 ```
 
@@ -84,7 +84,7 @@ class { 'nomad_cni':
 Using the following resource declaration you can setup two CNI networks, using the unicast vxlan technology:
 
 ```puppet
-nomad_cni::bridge::unicast::v4 {
+nomad_cni::vxlan::v4 {
   default:
     agent_regex => 'nomad0';
   'cni1':
@@ -140,7 +140,7 @@ If your firewall is set to drop connections that are not specifically declared, 
 
 ### CNIs segregation
 
-By default all CNIs are interconneccted. CNIs segregation is achieved by setting `cni_cut_off` to `true`:
+By default all CNIs are interconnected. CNIs segregation is achieved by setting `cni_cut_off` to `true`:
 
 ```puppet
 class { 'nomad_cni':
