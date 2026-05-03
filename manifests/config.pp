@@ -5,34 +5,37 @@
 #   Array of proxy vip
 #
 # @param cni_version String
-# version of CNI to install
+#   version of CNI to install
 #
-# @param cni_base_url Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
-# URL to download CNI plugins from
+# @param cni_base_url
+#   URL to download CNI plugins from
 #
 # @param keep_vxlan_up_timer_interval Integer
-# interval in minutes to run systemdd timer job to keep VXLANs up
+#   interval in minutes to run systemdd timer job to keep VXLANs up
 #
-# @param keep_vxlan_up_timer_unit Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
-# timer unit for the time interval: default minutes
+# @param keep_vxlan_up_timer_unit
+#   timer unit for the time interval: default minutes
 #
-# @param install_dependencies Boolean
+# @param install_dependencies
 #   whether to install the dependencies or not: 'bridge-utils', 'ethtool', 'fping'
 #
 # @param workaround_network_restart
 #   if the network is restarted the CNI stops working and the jobs must be redeployed
 #   the workaround consists of reloading the CNI services, and then drain and undrain the node
 #
-# @param nomad_token Optional[Sensitive]
+# @param nomad_token
 #   the token used to drain/undrain the node
 #
-# @param nomad_proto Enum['http', 'https']
+# @param nomad_proto
 #   the protocol to use. It must be http or https
 #
-# @param nomad_port Stdlib::Port
+# @param nomad_port
 #   the Nomad port. It defaults to 4646
 #
-# @param nomad_data_dir Stdlib::Absolutepath
+# @param nomad_listen_address
+#   the address to which Nomad listens. It must be an IP address without subnet. 
+#
+# @param nomad_data_dir
 #   Nomad data directory.
 #
 class nomad_cni::config (
@@ -46,6 +49,7 @@ class nomad_cni::config (
   Optional[Sensitive] $nomad_token,
   Enum['http', 'https'] $nomad_proto,
   Stdlib::Port $nomad_port,
+  Stdlib::Ip::Address::Nosubnet $nomad_listen_address,
   Stdlib::Absolutepath $nomad_data_dir,
 ) {
   assert_private()
@@ -71,9 +75,10 @@ class nomad_cni::config (
         content => Sensitive(
           epp("${module_name}/nomad-cni.env.epp",
             {
-              nomad_token => $nomad_token,
-              nomad_proto => $nomad_proto,
-              nomad_port  => $nomad_port,
+              nomad_token          => $nomad_token,
+              nomad_proto          => $nomad_proto,
+              nomad_port           => $nomad_port,
+              nomad_listen_address => $nomad_listen_address,
             }
           )
         );

@@ -7,9 +7,10 @@
 3. [What this module affects](#what-this-module-affects)
 4. [Architecture diagram](#architecture-diagram)
 5. [Usage and examples](#usage-and-examples)
-    1. [Install the CNI components](#install-the-cni-components)
-    2. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
-    3. [Minimum networks](#minimum-networks)
+    1. [Systemd-networkd workaround](#systemd-networkd-workaround)
+    2. [Install the CNI components](#install-the-cni-components)
+    3. [Create a bunch of CNI networks](#create-a-bunch-of-cni-networks)
+    4. [Minimum networks](#minimum-networks)
 6. [NICs management](#nics-management)
 7. [Firewall](#firewall)
     1. [NAT](#nat)
@@ -18,7 +19,7 @@
     4. [CNIs interconnection](#cnis-interconnection)
 8. [Add CNIs to Nomad](#add-cnis-to-nomad)
     1. [add host_network using VoxPupuli Nomad module](#add-host_network-using-voxpupuli-nomad-module)
-    1. [Nomad job example](#nomad-job-example)
+    2. [Nomad job example](#nomad-job-example)
 9. [Register your services to Consul](#register-your-services-to-consul)
 10. [Limitations](#limitations)
 11. [Notes](#notes)
@@ -59,6 +60,20 @@ The CNI configuration has a stanza for the [DNS settings](https://www.cni.dev/pl
 ![Could not fetch Nomad diagram!](https://cds.geant.org/pub/Nomad_cluster_small.jpg)
 
 ## Usage and examples <a name="usage-and-examples"></a>
+
+## Systemd-networkd workaround
+
+I observed that occasionally Ubuntu reloads the service `systemd-networkd`. When that happens, the CNI stops working and the containers loose connectivity.  
+The first step consists of restarting the CNI services, but unfortunately, the jobs do not recover, as Nomad does not fully restart the container (it issues a quick respawn).  
+In such casem the jobs need to be redeployed and for the purpose I am using `drain`/`undrain`, to deploy the jobs on a new node.  
+You can enable this feature (and it **strongly recommended**) by setting the following parameters when calling the class:
+
+```puppet
+class { 'nomad_cni':
+  workaround_network_restart => true,
+  nomad_token                => Sensitive('your_nomad_token'),
+}
+```
 
 ### Install the CNI components
 

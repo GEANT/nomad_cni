@@ -1,67 +1,104 @@
 # @summary Class: nomad_cni
 #
-# @param cni_version String
-#   version of CNI to install
-#
-# @param cni_base_url Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
-#   URL to download CNI plugins from
-#
-# @param keep_vxlan_up_timer_interval Integer
-#   interval in minutes to run systemd timer job to keep VXLANs up
-#
-# @param keep_vxlan_up_timer_unit Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
-#   timer unit for the time interval: default minutes
-#
-# @param manage_firewall_nat Boolean
-#   whether to manage the firewall rules for NAT
-#
-# @param manage_firewall_vxlan Boolean
-#   whether to manage the firewall rules for the VXLAN
-#
-# @param interface String
-#   Name of the network Interface to NAT (this is the interface on the host)
-#
-# @param firewall_provider Array[Enum['iptables', 'ip6tables']]
-#   Iptables providers: ['iptables', 'ip6tables']
-#
-# @param firewall_rule_order Nomad_cni::Digits
-#   Iptables rule order. It's a string made by digit(s) and it can start with zero(es)
-#
-# @param cni_cut_off Boolean
-#   Segregate vxlans with iptables
-#
-# @param vip_cidr Array
+# @param vip_cidr
 #   the IPv4 and or Ipv6 address of the VIP. It can be one of:
 #     - String or Array with an IPv4 CIDR
 #     - Array with an IPv4 CIDR and an IPv6 CIDR
 #   CIDR examples: '192.168.10.15/24' or ['192.168.10.15/24', '2001:db8::1/64']
+#   Type: Nomad_cni::Vip::Cidr
 #
-# @param install_dependencies Boolean
+# @param cni_version
+#   version of CNI to install
+#   Default: '1.4.0'
+#   Type: String
+#
+# @param cni_base_url
+#   URL to download CNI plugins from
+#   Default: 'https://github.com/containernetworking/plugins/releases/download'
+#   Type: Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
+#
+# @param keep_vxlan_up_timer_interval
+#   interval in minutes to run systemd timer job to keep VXLANs up
+#   Default: 10
+#   Type: Integer
+#
+# @param keep_vxlan_up_timer_unit
+#   timer unit for the time interval: default minutes
+#   Default: 'minutes' 
+#   Type: Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
+#
+# @param manage_firewall_nat
+#   whether to manage the firewall rules for NAT
+#   Default: true
+#   Type: Boolean
+#
+# @param manage_firewall_vxlan
+#   whether to manage the firewall rules for the VXLAN
+#   Default: false
+#   Type: Boolean
+#
+# @param interface
+#   Name of the network Interface to NAT (this is the interface on the host)
+#   Default: 'eth0'
+#   Type: String
+#
+# @param firewall_provider
+#   Iptables providers: ['iptables', 'ip6tables']
+#   Default: ['iptables']
+#   Type: Array[Enum['iptables', 'ip6tables']]
+#
+# @param firewall_rule_order
+#   Iptables rule order. It's a string made by digit(s) and it can start with zero(es)
+#   Default: '050'
+#   Type: Nomad_cni::Digits
+#
+# @param cni_cut_off
+#   Segregate vxlans with iptables
+#   Default: false
+#   Type: Boolean
+#
+# @param install_dependencies
 #   whether to install the dependencies or not: 'bridge-utils', 'ethtool', 'fping'
+#   Default: true
+#   Type: Boolean
 #
 # @param workaround_network_restart
 #   if the network is restarted the CNI stops working and the jobs must be redeployed
 #   the workaround consists of reloading the CNI services, and then drain and undrain the node
+#   Default: false
+#   Type: Boolean
 #
-# @param nomad_token Optional[Sensitive]
+# @param nomad_token
 #   the token used to drain/undrain the node
+#   it's mandatory if workaround_network_restart is set to true
+#   Default: undef
+#   Type: Optional[Sensitive]
 #
-# @param nomad_proto Enum['http', 'https']
+# @param nomad_proto
 #   the protocol to use. It must be http or https
+#   Default: http
+#   Type: Enum['http', 'https']
 #
-# @param nomad_port Stdlib::Port
+# @param nomad_port
 #   the Nomad port.
 #   Default: 4646
+#   Type: Stdlib::Port
 #
-# @param nomad_data_dir Stdlib::Absolutepath
+# @param nomad_listen_address
+#   the address to which Nomad listens. It must be an IP address without subnet. 
+#   Default: 127.0.0.1
+#   Type: Stdlib::Ip::Address::Nosubnet
+#
+# @param nomad_data_dir
 #   Nomad data directory.
 #   Default: /var/lib/nomad
+#   Type: Stdlib::Absolutepath
 #
 class nomad_cni (
   Nomad_cni::Vip::Cidr $vip_cidr, # see above for the format
   String $cni_version                                      = '1.4.0',
   Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl] $cni_base_url = 'https://github.com/containernetworking/plugins/releases/download',
-  Integer $keep_vxlan_up_timer_interval                    = 1,
+  Integer $keep_vxlan_up_timer_interval                    = 10,
   Enum[
     'usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'
   ] $keep_vxlan_up_timer_unit                              = 'minutes',
@@ -77,11 +114,12 @@ class nomad_cni (
   Boolean $install_dependencies                            = true,
   # apply workaround when systemd-networkd is reloaded
   # it assumes that `nomad` executable is in the PATH
-  Boolean $workaround_network_restart  = false,
-  Optional[Sensitive] $nomad_token     = undef,
-  Enum['http', 'https'] $nomad_proto   = 'http',
-  Stdlib::Port $nomad_port             = 4646,
-  Stdlib::Absolutepath $nomad_data_dir = '/var/lib/nomad'
+  Boolean $workaround_network_restart                 = false,
+  Optional[Sensitive] $nomad_token                    = undef,
+  Enum['http', 'https'] $nomad_proto                  = 'http',
+  Stdlib::Port $nomad_port                            = 4646,
+  Stdlib::Ip::Address::Nosubnet $nomad_listen_address = '127.0.0.1',
+  Stdlib::Absolutepath $nomad_data_dir                = '/var/lib/nomad'
 ) {
   if $facts['nomad_cni_upgrade'] {
     fail("\nnomad_cni_upgrade fact is set.\nPlease remove all the files under /opt/cni/vxlan/, run puppet and finally REBOOT the server\n")
@@ -105,6 +143,7 @@ class nomad_cni (
     nomad_proto                  => $nomad_proto,
     nomad_port                   => $nomad_port,
     nomad_data_dir               => $nomad_data_dir,
+    nomad_listen_address         => $nomad_listen_address,
   }
 
   # == create custom fact directory and avoid conflicts with other modules
