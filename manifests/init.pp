@@ -101,9 +101,14 @@ class nomad_cni (
 
   $nat_rule_order   = $firewall_rule_order
 
-  file { '/etc/facter/facts.d/nomad_cni_firewall_rule_order.yaml':
-    require => Exec["create custom fact directories from ${module_name}"],
-    content => "---\ncni_connect_rule_order: \"${cni_connect_rule_order}\"\n";
+  file {
+    default:
+      require => Exec["create custom fact directories from ${module_name}"];
+    '/etc/facter/facts.d/nomad_cni_firewall_rule_order.yaml':
+      content => "---\ncni_connect_rule_order: \"${cni_connect_rule_order}\"\n";
+    '/etc/facter/facts.d/cni_names.rb':
+      mode   => '0755',
+      source => "puppet:///modules/${module_name}/cni_names.rb";
   }
 
   if ($manage_firewall_nat) or ($manage_firewall_vxlan) or ($cni_cut_off) {
