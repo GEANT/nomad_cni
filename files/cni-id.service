@@ -2,7 +2,8 @@
 Description=VXLAN for CNI %I
 Documentation=https://github.com/GEANT/nomad_cni
 Wants=network-online.target
-After=network-online.target
+PartOf=systemd-networkd.service
+After=network-online.target systemd-networkd.service
 
 [Service]
 Type=simple
