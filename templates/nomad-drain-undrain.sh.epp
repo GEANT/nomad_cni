@@ -15,7 +15,7 @@ fi
 NODE_ID=$(cat <%= $nomad_data_dir %>/client/client-id)
 source /root/.nomad-cni.env
 
-nomad node drain -enable -yes "$NODE_ID"
+nomad node drain -force -enable -yes "$NODE_ID"
 nomad system gc
 sleep 1
 nomad node drain -disable "$NODE_ID"
