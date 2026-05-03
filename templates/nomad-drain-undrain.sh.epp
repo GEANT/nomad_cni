@@ -12,10 +12,30 @@ if [ "$UPTIME" -lt 300 ]; then
   exit 0
 fi
 
+while true; do
+    case "$1" in
+    -h | --help)
+        echo "Usage: $(basename $0) [--force]"
+        echo ""
+        echo "  -f|--force  Force drain. Usefull when the jobs lost connectivity"
+        echo ""
+        exit 3
+        ;;
+    -f | --force)
+        FORCE="-force"
+        ;;
+    --)
+        shift
+        break
+        ;;
+    esac
+    shift
+done
+
 NODE_ID=$(cat <%= $nomad_data_dir %>/client/client-id)
 source /root/.nomad-cni.env
 
-nomad node drain -force -enable -yes "$NODE_ID"
+nomad node drain $FORCE -enable -yes "$NODE_ID"
 nomad system gc
 sleep 1
 nomad node drain -disable "$NODE_ID"
