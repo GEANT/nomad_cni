@@ -15,19 +15,20 @@ fi
 usage() {
     [[ "$#" -eq 2 ]] && echo -e "$2" # print a message passed as argument
     echo ""
-    echo "Usage: $(basename $0) [--force]"
+    echo "Usage: $(basename $0) [--force] [--dry-run]"
     echo "       $(basename $0) -h | --help"
     echo ""
     echo "  -h | --help     Print this help and exit"
-    echo "  -f | --force  Force node drain. Useful when the jobs have lost connectivity"
+    echo "  -f | --force    Force node drain. Useful when the jobs have lost connectivity"
+    echo "  -d | --dry-run  Dry run exection. Shows only the commands"
     echo ""
     [[ "$#" -gt 0 ]] && exit $1
     exit
 }
 
-ERR=$(getopt -Q -o "h,f" --longoptions "help,force" -- "$@" 2>&1)
+ERR=$(getopt -Q -o "h,f,d" --longoptions "help,force,dry-run" -- "$@" 2>&1)
 [ $? -ne 0 ] && usage 3 "\nError: $ERR"
-OPTS=$(getopt -o "h,f" --longoptions "help,force" -- "$@")
+OPTS=$(getopt -o "h,f,d" --longoptions "help,force,dry-run" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -37,6 +38,9 @@ while true; do
         ;;
     -f | --force)
         FORCE="-force"
+        ;;
+    -d | --dry-run)
+        DRY="yes"
         ;;
     --)
         shift
@@ -49,8 +53,13 @@ done
 NODE_ID=$(cat <%= $nomad_data_dir %>/client/client-id)
 source /root/.nomad-cni.env
 
-nomad node drain $FORCE -enable -yes "$NODE_ID"
-nomad system gc
-sleep 1
-nomad node drain -disable "$NODE_ID"
-
+if [ -n "$DRY" ]; then
+    echo nomad node drain $FORCE -enable -yes "$NODE_ID"
+    echo nomad system gc
+    echo nomad node drain -disable "$NODE_ID"
+else
+    nomad node drain $FORCE -enable -yes "$NODE_ID"
+    nomad system gc
+    sleep 1
+    nomad node drain -disable "$NODE_ID"
+fi
