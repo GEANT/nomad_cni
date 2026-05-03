@@ -1,46 +1,61 @@
-# == Class: nomad_cni
+# @summary Class: nomad_cni
 #
+# @param cni_version String
+#   version of CNI to install
 #
-# == Parameters
+# @param cni_base_url Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
+#   URL to download CNI plugins from
 #
-# [*cni_version*] String
-# version of CNI to install
+# @param keep_vxlan_up_timer_interval Integer
+#   interval in minutes to run systemd timer job to keep VXLANs up
 #
-# [*cni_base_url*] Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
-# URL to download CNI plugins from
+# @param keep_vxlan_up_timer_unit Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
+#   timer unit for the time interval: default minutes
 #
-# [*keep_vxlan_up_timer_interval*] Integer
-# interval in minutes to run systemdd timer job to keep VXLANs up
+# @param manage_firewall_nat Boolean
+#   whether to manage the firewall rules for NAT
 #
-# [*keep_vxlan_up_timer_unit*] Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
-# timer unit for the time interval: default minutes
+# @param manage_firewall_vxlan Boolean
+#   whether to manage the firewall rules for the VXLAN
 #
-# [*manage_firewall_nat*] Boolean
-# whether to manage the firewall rules for NAT
+# @param interface String
+#   Name of the network Interface to NAT (this is the interface on the host)
 #
-# [*manage_firewall_vxlan*] Boolean
-# whether to manage the firewall rules for the VXLAN
+# @param firewall_provider Array[Enum['iptables', 'ip6tables']]
+#   Iptables providers: ['iptables', 'ip6tables']
 #
-# [*interface*] String
-# Name of the network Interface to NAT (this is the interface on the host)
+# @param firewall_rule_order Nomad_cni::Digits
+#   Iptables rule order. It's a string made by digit(s) and it can start with zero(es)
 #
-# [*firewall_provider*] Array[Enum['iptables', 'ip6tables']]
-# Iptables providers: ['iptables', 'ip6tables']
+# @param cni_cut_off Boolean
+#   Segregate vxlans with iptables
 #
-# [*firewall_rule_order*] Nomad_cni::Digits
-# Iptables rule order. It's a string made by digit(s) and it can start with zero(es)
-#
-# [*cni_cut_off*] Boolean
-# Segregate vxlans with iptables
-#
-# [*vip_cidr*] Array
+# @param vip_cidr Array
 #   the IPv4 and or Ipv6 address of the VIP. It can be one of:
-#   - String or Array with an IPv4 CIDR
-#   - Array with an IPv4 CIDR and an IPv6 CIDR
+#     - String or Array with an IPv4 CIDR
+#     - Array with an IPv4 CIDR and an IPv6 CIDR
 #   CIDR examples: '192.168.10.15/24' or ['192.168.10.15/24', '2001:db8::1/64']
 #
-# [*install_dependencies*] Boolean
+# @param install_dependencies Boolean
 #   whether to install the dependencies or not: 'bridge-utils', 'ethtool', 'fping'
+#
+# @param workaround_network_restart
+#   if the network is restarted the CNI stops working and the jobs must be redeployed
+#   the workaround consists of reloading the CNI services, and then drain and undrain the node
+#
+# @param nomad_token Optional[Sensitive]
+#   the token used to drain/undrain the node
+#
+# @param nomad_proto Enum['http', 'https']
+#   the protocol to use. It must be http or https
+#
+# @param nomad_port Stdlib::Port
+#   the Nomad port.
+#   Default: 4646
+#
+# @param nomad_data_dir Stdlib::Absolutepath
+#   Nomad data directory.
+#   Default: /var/lib/nomad
 #
 class nomad_cni (
   Nomad_cni::Vip::Cidr $vip_cidr, # see above for the format
@@ -60,12 +75,22 @@ class nomad_cni (
   Nomad_cni::Digits $firewall_rule_order                   = '050', # string made by digits, which can start with zero(es)
   Array[Enum['iptables', 'ip6tables']] $firewall_provider  = ['iptables'], # ip6tables is NOT supported at the moment
   Boolean $install_dependencies                            = true,
+  # apply workaround when systemd-networkd is reloaded
+  # it assumes that `nomad` executable is in the PATH
+  Boolean $workaround_network_restart  = false,
+  Optional[Sensitive] $nomad_token     = undef,
+  Enum['http', 'https'] $nomad_proto   = 'http',
+  Stdlib::Port $nomad_port             = 4646,
+  Stdlib::Absolutepath $nomad_data_dir = '/var/lib/nomad'
 ) {
   if $facts['nomad_cni_upgrade'] {
     fail("\nnomad_cni_upgrade fact is set.\nPlease remove all the files under /opt/cni/vxlan/, run puppet and finally REBOOT the server\n")
   }
   if 'ip6tables' in $firewall_provider {
     fail('ip6tables is not supported at the moment')
+  }
+  if $workaround_network_restart {
+    unless $nomad_token { fail("\$nomad_token is mandatory when \$workaround_network_restart is set to true") }
   }
 
   class { 'nomad_cni::config':
@@ -75,6 +100,11 @@ class nomad_cni (
     keep_vxlan_up_timer_unit     => $keep_vxlan_up_timer_unit,
     ingress_vip                  => $vip_cidr,
     install_dependencies         => $install_dependencies,
+    workaround_network_restart   => $workaround_network_restart,
+    nomad_token                  => $nomad_token,
+    nomad_proto                  => $nomad_proto,
+    nomad_port                   => $nomad_port,
+    nomad_data_dir               => $nomad_data_dir,
   }
 
   # == create custom fact directory and avoid conflicts with other modules
@@ -106,9 +136,9 @@ class nomad_cni (
       require => Exec["create custom fact directories from ${module_name}"];
     '/etc/facter/facts.d/nomad_cni_firewall_rule_order.yaml':
       content => "---\ncni_connect_rule_order: \"${cni_connect_rule_order}\"\n";
-    '/etc/facter/facts.d/cni_names.rb':
+    '/etc/facter/facts.d/cni_services.rb':
       mode   => '0755',
-      source => "puppet:///modules/${module_name}/cni_names.rb";
+      source => "puppet:///modules/${module_name}/cni_services.rb";
   }
 
   if ($manage_firewall_nat) or ($manage_firewall_vxlan) or ($cni_cut_off) {

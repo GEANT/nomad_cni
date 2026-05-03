@@ -1,26 +1,39 @@
-# Class: nomad_cni::config
+# @summary Class: nomad_cni::config
+#   This class installs the CNI plugins and python3-demjson
 #
-# This class installs the CNI plugins and python3-demjson
-#
-# == Parameters
-#
-# [*ingress_vip*]
+# @param ingress_vip
 #   Array of proxy vip
 #
-# [*cni_version*] String
+# @param cni_version String
 # version of CNI to install
 #
-# [*cni_base_url*] Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
+# @param cni_base_url Variant[Stdlib::HTTPSUrl, Stdlib::HTTPUrl]
 # URL to download CNI plugins from
 #
-# [*keep_vxlan_up_timer_interval*] Integer
+# @param keep_vxlan_up_timer_interval Integer
 # interval in minutes to run systemdd timer job to keep VXLANs up
 #
-# [*keep_vxlan_up_timer_unit*] Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
+# @param keep_vxlan_up_timer_unit Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years']
 # timer unit for the time interval: default minutes
 #
-# [*install_dependencies*] Boolean
+# @param install_dependencies Boolean
 #   whether to install the dependencies or not: 'bridge-utils', 'ethtool', 'fping'
+#
+# @param workaround_network_restart
+#   if the network is restarted the CNI stops working and the jobs must be redeployed
+#   the workaround consists of reloading the CNI services, and then drain and undrain the node
+#
+# @param nomad_token Optional[Sensitive]
+#   the token used to drain/undrain the node
+#
+# @param nomad_proto Enum['http', 'https']
+#   the protocol to use. It must be http or https
+#
+# @param nomad_port Stdlib::Port
+#   the Nomad port. It defaults to 4646
+#
+# @param nomad_data_dir Stdlib::Absolutepath
+#   Nomad data directory.
 #
 class nomad_cni::config (
   Variant[String, Array] $ingress_vip,
@@ -29,6 +42,11 @@ class nomad_cni::config (
   Integer $keep_vxlan_up_timer_interval,
   Enum['usec', 'msec', 'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years'] $keep_vxlan_up_timer_unit,
   Boolean $install_dependencies,
+  Boolean $workaround_network_restart,
+  Optional[Sensitive] $nomad_token,
+  Enum['http', 'https'] $nomad_proto,
+  Stdlib::Port $nomad_port,
+  Stdlib::Absolutepath $nomad_data_dir,
 ) {
   assert_private()
 
@@ -43,6 +61,54 @@ class nomad_cni::config (
     '/opt/cni/vxlan/unicast-bridge-fdb.d',
     '/opt/cni/vxlan/unicast.d',
   ]
+
+  # == Apply workaround_network_restart
+  #
+  if ($workaround_network_restart) {
+    file {
+      '/root/.nomad-cni.env':
+        mode    => '0644',
+        content => Sensitive(
+          epp("${module_name}/nomad-cni.env.epp",
+            {
+              nomad_token => $nomad_token,
+              nomad_proto => $nomad_proto,
+              nomad_port  => $nomad_port,
+            }
+          )
+        );
+      '/usr/local/bin/nomad-drain-undrain.sh':
+        mode    => '0755',
+        content => epp("${module_name}/nomad-drain-undrain.sh.epp", { nomad_data_dir => $nomad_data_dir });
+    }
+    systemd::manage_dropin { 'drain-undrain-nomad.conf':
+      unit          => 'systemd-networkd.service',
+      service_entry => {
+        'ExecStartPost' => '+/bin/systemd-run --no-block /bin/systemctl start nomad-drain-undrain.service',
+      },
+    }
+    systemd::unit_file { 'nomad-drain-undrain.service':
+      content => epp("${module_name}/nomad-drain-undrain.service.epp", { cni_srvs => $facts['cni_services'] });
+    }
+    -> service { 'nomad-drain-undrain.service':
+      ensure => undef,
+      enable => true;
+    }
+  } else {
+    file { ['/root/.nomad-cni.env', '/usr/local/bin/nomad-drain-undrain.sh']:
+      ensure => absent;
+    }
+    systemd::manage_dropin { 'drain-undrain-nomad.conf':
+      ensure => absent,
+      unit   => 'systemd-networkd.service',
+    }
+    service { 'nomad-drain-undrain.service':
+      enable => false;
+    }
+    -> systemd::unit_file { 'nomad-drain-undrain.service':
+      ensure => absent;
+    }
+  }
 
   # == create necessary files
   #

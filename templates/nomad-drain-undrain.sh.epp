@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# only root can run the script
+if [ "$(id -u)" -ne 0 ]; then
+    echo "ERROR: This script must be run as root"
+    exit 1
+fi
+
+# exit on boot
+UPTIME=$(awk '{print int($1)}' /proc/uptime)
+if [ "$UPTIME" -lt 300 ]; then
+  exit 0
+fi
+
+NODE_ID=$(cat <%= $nomad_data_dir %>/client/client-id)
+source /root/.nomad-cni.env
+
+nomad node drain -enable -yes "$NODE_ID"
+nomad system gc
+sleep 1
+nomad node drain -disable "$NODE_ID"
+

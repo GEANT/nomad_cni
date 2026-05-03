@@ -1,0 +1,12 @@
+[Unit]
+Description=Drain and undrain Nomad node after CNI recovery
+<% unless $cni_srvs.empty { -%>
+After=<%= $cni_srvs.join(" ") %>
+<% } -%>
+
+[Service]
+Type=oneshot
+EnvironmentFile=/root/.nomad-cni.env
+ExecStart=/usr/local/bin/nomad-drain-undrain.sh
+RemainAfterExit=no
+TimeoutStartSec=600

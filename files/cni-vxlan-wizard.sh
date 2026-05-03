@@ -12,10 +12,10 @@ else
     echo_cmd='logger -t CNI-VXLAN-wizard'
 fi
 
-[ $(id -u) -ne 0 ] && {
+if [ "$(id -u)" -ne 0 ]; then
     echo "ERROR: This script must be run as root"
     exit 1
-}
+fi
 
 usage() {
     echo "Usage: $(basename $0) [--force] [--purge] --status <up>/<down>/<check> --name <cni_name>"
