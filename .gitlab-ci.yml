@@ -21,26 +21,6 @@ default:
     - bundle -v
     - bundle install --without system_tests --path vendor/bundle --jobs $(nproc)
 
-validate lint check rubocop-Ruby 2.7.2-Puppet ~> 7:
-  stage: syntax
-  image: ruby:2.7.2
-  script:
-    - bundle exec rake validate lint check rubocop
-  variables:
-    PUPPET_GEM_VERSION: '~> 7'
-  tags:
-    - shared-docker-runner
-
-parallel_spec-Ruby 2.7.2-Puppet ~> 7:
-  stage: unit
-  image: ruby:2.7.2
-  script:
-    - bundle exec rake parallel_spec
-  variables:
-    PUPPET_GEM_VERSION: '~> 7'
-  tags:
-    - shared-docker-runner
-
 validate lint check rubocop-Ruby 3.2.0-Puppet ~> 8:
   stage: syntax
   image: ruby:3.2.0
@@ -49,7 +29,7 @@ validate lint check rubocop-Ruby 3.2.0-Puppet ~> 8:
   variables:
     PUPPET_GEM_VERSION: '~> 8'
   tags:
-    - shared-docker-runner
+    - shared-puppet-docker-runner
 
 parallel_spec-Ruby 2.7.2-Puppet ~> 8:
   stage: unit
@@ -59,7 +39,7 @@ parallel_spec-Ruby 2.7.2-Puppet ~> 8:
   variables:
     PUPPET_GEM_VERSION: '~> 8'
   tags:
-    - shared-docker-runner
+    - shared-puppet-docker-runner
 
 # custom internal jobs
 job_deploy:
@@ -71,7 +51,7 @@ job_deploy:
   script:
     - ${HOME_RUNNER}/bin/ci2puppet.sh ${CI_PROJECT_NAME} ${CI_COMMIT_REF_NAME}
   tags:
-    - gitlab-runner02-shell01-tag1
+    - shared-puppet-shell-runner
 
 job_notification:
   stage: send_notification
@@ -88,4 +68,4 @@ job_notification:
     - /usr/local/bin/upload_to_slack.sh ${HOME_RUNNER}/${CI_PROJECT_NAME}_msg.txt post "Puppet CI Error" "${DEVOPS_CHANNEL}" ${DEVOPSBOT_TOKEN} ERROR
     - cat ${HOME_RUNNER}/${CI_PROJECT_NAME}_msg.txt | mail -s "Puppet CI Error on Repository ${CI_PROJECT_NAME}" $RCPT
   tags:
-    - gitlab-runner02-shell01-tag2
+    - shared-puppet-shell-runner
