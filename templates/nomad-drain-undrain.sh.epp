@@ -68,12 +68,12 @@ NODE_ID=$(cat <%= $nomad_data_dir %>/client/client-id)
 source /root/.nomad-cni.env
 
 if [ -n "$DRY" ]; then
-    echo nomad node drain "$FORCE" -enable -yes "$NODE_ID"
+    echo nomad node drain $FORCE -enable -yes $NODE_ID
     echo nomad system gc
-    echo nomad node drain -disable "$NODE_ID"
+    echo nomad node drain -disable $NODE_ID
 else
-    nomad node drain "$FORCE" -enable -yes "$NODE_ID"
+    nomad node drain $FORCE -enable -yes $NODE_ID
     nomad system gc
     sleep 1
-    nomad node drain -disable "$NODE_ID"
+    nomad node drain -disable $NODE_ID
 fi
