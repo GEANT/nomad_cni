@@ -18,17 +18,18 @@ usage() {
     echo "Usage: $(basename $0) [--force] [--dry-run]"
     echo "       $(basename $0) -h | --help"
     echo ""
-    echo "  -h | --help     Print this help and exit"
-    echo "  -f | --force    Force node drain. Useful when the jobs have lost connectivity"
-    echo "  -d | --dry-run  Dry run exection. Shows only the commands"
+    echo "  -h | --help      Print this help and exit"
+    echo "  -f | --force     Force node drain. Useful when the jobs have lost connectivity"
+    echo "  -d | --dry-run   Dry run exection. Shows only the commands"
+    echo "  -r | --real-run  Really drain and undrain"
     echo ""
-    [[ "$#" -gt 0 ]] && exit $1
+    [[ "$#" -gt 0 ]] && exit "$1"
     exit
 }
 
-ERR=$(getopt -Q -o "h,f,d" --longoptions "help,force,dry-run" -- "$@" 2>&1)
+ERR=$(getopt -Q -o "h,f,d,r" --longoptions "help,force,dry-run,real-run" -- "$@" 2>&1)
 [ $? -ne 0 ] && usage 3 "\nError: $ERR"
-OPTS=$(getopt -o "h,f,d" --longoptions "help,force,dry-run" -- "$@")
+OPTS=$(getopt -o "h,f,d,r" --longoptions "help,force,dry-run,real-run" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
@@ -42,6 +43,9 @@ while true; do
     -d | --dry-run)
         DRY="yes"
         ;;
+    -r | --real-run)
+        REAL="yes"
+        ;;
     --)
         shift
         break
@@ -50,15 +54,25 @@ while true; do
     shift
 done
 
+if [ -n "$DRY" ] && [ -n "$REAL" ]; then
+    echo "--real-run and --dry-run are mutually exclusive"
+    exit 1
+elif [ -z "$DRY" ] && [ -z "$REAL" ]; then
+    echo "You must use at least one of --real-run or --dry-run"
+    usage 0
+fi
+
 NODE_ID=$(cat <%= $nomad_data_dir %>/client/client-id)
+
+# shellcheck source=./nomad-cni.env.epp
 source /root/.nomad-cni.env
 
 if [ -n "$DRY" ]; then
-    echo nomad node drain $FORCE -enable -yes "$NODE_ID"
+    echo nomad node drain "$FORCE" -enable -yes "$NODE_ID"
     echo nomad system gc
     echo nomad node drain -disable "$NODE_ID"
 else
-    nomad node drain $FORCE -enable -yes "$NODE_ID"
+    nomad node drain "$FORCE" -enable -yes "$NODE_ID"
     nomad system gc
     sleep 1
     nomad node drain -disable "$NODE_ID"
